@@ -1,6 +1,7 @@
-import React, { Suspense } from 'react';
-import { Check, Copy, FileJson, Upload } from 'lucide-react';
+import React, { Suspense, useState } from 'react';
+import { BookOpen, Check, Copy, Download, FileJson, Upload } from 'lucide-react';
 import { EpisodeScript } from './types';
+import { buildStagecraftDirectorSkillMd } from './directorSkillExport';
 
 const AiDirectorPanel = React.lazy(() =>
   import('./AiDirectorPanel').then((m) => ({ default: m.AiDirectorPanel }))
@@ -36,6 +37,38 @@ export const WorkbenchScriptTab: React.FC<WorkbenchScriptTabProps> = React.memo(
     onExportChapterJson,
     onApplyJson,
   }) => {
+    const [copiedSkill, setCopiedSkill] = useState(false);
+
+    const handleCopySkillMd = async () => {
+      const md = buildStagecraftDirectorSkillMd();
+      try {
+        await navigator.clipboard.writeText(md);
+      } catch {
+        // Fallback clipboard copy for restricted iframe contexts
+        const ta = document.createElement('textarea');
+        ta.value = md;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+      }
+      setCopiedSkill(true);
+      window.setTimeout(() => setCopiedSkill(false), 2200);
+    };
+
+    const handleDownloadSkillMd = () => {
+      const md = buildStagecraftDirectorSkillMd();
+      const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'SKILL.md';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 4000);
+    };
+
     return (
       <div className="flex-1 flex flex-col min-h-0 overflow-y-auto p-4 gap-3">
         <Suspense
@@ -64,8 +97,26 @@ export const WorkbenchScriptTab: React.FC<WorkbenchScriptTabProps> = React.memo(
             </button>
           </div>
           <p className="text-[11px] text-[#8e97b0] leading-relaxed">
-            Zero-key option: copy the Director System Prompt into any AI chat for Indian or World public-domain folklore, then paste or import the JSON below.
+            Zero-key option: copy the Director System Prompt or export a live coding-agent <code className="text-[#f2c85b]">SKILL.md</code> with all 60 archetypes, 50 stages, 65 props &amp; 20 art engines.
           </p>
+          <div className="grid grid-cols-2 gap-1.5 pt-0.5">
+            <button
+              type="button"
+              onClick={handleCopySkillMd}
+              className="h-7 px-2.5 rounded-md bg-[#161f38] hover:bg-[#202d50] border border-[#f2c85b]/35 text-[#f7e7bc] text-[10px] font-bold inline-flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              {copiedSkill ? <Check className="w-3 h-3 text-[#4ade80]" /> : <BookOpen className="w-3 h-3 text-[#f2c85b]" />}
+              <span>{copiedSkill ? 'Copied SKILL.md' : 'Copy Director SKILL.md'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleDownloadSkillMd}
+              className="h-7 px-2.5 rounded-md bg-[#161f38] hover:bg-[#202d50] border border-cyan-400/30 text-cyan-100 text-[10px] font-bold inline-flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <Download className="w-3 h-3 text-cyan-300" />
+              <span>Download SKILL.md</span>
+            </button>
+          </div>
         </div>
 
         {jsonError && (

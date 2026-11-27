@@ -600,6 +600,8 @@ export interface EpisodeVisualStyle {
   depthOfField?: number; // 0 .. 1 subtle 2.5D multi-plane rack focus / backdrop defocus (default 0.35)
   lightShafts?: number; // 0 .. 1 volumetric light shafts & dust-mote atmosphere (default 0.4)
   spatialAudio?: boolean; // Deterministic stereo panning & stage room acoustics (default true)
+  hitstopEnabled?: boolean; // Deterministic 2-4 frame impact freeze + shock envelope on peak strikes (default true)
+  foregroundFraming?: number; // 0 .. 1 near-camera foreground parallax silhouette framing (default 0.35)
 }
 
 export interface CastMember {
@@ -716,6 +718,14 @@ export interface LocationCardConfig {
   style?: LocationCardStyle;
 }
 
+export interface SpriteSheetConfig {
+  cols: number; // 1 .. 16 columns
+  rows: number; // 1 .. 16 rows
+  frameCount: number; // 1 .. 256 active frames
+  fps: number; // 2 .. 30 playback frames per second
+  loop?: boolean; // default true
+}
+
 export interface StoryBeat {
   id: string;
   title: string;
@@ -733,6 +743,8 @@ export interface StoryBeat {
   propOffsetY?: number; // Optional fine stage nudge (-0.35 .. +0.35)
   customPropDataUrl?: string; // Optional user-uploaded PNG/JPEG/WebP cutout prop for one-off chapter objects
   customPropLabel?: string;
+  /** Optional frame-locked sprite sheet slicer grid for animated custom props */
+  customPropSheet?: SpriteSheetConfig;
   customBackdropDataUrl?: string; // Optional user-uploaded PNG/JPEG/WebP painted backdrop plate
   customBackdropLabel?: string;
   frame?: FrameMode;
@@ -1571,6 +1583,8 @@ export const DEFAULT_VISUAL_STYLE: EpisodeVisualStyle = {
   depthOfField: 0.35,
   lightShafts: 0.4,
   spatialAudio: true,
+  hitstopEnabled: true,
+  foregroundFraming: 0.35,
 };
 
 export const LOOK_PRESETS: Array<{
@@ -1786,6 +1800,14 @@ export function resolveVisualStyle(partial?: Partial<EpisodeVisualStyle>): Episo
       typeof partial.spatialAudio === 'boolean'
         ? partial.spatialAudio
         : DEFAULT_VISUAL_STYLE.spatialAudio,
+    hitstopEnabled:
+      typeof partial.hitstopEnabled === 'boolean'
+        ? partial.hitstopEnabled
+        : DEFAULT_VISUAL_STYLE.hitstopEnabled,
+    foregroundFraming:
+      typeof partial.foregroundFraming === 'number' && Number.isFinite(partial.foregroundFraming)
+        ? Math.max(0, Math.min(1, partial.foregroundFraming))
+        : DEFAULT_VISUAL_STYLE.foregroundFraming,
   };
 }
 
@@ -2444,6 +2466,26 @@ export function validateEpisodeScript(raw: unknown): { ok: true; script: Episode
           : undefined,
       customPropLabel:
         typeof item.customPropLabel === 'string' ? item.customPropLabel.slice(0, 80) : undefined,
+      customPropSheet: (() => {
+        if (!item.customPropSheet || typeof item.customPropSheet !== 'object') return undefined;
+        const sh = item.customPropSheet as Record<string, unknown>;
+        const colsRaw = Number(sh.cols);
+        const rowsRaw = Number(sh.rows);
+        const fcRaw = Number(sh.frameCount);
+        const fpsRaw = Number(sh.fps);
+        if (!Number.isFinite(colsRaw) || !Number.isFinite(rowsRaw)) return undefined;
+        const cols = Math.max(1, Math.min(16, Math.round(colsRaw)));
+        const rows = Math.max(1, Math.min(16, Math.round(rowsRaw)));
+        const maxCells = Math.min(256, cols * rows);
+        const frameCount = Number.isFinite(fcRaw)
+          ? Math.max(1, Math.min(maxCells, Math.round(fcRaw)))
+          : maxCells;
+        const fps = Number.isFinite(fpsRaw)
+          ? Math.max(2, Math.min(30, Math.round(fpsRaw)))
+          : 12;
+        const loop = typeof sh.loop === 'boolean' ? sh.loop : true;
+        return { cols, rows, frameCount, fps, loop };
+      })(),
       customBackdropDataUrl:
         typeof item.customBackdropDataUrl === 'string' &&
         item.customBackdropDataUrl.length <= 5_500_000 &&
@@ -2599,6 +2641,12 @@ export function validateEpisodeScript(raw: unknown): { ok: true; script: Episode
           : undefined,
       spatialAudio:
         typeof vs.spatialAudio === 'boolean' ? vs.spatialAudio : undefined,
+      hitstopEnabled:
+        typeof vs.hitstopEnabled === 'boolean' ? vs.hitstopEnabled : undefined,
+      foregroundFraming:
+        typeof vs.foregroundFraming === 'number' && Number.isFinite(vs.foregroundFraming)
+          ? Math.max(0, Math.min(1, vs.foregroundFraming))
+          : undefined,
     };
   }
 

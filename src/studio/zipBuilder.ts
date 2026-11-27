@@ -114,6 +114,14 @@ import studioEpisodeDiffTs from './episodeDiff.ts?raw';
 import studioVersionDiffModalTsx from './VersionDiffModal.tsx?raw';
 import studioShortcutsTs from './studioShortcuts.ts?raw';
 import studioCommandPaletteModalTsx from './CommandPaletteModal.tsx?raw';
+import studioImpactVfxTs from './impactVfx.ts?raw';
+import studioSpritePrepToolsTs from './spritePrepTools.ts?raw';
+import studioSpritePrepModalTsx from './SpritePrepModal.tsx?raw';
+import studioSpriteSheetSlicerTs from './spriteSheetSlicer.ts?raw';
+import studioSurfaceReflectionsTs from './surfaceReflections.ts?raw';
+import studioForegroundParallaxTs from './foregroundParallax.ts?raw';
+import studioVisualScorecardTs from './visualScorecard.ts?raw';
+import studioDirectorSkillExportTs from './directorSkillExport.ts?raw';
 import studioZipBuilderTs from './zipBuilder.ts?raw';
 import batchRenderScriptMjs from '../../scripts/render-batch.mjs?raw';
 import determinismAuditScriptMjs from '../../scripts/determinism-audit.mjs?raw';
@@ -716,6 +724,38 @@ export function collectAllMachinimaEntries(): ZipEntryInput[] {
     {
       path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/CommandPaletteModal.tsx`,
       content: studioCommandPaletteModalTsx,
+    },
+    {
+      path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/impactVfx.ts`,
+      content: studioImpactVfxTs,
+    },
+    {
+      path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/spritePrepTools.ts`,
+      content: studioSpritePrepToolsTs,
+    },
+    {
+      path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/SpritePrepModal.tsx`,
+      content: studioSpritePrepModalTsx,
+    },
+    {
+      path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/spriteSheetSlicer.ts`,
+      content: studioSpriteSheetSlicerTs,
+    },
+    {
+      path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/surfaceReflections.ts`,
+      content: studioSurfaceReflectionsTs,
+    },
+    {
+      path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/foregroundParallax.ts`,
+      content: studioForegroundParallaxTs,
+    },
+    {
+      path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/visualScorecard.ts`,
+      content: studioVisualScorecardTs,
+    },
+    {
+      path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/directorSkillExport.ts`,
+      content: studioDirectorSkillExportTs,
     },
     {
       path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/zipBuilder.ts`,

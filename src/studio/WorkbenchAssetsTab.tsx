@@ -4,6 +4,7 @@ import {
   Layers,
   Plus,
   RefreshCw,
+  Scissors,
   Search,
   Sparkles,
   Wand2,
@@ -131,6 +132,7 @@ interface WorkbenchAssetsTabProps {
   onCycleProcPropSeed: () => void;
   onGenerateProceduralProp: () => void;
   onOpenWorkshopForNewEntity: () => void;
+  onOpenSpritePrepModal?: () => void;
   onAddArchetypeToEpisode: (archetype: ArchetypeId, label: string) => void;
   onAddSpritePresetToEpisode?: (preset: SpriteWorkshopPreset) => void;
   onUpdateSelectedBeat: (patch: Partial<StoryBeat>) => void;
@@ -159,6 +161,7 @@ export const WorkbenchAssetsTab: React.FC<WorkbenchAssetsTabProps> = React.memo(
     onCycleProcPropSeed,
     onGenerateProceduralProp,
     onOpenWorkshopForNewEntity,
+    onOpenSpritePrepModal,
     onAddArchetypeToEpisode,
     onAddSpritePresetToEpisode,
     onUpdateSelectedBeat,
@@ -657,6 +660,27 @@ export const WorkbenchAssetsTab: React.FC<WorkbenchAssetsTabProps> = React.memo(
 
           {assetCat === 'props' && (
             <div className="space-y-3">
+              {onOpenSpritePrepModal && (
+                <button
+                  type="button"
+                  onClick={onOpenSpritePrepModal}
+                  className="w-full p-2.5 rounded-lg bg-[#161e36] hover:bg-[#1e2948] border border-[#f2c85b]/45 text-left flex items-center justify-between gap-2 transition-colors cursor-pointer"
+                >
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold text-[#f2c85b] inline-flex items-center gap-1.5">
+                      <Scissors className="w-3.5 h-3.5 shrink-0" />
+                      <span>Prep Custom Cutout / Sprite Sheet</span>
+                    </div>
+                    <div className="text-[10px] text-[#9aa3bd] mt-0.5 truncate">
+                      {selectedBeat?.customPropSheet
+                        ? `Animated Sheet: ${selectedBeat.customPropLabel || 'Sprite'} (${selectedBeat.customPropSheet.cols}×${selectedBeat.customPropSheet.rows} · ${selectedBeat.customPropSheet.fps}fps)`
+                        : 'Strip flat backgrounds, add ink outlines, pixelize or slice animated sheets'}
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-semibold text-[#f2c85b] shrink-0">Open</span>
+                </button>
+              )}
+
               <div className="p-2.5 rounded-lg bg-[#12192f] border border-cyan-400/25 space-y-2">
                 <div className="flex items-center justify-between gap-2">
                   <div className="text-[11px] font-semibold text-cyan-200 inline-flex items-center gap-1.5">
@@ -699,6 +723,7 @@ export const WorkbenchAssetsTab: React.FC<WorkbenchAssetsTabProps> = React.memo(
                         onUpdateSelectedBeat({
                           customPropDataUrl: undefined,
                           customPropLabel: undefined,
+                          customPropSheet: undefined,
                         })
                       }
                       className="h-7 px-2 rounded bg-rose-500/15 hover:bg-rose-500/25 text-[10px] font-semibold text-rose-200 cursor-pointer"
@@ -746,6 +771,7 @@ export const WorkbenchAssetsTab: React.FC<WorkbenchAssetsTabProps> = React.memo(
                             prop: p.id,
                             customPropDataUrl: undefined,
                             customPropLabel: undefined,
+                            customPropSheet: undefined,
                           })
                         }
                         className={`p-2 rounded-lg text-left border transition-colors cursor-pointer ${

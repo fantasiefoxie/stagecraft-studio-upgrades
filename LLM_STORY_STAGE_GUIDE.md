@@ -338,3 +338,18 @@ External AI agents, CI jobs, and power users can compile, heal, YPP-audit, reten
 3. **Zero-Cost Dialogue Sanitizer & Long-Beat Auto-Splitter**: Automatically strips leaked `Speaker:` labels and `(parenthetical)` / `*asterisk*` cues (converting them into real actor `expression` and `sfx`), and splits any bloated 25+ word wall-of-text beat into two snappy alternating shots.
 4. **Script Craft Auditor (0–100) + 1-Click Dialogue Script Doctor**: Audits opening hook strength, words-per-beat cadence, character banter vs. narrator ratio, prop payoff, and moral ending—then lets you punch up **only** the dialogue while keeping 100% of visual blocking, cast, and camera shots locked.
 
+---
+
+## 13. Multi-Genre World Catalogs & Wave 4 Visual Craft Features
+
+Stagecraft Studio expands beyond folklore into **any genre** (Sci-Fi, Noir, Fantasy RPG, Modern Explainer, Historical Drama & Creatures) through one unified 2D Canvas pipeline across **all 20 Art Engines**:
+
+- **Live Catalog Totals**: **60 Cast Archetypes**, **50 Stage Backdrops**, **64 Story Props (+ `none`)**, **16 Lighting Moods**, **12 Weather Systems**, **12 Living Crowds**, **14 Kinetic FX**, **20 Art Engines**, **24 Procedural Backdrop Themes**, **24 Procedural Prop Cutouts**, **9 Act Visual Arcs**, **12 Acting Macros**, and **32 Curated CharacterDNA Sprite Presets**.
+- **Deterministic Hit Stop & Attack-Hold-Decay VFX (`visualStyle.hitstopEnabled`)**: Automatically inserts a crisp 2–4 frame impact freeze with micro-shake, shockwave ring, and chromatic edge kick on peak strikes (`pose: "attack"`, `cameraPunch >= 0.5`, `sword_clash` / `thunder_crack`, or `crimson_impact` / `shock_burst` / `shatter_glass` / `comic_pow`).
+- **In-Browser Sprite Prep Studio & Frame-Locked Sprite Sheet Slicer (`beat.customPropSheet`)**: Strip flat solid backgrounds via corner flood-fill, add pixel-snapped or ink silhouettes, quantize sprites to the active Mood Palette, or slice multi-frame PNG/WebP sprite sheets (`{ cols, rows, frameCount, fps, loop }`) locked to `STUDIO_FPS` and active `motionCadence`.
+- **Directional Ground Shadows & Surface Reflections**: Automatically renders directional light-aligned ground shadows plus animated water/wet-street/polished-marble reflections across all 50 stages (with outdoor rain/storm wet-street reflection upgrades).
+- **Foreground Framing Parallax Silhouettes (`visualStyle.foregroundFraming`)**: Adds soft near-camera framing silhouettes (`banyan_foliage`, `temple_pillars`, `bamboo_stalks`, `cyber_cables`, `noir_blinds`, `gothic_arch`, `ship_rigging`, `alpine_pines`, `sakura_branch`, `starship_struts`) moving at `1.28×` camera parallax without obstructing faces or captions.
+- **Calibrated 0–3 Visual Craft Scorecard & Manifest Audit CLI**: Evaluates 6 visual-craft dimensions (`0 = Placeholder` .. `3 = Showcase`) in **Storyboard QA** and in `scripts/determinism-audit.mjs` (`--manifest <file.json>`, `--max-frame-ms <ms>`, console/`pageerror` capture).
+- **Live Exportable Director `SKILL.md`**: Click **Copy Director SKILL.md** or **Download SKILL.md** in the **AI / Script** tab to export a live, always-current coding-agent skill file reflecting every catalog ID and JSON schema contract.
+
+

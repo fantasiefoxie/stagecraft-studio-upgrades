@@ -156,6 +156,9 @@ const FastRenderModal = lazy(() =>
 const EntityWorkshopModal = lazy(() =>
   import('./studio/EntityWorkshopModal').then((m) => ({ default: m.EntityWorkshopModal }))
 );
+const SpritePrepModal = lazy(() =>
+  import('./studio/SpritePrepModal').then((m) => ({ default: m.SpritePrepModal }))
+);
 import { retimeBeatExpressionTracks } from './studio/emotionChoreographer';
 import {
   AUTOSAVE_PROJECT_ID,
@@ -278,6 +281,7 @@ export default function App() {
   const [safeZones, setSafeZones] = useState(false);
   const [onionSkin, setOnionSkin] = useState(false);
   const [voiceBoothOpen, setVoiceBoothOpen] = useState(false);
+  const [spritePrepOpen, setSpritePrepOpen] = useState(false);
   const [versionDiffOpen, setVersionDiffOpen] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [dragBeatIdx, setDragBeatIdx] = useState<number | null>(null);
@@ -3442,6 +3446,7 @@ export default function App() {
               onCycleProcPropSeed={() => setProcPropSeed((s) => ((s * 29 + 7) % 97) + 1)}
               onGenerateProceduralProp={handleGenerateProceduralProp}
               onOpenWorkshopForNewEntity={openWorkshopForNewEntity}
+              onOpenSpritePrepModal={() => setSpritePrepOpen(true)}
               onAddArchetypeToEpisode={addArchetypeToEpisode}
               onAddSpritePresetToEpisode={addSpritePresetToEpisode}
               onUpdateSelectedBeat={updateSelectedBeat}
@@ -3634,6 +3639,46 @@ export default function App() {
           onExecute={handleExecuteCommand}
           onClose={() => setCommandPaletteOpen(false)}
         />
+      )}
+
+      {/* Upgrades 22 & 23: In-Browser Sprite Prep Studio & Frame-Locked Sprite Sheet Slicer */}
+      {spritePrepOpen && (
+        <Suspense
+          fallback={
+            <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center text-xs text-[#eef1f8]">
+              Loading Sprite Prep Studio…
+            </div>
+          }
+        >
+          <SpritePrepModal
+            open={spritePrepOpen}
+            activeMood={selectedBeat?.mood ?? 'midnight_banyan'}
+            sceneNumber={selectedBeatIdx + 1}
+            initialPropDataUrl={selectedBeat?.customPropDataUrl}
+            initialPropLabel={selectedBeat?.customPropLabel}
+            initialSheet={selectedBeat?.customPropSheet}
+            onApplyProp={(dataUrl, label, sheet) => {
+              updateSelectedBeat(
+                {
+                  customPropDataUrl: dataUrl,
+                  customPropLabel: label,
+                  customPropSheet: sheet,
+                },
+                sheet ? `Bind Animated Prop: ${label}` : `Prep Custom Prop: ${label}`
+              );
+            }}
+            onApplyBackdrop={(dataUrl, label) => {
+              updateSelectedBeat(
+                {
+                  customBackdropDataUrl: dataUrl,
+                  customBackdropLabel: label,
+                },
+                `Prep Custom Backdrop: ${label}`
+              );
+            }}
+            onClose={() => setSpritePrepOpen(false)}
+          />
+        </Suspense>
       )}
     </div>
   );

@@ -20,6 +20,7 @@ import {
   auditEpisodeContinuity,
   autoFixEpisodeContinuity,
 } from './continuityAuditor';
+import { scoreEpisodeVisualCraft } from './visualScorecard';
 
 interface StoryboardQaModalProps {
   open: boolean;
@@ -110,6 +111,7 @@ export const StoryboardQaModal: React.FC<StoryboardQaModalProps> = ({
   };
 
   const continuityReport = useMemo(() => auditEpisodeContinuity(episode), [episode]);
+  const visualScorecard = useMemo(() => scoreEpisodeVisualCraft(episode), [episode]);
 
   const handleAutoFixContinuity = () => {
     if (!onApplyFixedEpisode) return;
@@ -366,6 +368,57 @@ export const StoryboardQaModal: React.FC<StoryboardQaModalProps> = ({
                   ))}
                 </div>
               )}
+            </div>
+
+            {/* Upgrade 26: Calibrated 0-3 Visual Craft Scorecard */}
+            <div className="rounded-lg bg-[#13182c] border border-white/10 p-3 space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-semibold text-white">
+                  Visual Craft Scorecard (0–3)
+                </span>
+                <span
+                  className={`px-2 py-0.5 rounded text-[10px] font-bold font-mono-tabular ${
+                    visualScorecard.totalScore >= 14
+                      ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-400/30'
+                      : visualScorecard.totalScore >= 9
+                        ? 'bg-sky-500/15 text-sky-300 border border-sky-400/30'
+                        : 'bg-amber-500/15 text-amber-300 border border-amber-400/35'
+                  }`}
+                >
+                  {visualScorecard.totalScore}/{visualScorecard.maxScore} · {visualScorecard.gradeLabel}
+                </span>
+              </div>
+              <div className="space-y-1.5">
+                {visualScorecard.categories.map((cat) => (
+                  <div
+                    key={cat.id}
+                    className="rounded-md bg-[#0c101e] border border-white/8 p-2 space-y-0.5"
+                  >
+                    <div className="flex items-center justify-between gap-2 text-[10px]">
+                      <span className="font-semibold text-white truncate">{cat.label}</span>
+                      <span
+                        className={`px-1.5 py-0.5 rounded font-mono-tabular font-bold shrink-0 ${
+                          cat.score >= 3
+                            ? 'bg-emerald-500/20 text-emerald-300'
+                            : cat.score === 2
+                              ? 'bg-sky-500/20 text-sky-300'
+                              : cat.score === 1
+                                ? 'bg-amber-500/20 text-amber-300'
+                                : 'bg-rose-500/20 text-rose-300'
+                        }`}
+                      >
+                        {cat.score}/3 · {cat.band}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-[#8e97b0] leading-snug">{cat.rationale}</p>
+                    {cat.score < 2 && cat.suggestion && (
+                      <p className="text-[10px] text-amber-200/90 leading-snug">
+                        Tip: {cat.suggestion}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

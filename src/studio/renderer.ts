@@ -49,6 +49,13 @@ import {
   stripEmphasisMarkup,
 } from './kineticCaptions';
 import { drawLocationLowerThird } from './lowerThirds';
+import { computeHitstopState, drawImpactShockOverlay } from './impactVfx';
+import { computeSpriteSheetFrameRect } from './spriteSheetSlicer';
+import {
+  ReflectedActorSnapshot,
+  drawGroundedShadowAndReflection,
+} from './surfaceReflections';
+import { drawForegroundParallaxLayer } from './foregroundParallax';
 import {
   SfxChoreographyState,
   applyParallaxCamera,
@@ -63,6 +70,7 @@ import {
   drawStageForegroundDepthLayer,
   getArchetypeKinematics,
   getStyleAnimationGrammar,
+  resolveEffectiveMotionFps,
   snapStyleTime,
 } from './animationEngine';
 import {
@@ -1083,21 +1091,37 @@ function drawCustomOrHeroProp(
   scale: number,
   globalT: number,
   u: number,
-  rotation = 0
+  rotation = 0,
+  localT = 0,
+  cadenceFps?: number
 ): void {
   if (beat.customPropDataUrl) {
     const img = getSafeRasterImage(beat.customPropDataUrl);
     if (img) {
       const maxDim = 220 * scale;
-      const ratio = Math.min(maxDim / img.naturalWidth, maxDim / img.naturalHeight);
-      const dw = img.naturalWidth * ratio;
-      const dh = img.naturalHeight * ratio;
       ctx.save();
       ctx.translate(px, py);
       if (rotation) ctx.rotate(rotation);
       ctx.shadowColor = 'rgba(255, 212, 82, 0.4)';
       ctx.shadowBlur = 22;
-      ctx.drawImage(img, -dw / 2, -dh / 2, dw, dh);
+      if (beat.customPropSheet) {
+        const rect = computeSpriteSheetFrameRect(
+          beat.customPropSheet,
+          img.naturalWidth,
+          img.naturalHeight,
+          localT,
+          cadenceFps
+        );
+        const ratio = Math.min(maxDim / Math.max(1, rect.sw), maxDim / Math.max(1, rect.sh));
+        const dw = rect.sw * ratio;
+        const dh = rect.sh * ratio;
+        ctx.drawImage(img, rect.sx, rect.sy, rect.sw, rect.sh, -dw / 2, -dh / 2, dw, dh);
+      } else {
+        const ratio = Math.min(maxDim / img.naturalWidth, maxDim / img.naturalHeight);
+        const dw = img.naturalWidth * ratio;
+        const dh = img.naturalHeight * ratio;
+        ctx.drawImage(img, -dw / 2, -dh / 2, dw, dh);
+      }
       ctx.restore();
       return;
     }
@@ -2230,6 +2254,13 @@ export function renderEpisodeFrame(
   const motionCadence = style.motionCadence || 'auto';
   const motionProfile = style.motionProfile || 'auto';
   const actionState = resolveBeatActionStateAtFrame(beat, ev.localFrame);
+  const hitstop = computeHitstopState(
+    beat,
+    ev.localFrame,
+    STUDIO_FPS,
+    style.hitstopEnabled !== false
+  );
+  const effectiveCadenceFps = resolveEffectiveMotionFps(activeRenderStyle, motionCadence);
   const sfxChoreo = computeSfxChoreography(beat, localT, globalT);
   const rawAnimT = sfxChoreo.effectiveTime;
   const steppedT = snapStyleTime(rawAnimT, activeRenderStyle, motionCadence);
@@ -2239,11 +2270,24 @@ export function renderEpisodeFrame(
     motionCadence === '12fps' || motionCadence === '24fps'
       ? clamp(snapStyleTime(localT, activeRenderStyle, motionCadence) / beatDur, 0, 1)
       : u;
+  // Upgrade 21: During deterministic hitstop freeze, lock actor limb/pose clock to frozenLocalFrame
+  const frozenLocalT = hitstop.frozenLocalFrame / STUDIO_FPS;
+  const actorAnimT = hitstop.isFrozen
+    ? snapStyleTime(
+        Math.max(0, globalT - (localT - frozenLocalT)),
+        activeRenderStyle,
+        motionCadence
+      )
+    : animT;
+  const actorMotionU = hitstop.isFrozen
+    ? clamp(frozenLocalT / beatDur, 0, 1)
+    : motionU;
   const lighting = computeSceneLighting(beat, animT, sfxChoreo, styleGrammar);
   const showDepthForeground =
     beat.frame !== 'chapter_title' &&
     beat.frame !== 'moral_card' &&
     beat.frame !== 'end_screen';
+  const fgFramingIntensity = style.foregroundFraming ?? 0.35;
 
   const effectiveActors: ActorPlacement[] = (beat.actors || []).map((a) => {
     const poseOvr = actionState.actorPoseOverrides[a.castId];
@@ -2256,12 +2300,13 @@ export function renderEpisodeFrame(
     };
   });
   const applyActionCameraPunch = (baseCam: { zoom: number; panX: number; panY: number }) => {
-    if (actionState.cameraPunch <= 0.005) return baseCam;
     const p = actionState.cameraPunch;
+    const hsActive = hitstop.isFrozen || Math.abs(hitstop.shakeX) > 0.001 || Math.abs(hitstop.shakeY) > 0.001;
+    if (p <= 0.005 && !hsActive) return baseCam;
     return {
-      zoom: baseCam.zoom + p * 0.095,
-      panX: baseCam.panX + Math.sin(ev.localFrame * 2.1) * p * 10 * s,
-      panY: baseCam.panY + Math.cos(ev.localFrame * 2.7) * p * 7 * s,
+      zoom: baseCam.zoom + p * 0.095 + (hitstop.isFrozen ? 0.025 * hitstop.impactEnvelope : 0),
+      panX: baseCam.panX + Math.sin(ev.localFrame * 2.1) * p * 10 * s + hitstop.shakeX * 6 * s,
+      panY: baseCam.panY + Math.cos(ev.localFrame * 2.7) * p * 7 * s + hitstop.shakeY * 5 * s,
     };
   };
 
@@ -2375,11 +2420,22 @@ export function renderEpisodeFrame(
         if ((beat.prop !== 'none' || beat.customPropDataUrl) && !propSpec.isHeld && beat.propSlot !== 'overhead') {
           drawGroundContactShadow(bCtx, propSpec.px, propSpec.py + 42 * s, 54 * s, 14 * s, 0.34);
         }
+        const reflectedActors: ReflectedActorSnapshot[] = [];
         for (const a of effectiveActors) {
-          if (a.slot === 'overhead' || a.pose === 'soar' || a.pose === 'hang_upside_down') continue;
+          const isAirborne =
+            a.slot === 'overhead' || a.pose === 'soar' || a.pose === 'hang_upside_down';
           const c = getCast(a.castId);
-          const pos = computeActorPosition(a, w, h, s, motionU, isVert, motionProfile, activeRenderStyle);
-          const leapShrink = a.motion === 'leap_arc' ? 1 - Math.sin(motionU * Math.PI) * 0.45 : 1;
+          const pos = computeActorPosition(a, w, h, s, actorMotionU, isVert, motionProfile, activeRenderStyle);
+          reflectedActors.push({
+            x: pos.x,
+            y: a.motion === 'leap_arc' ? h * 0.84 : pos.y,
+            scale: actorScale * (c.scale || 1),
+            primaryColor: c.primaryColor,
+            accentColor: c.accentColor,
+            isAirborne,
+          });
+          if (isAirborne) continue;
+          const leapShrink = a.motion === 'leap_arc' ? 1 - Math.sin(actorMotionU * Math.PI) * 0.45 : 1;
           const shadowY = a.motion === 'leap_arc' ? h * 0.84 : pos.y;
           drawGroundContactShadow(
             bCtx,
@@ -2390,6 +2446,8 @@ export function renderEpisodeFrame(
             0.46 * leapShrink
           );
         }
+        // Upgrade 24: Directional cast ground shadows + wet-surface/water reflections
+        drawGroundedShadowAndReflection(bCtx, w, h, beat, reflectedActors, animT, pal);
         bCtx.restore();
         if (dofSpec.enabled) {
           applyPooledBackdropDof(bCtx, w, h, dofSpec);
@@ -2450,7 +2508,9 @@ export function renderEpisodeFrame(
             pulseScale,
             animT,
             motionU,
-            propSpec.rotation + propPhys.rotationRad
+            propSpec.rotation + propPhys.rotationRad,
+            localT,
+            effectiveCadenceFps
           );
         }
 
@@ -2458,7 +2518,7 @@ export function renderEpisodeFrame(
         for (const a of effectiveActors) {
           const c = getCast(a.castId);
           const isSpeaking = beat.speakerId === a.castId;
-          const pos = computeActorPosition(a, w, h, s, motionU, isVert, motionProfile, activeRenderStyle);
+          const pos = computeActorPosition(a, w, h, s, actorMotionU, isVert, motionProfile, activeRenderStyle);
           if (
             a.motion === 'enter_left' ||
             a.motion === 'enter_right' ||
@@ -2468,7 +2528,7 @@ export function renderEpisodeFrame(
             a.pose === 'recoil' ||
             a.pose === 'soar'
           ) {
-            const prevU = clamp(motionU - 0.06, 0, 1);
+            const prevU = clamp(actorMotionU - 0.06, 0, 1);
             const prevPos = computeActorPosition(a, w, h, s, prevU, isVert, motionProfile, activeRenderStyle);
             let dx = pos.x - prevPos.x;
             let dy = pos.y - prevPos.y;
@@ -2499,8 +2559,8 @@ export function renderEpisodeFrame(
             a.facing || (a.slot === 'right' ? 'left' : 'right'),
             isSpeaking ? viseme : 0,
             isSpeaking ? speechEnergy : 0,
-            animT,
-            motionU,
+            actorAnimT,
+            actorMotionU,
             a.motion,
             activeRenderStyle,
             lighting,
@@ -2534,17 +2594,32 @@ export function renderEpisodeFrame(
             pulseScale,
             animT,
             u,
-            propSpec.rotation + propPhys.rotationRad
+            propSpec.rotation + propPhys.rotationRad,
+            localT,
+            effectiveCadenceFps
           );
         }
         fCtx.restore();
 
-        // Step 1: Close Foreground Depth Framing Plane (1.38x parallax)
+        // Step 1: Close Foreground Depth Framing Plane (1.38x parallax) + Upgrade 25 Corner Framing Silhouettes (1.28x parallax)
         if (showDepthForeground) {
           fCtx.save();
           applyParallaxCamera(fCtx, w, h, cam, 1.38);
           drawStageForegroundDepthLayer(fCtx, w, h, beat.stage, pal, animT);
           fCtx.restore();
+          if (fgFramingIntensity > 0.01) {
+            drawForegroundParallaxLayer(
+              fCtx,
+              w,
+              h,
+              beat.stage,
+              beat.mood,
+              cam.panX,
+              cam.zoom,
+              animT,
+              fgFramingIntensity
+            );
+          }
         }
       },
     }, staticCamKey);
@@ -2873,6 +2948,19 @@ export function renderEpisodeFrame(
           applyParallaxCamera(fCtx, w, h, cam, 1.38);
           drawStageForegroundDepthLayer(fCtx, w, h, beat.stage, pal, animT);
           fCtx.restore();
+          if (fgFramingIntensity > 0.01) {
+            drawForegroundParallaxLayer(
+              fCtx,
+              w,
+              h,
+              beat.stage,
+              beat.mood,
+              cam.panX,
+              cam.zoom,
+              animT,
+              fgFramingIntensity
+            );
+          }
         }
       },
     });
@@ -2964,7 +3052,9 @@ export function renderEpisodeFrame(
             s * 1.25 * zoom,
             animT,
             u,
-            spotPhys.rotationRad
+            spotPhys.rotationRad,
+            localT,
+            effectiveCadenceFps
           );
         }
         fCtx.restore();
@@ -2974,6 +3064,19 @@ export function renderEpisodeFrame(
           applyParallaxCamera(fCtx, w, h, cam, 1.38);
           drawStageForegroundDepthLayer(fCtx, w, h, beat.stage, pal, animT);
           fCtx.restore();
+          if (fgFramingIntensity > 0.01) {
+            drawForegroundParallaxLayer(
+              fCtx,
+              w,
+              h,
+              beat.stage,
+              beat.mood,
+              cam.panX,
+              cam.zoom,
+              animT,
+              fgFramingIntensity
+            );
+          }
         }
       },
     });
@@ -3268,6 +3371,7 @@ export function renderEpisodeFrame(
   drawWeather(ctx, w, h, beat.weather, beat.mood, animT);
   drawBeatFx(ctx, w, h, actionState.fxOverride || beat.fx, u, animT);
   drawSfxVisualEffects(ctx, w, h, sfxChoreo, sfxAnchorX, sfxAnchorY, s);
+  drawImpactShockOverlay(ctx, w, h, hitstop, sfxAnchorX, sfxAnchorY, pal.accent, s);
 
   // Episode Visual Look Finish (Rim Light, Color Grade, Contrast, Ink Weight, Texture, Vignette, Frame Border)
   drawVisualFinishOverlay(ctx, w, h, beat, style, aspect);

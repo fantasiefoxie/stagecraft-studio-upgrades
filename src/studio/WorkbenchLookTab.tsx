@@ -12,6 +12,7 @@ import {
   Trash2,
   Upload,
   Volume2,
+  Zap,
 } from 'lucide-react';
 import {
   ARCHETYPE_DEFAULT_COLORS,
@@ -586,6 +587,55 @@ export const WorkbenchLookTab: React.FC<WorkbenchLookTabProps> = React.memo(
                 className="w-full accent-[#f2c85b] cursor-pointer"
               />
             </label>
+
+            {/* Upgrade 25: Foreground Framing Parallax Silhouettes */}
+            <label className="block">
+              <div className="flex items-center justify-between text-[11px] text-[#9aa3bd] mb-1">
+                <span>Foreground Parallax Framing</span>
+                <span className="font-mono-tabular text-white">
+                  {Math.round((resolvedStyle.foregroundFraming ?? 0.35) * 100)}%
+                </span>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.05}
+                value={resolvedStyle.foregroundFraming ?? 0.35}
+                onChange={(e) =>
+                  onUpdateVisualStyle({ foregroundFraming: Number(e.target.value) })
+                }
+                className="w-full accent-[#38bdf8] cursor-pointer"
+              />
+            </label>
+
+            {/* Upgrade 21: Deterministic Impact Hit Stop (2-4 Frame Freeze) */}
+            <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-white/8">
+              <div>
+                <div className="text-[11px] font-semibold text-white">
+                  Impact Hit Stop &amp; Shock Ring
+                </div>
+                <div className="text-[10px] text-[#848da8]">
+                  2–4 frame freeze + micro-shake on strikes, clashes &amp; impact FX
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  onUpdateVisualStyle({
+                    hitstopEnabled: !(resolvedStyle.hitstopEnabled !== false),
+                  })
+                }
+                className={`h-7 px-2.5 rounded border text-[11px] font-semibold inline-flex items-center gap-1 cursor-pointer ${
+                  resolvedStyle.hitstopEnabled !== false
+                    ? 'bg-[#2a2315] border-[#f2c85b]/50 text-[#f2c85b]'
+                    : 'bg-[#0e1324] border-white/12 text-[#8e97b0]'
+                }`}
+              >
+                <Zap className="w-3.5 h-3.5" />
+                <span>{resolvedStyle.hitstopEnabled !== false ? 'On' : 'Off'}</span>
+              </button>
+            </div>
 
             {/* Upgrade 2: Deterministic Stereo Spatial Audio & Room Acoustics */}
             <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-white/8">

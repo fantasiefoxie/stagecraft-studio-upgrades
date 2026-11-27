@@ -30,6 +30,10 @@ import {
   buildAbcThumbnailVariants,
   renderYoutubeThumbnail,
 } from './thumbnailRenderer';
+import {
+  EpisodeVisualScorecard,
+  scoreEpisodeVisualCraft,
+} from './visualScorecard';
 
 export interface HeadlessVoiceInput {
   beatId: string;
@@ -105,6 +109,7 @@ export interface HeadlessDriver {
     height: number;
     pngBase64: string;
   }>;
+  scoreVisualCraft: () => EpisodeVisualScorecard;
   getDuration: () => number;
 }
 
@@ -366,6 +371,9 @@ export function useHeadlessDriver(args: UseHeadlessDriverArgs): void {
             pngBase64: dataUrl.slice('data:image/png;base64,'.length),
           };
         });
+      },
+      scoreVisualCraft() {
+        return scoreEpisodeVisualCraft(episodeRef.current);
       },
       getDuration() {
         return getEpisodeDuration(episodeRef.current);

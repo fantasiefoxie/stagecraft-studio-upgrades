@@ -207,6 +207,37 @@ import {
 } from '../src/studio/continuityAuditor';
 import { planBeatFoleyEvents } from '../src/studio/proceduralFoley';
 import {
+  attackHoldDecay,
+  computeHitstopState,
+  drawImpactShockOverlay,
+} from '../src/studio/impactVfx';
+import {
+  addSpriteOutlineRgba,
+  getMoodPaletteHexes,
+  processSpriteRgbaPipeline,
+  quantizeAndPixelizeRgba,
+  removeFlatBackgroundRgba,
+} from '../src/studio/spritePrepTools';
+import {
+  computeSpriteSheetFrameRect,
+  detectGridHint,
+  normalizeSpriteSheetConfig,
+} from '../src/studio/spriteSheetSlicer';
+import {
+  drawGroundedShadowAndReflection,
+  getStageReflectionProfile,
+} from '../src/studio/surfaceReflections';
+import {
+  ForegroundMotifId,
+  classifyForegroundFrame,
+  drawForegroundParallaxLayer,
+} from '../src/studio/foregroundParallax';
+import {
+  formatVisualScorecardMarkdown,
+  scoreEpisodeVisualCraft,
+} from '../src/studio/visualScorecard';
+import { buildStagecraftDirectorSkillMd } from '../src/studio/directorSkillExport';
+import {
   CAMERA_KEYFRAME_PRESETS,
   composeCameraWithKeyframes,
   evaluateCameraKeyframes,
@@ -2208,6 +2239,411 @@ test('40. Wave 3: All 20 new stages resolve deterministic spatial acoustics & vo
     const planB = computeVolumetricLightPlan({ ...baseBeat, stage, mood }, style, 1.5, 'neon_cybernoir');
     assert.deepEqual(planA, planB, `Volumetric light plan must be deterministic for ${stage}`);
     assert.equal(planA.enabled, true, `Volumetric light plan should enable for ${stage}/${mood}`);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Test 41 (Upgrade 21): Deterministic Hit Stop & Attack-Hold-Decay VFX Envelopes
+// ---------------------------------------------------------------------------
+test('41. Upgrade 21: attackHoldDecay envelope, 2-4f hitstop freeze, disabled bypass & impact shock overlay smoke render', () => {
+  // Attack-Hold-Decay shape checks
+  assert.equal(attackHoldDecay(0.4, 0.5, 0.1, 0.2, 0.3), 0);
+  const midAttack = attackHoldDecay(0.55, 0.5, 0.1, 0.2, 0.3);
+  assert.ok(midAttack > 0 && midAttack < 1, `Expected 0 < midAttack < 1, got ${midAttack}`);
+  assert.equal(attackHoldDecay(0.65, 0.5, 0.1, 0.2, 0.3), 1);
+  const midDecay = attackHoldDecay(0.95, 0.5, 0.1, 0.2, 0.3);
+  assert.ok(midDecay > 0 && midDecay < 1, `Expected 0 < midDecay < 1, got ${midDecay}`);
+  assert.equal(attackHoldDecay(1.2, 0.5, 0.1, 0.2, 0.3), 0);
+
+  // Beat with attack + sword_clash + cameraPunch action cue
+  const beat = clone(PRESET_EPISODES[0].beats[0]);
+  beat.duration = 4.0;
+  beat.sfx = 'sword_clash';
+  beat.fx = 'crimson_impact';
+  beat.actionCues = [
+    {
+      frame: 60,
+      castId: beat.actors[0]?.castId,
+      pose: 'attack',
+      cameraPunch: 0.75,
+      sfx: 'sword_clash',
+      fx: 'shock_burst',
+    },
+  ];
+
+  // Exactly at impact anchor frame 60 and frame 61 -> frozen onto frame 60
+  const hsAt60 = computeHitstopState(beat, 60, STUDIO_FPS, true);
+  const hsAt61 = computeHitstopState(beat, 61, STUDIO_FPS, true);
+  assert.equal(hsAt60.isFrozen, true, 'Expected hitstop freeze at impact frame 60');
+  assert.equal(hsAt61.isFrozen, true, 'Expected hitstop freeze to hold at frame 61');
+  assert.equal(hsAt60.frozenLocalFrame, 60);
+  assert.equal(hsAt61.frozenLocalFrame, 60);
+  assert.ok(hsAt60.hitstopFrames >= 2 && hsAt60.hitstopFrames <= 4, `Expected 2..4 hitstop frames, got ${hsAt60.hitstopFrames}`);
+  assert.ok(hsAt60.impactEnvelope > 0.5);
+
+  // Deterministic repeatability
+  const hsAt61Repeat = computeHitstopState(beat, 61, STUDIO_FPS, true);
+  assert.deepEqual(hsAt61, hsAt61Repeat);
+
+  // Disabled via hitstopEnabled=false -> zero freeze
+  const hsDisabled = computeHitstopState(beat, 60, STUDIO_FPS, false);
+  assert.equal(hsDisabled.isFrozen, false);
+  assert.equal(hsDisabled.frozenLocalFrame, 60);
+  assert.equal(hsDisabled.impactEnvelope, 0);
+
+  // Draw smoke test
+  const { ctx, getOps } = createMockCanvas2D();
+  const beforeOps = getOps();
+  drawImpactShockOverlay(ctx, 1280, 720, hsAt60, 640, 360, '#ffd452', 1.0);
+  assert.ok(getOps() > beforeOps, 'Expected drawImpactShockOverlay to execute draw ops');
+});
+
+// ---------------------------------------------------------------------------
+// Test 42 (Upgrade 22): Pure RGBA Sprite & Prop Prep Tools
+// ---------------------------------------------------------------------------
+test('42. Upgrade 22: removeFlatBackgroundRgba preserves interior matching color, addSpriteOutlineRgba & quantizeAndPixelizeRgba work deterministically', () => {
+  const w = 16;
+  const h = 16;
+  const rgba = new Uint8ClampedArray(w * h * 4);
+  // Fill entire 16x16 with white background (250, 250, 250, 255)
+  for (let i = 0; i < w * h; i++) {
+    rgba[i * 4] = 250;
+    rgba[i * 4 + 1] = 250;
+    rgba[i * 4 + 2] = 250;
+    rgba[i * 4 + 3] = 255;
+  }
+  // Draw a closed red ring (x: 4..11, y: 4..11) enclosing a white interior hole (x: 6..9, y: 6..9)
+  for (let y = 4; y <= 11; y++) {
+    for (let x = 4; x <= 11; x++) {
+      const isInterior = x >= 6 && x <= 9 && y >= 6 && y <= 9;
+      if (!isInterior) {
+        const off = (y * w + x) * 4;
+        rgba[off] = 220;
+        rgba[off + 1] = 40;
+        rgba[off + 2] = 40;
+        rgba[off + 3] = 255;
+      }
+    }
+  }
+
+  const cut = removeFlatBackgroundRgba(rgba, w, h, { tolerance: 24, feather: false });
+  // Corner (0,0) must be transparent
+  assert.equal(cut[3], 0, 'Expected corner background pixel to be stripped to alpha 0');
+  // Ring pixel (4,4) must stay opaque
+  assert.equal(cut[(4 * w + 4) * 4 + 3], 255, 'Expected solid ring pixel to remain opaque');
+  // Enclosed interior white pixel (7,7) must stay opaque (flood-fill only removes exterior!)
+  assert.equal(cut[(7 * w + 7) * 4 + 3], 255, 'Expected enclosed interior matching-color pixel to stay preserved');
+
+  // Outline pass must color adjacent transparent pixel (3,5) with #112233
+  const outlined = addSpriteOutlineRgba(cut, w, h, {
+    colorHex: '#112233',
+    thicknessPx: 1,
+    pixelSnap: true,
+  });
+  const borderOff = (5 * w + 3) * 4;
+  assert.equal(outlined[borderOff + 3], 255, 'Expected adjacent outline pixel to become opaque');
+  assert.equal(outlined[borderOff], 0x11);
+  assert.equal(outlined[borderOff + 1], 0x22);
+  assert.equal(outlined[borderOff + 2], 0x33);
+
+  // Mood palette quantization snaps every opaque pixel to getMoodPaletteHexes('cyber_magenta')
+  const palette = getMoodPaletteHexes('cyber_magenta');
+  assert.ok(palette.length >= 6);
+  const quantized = quantizeAndPixelizeRgba(outlined, w, h, { pixelSize: 2, paletteHex: palette });
+  const allowedRgb = new Set(
+    palette.map((hex) => {
+      const hClean = hex.replace('#', '');
+      return `${parseInt(hClean.slice(0, 2), 16)},${parseInt(hClean.slice(2, 4), 16)},${parseInt(hClean.slice(4, 6), 16)}`;
+    })
+  );
+  let checkedOpaque = 0;
+  for (let i = 0; i < w * h; i++) {
+    if (quantized[i * 4 + 3] > 0) {
+      checkedOpaque++;
+      const key = `${quantized[i * 4]},${quantized[i * 4 + 1]},${quantized[i * 4 + 2]}`;
+      assert.ok(allowedRgb.has(key), `Quantized pixel RGB ${key} not in cyber_magenta palette`);
+    }
+  }
+  assert.ok(checkedOpaque > 10);
+
+  // Full pipeline determinism check
+  const pipeA = processSpriteRgbaPipeline(rgba, w, h, {
+    removeBackground: true,
+    bgTolerance: 24,
+    outlineEnabled: true,
+    outlineThicknessPx: 2,
+    pixelSize: 2,
+    paletteHex: palette,
+  });
+  const pipeB = processSpriteRgbaPipeline(rgba, w, h, {
+    removeBackground: true,
+    bgTolerance: 24,
+    outlineEnabled: true,
+    outlineThicknessPx: 2,
+    pixelSize: 2,
+    paletteHex: palette,
+  });
+  assert.deepEqual(pipeA, pipeB);
+});
+
+// ---------------------------------------------------------------------------
+// Test 43 (Upgrade 23): Frame-Locked Sprite Sheet Slicer & Schema Validation
+// ---------------------------------------------------------------------------
+test('43. Upgrade 23: detectGridHint, computeSpriteSheetFrameRect cadence/looping & validateEpisodeScript customPropSheet clamping', () => {
+  const h4x1 = detectGridHint(512, 128);
+  assert.equal(h4x1.cols, 4);
+  assert.equal(h4x1.rows, 1);
+
+  const h4x2 = detectGridHint(512, 256);
+  assert.equal(h4x2.cols, 4);
+  assert.equal(h4x2.rows, 2);
+
+  const hSq = detectGridHint(512, 512);
+  assert.equal(hSq.cols, 4);
+  assert.equal(hSq.rows, 4);
+
+  const sheet = normalizeSpriteSheetConfig({ cols: 4, rows: 2, frameCount: 6, fps: 12, loop: true });
+  const r0 = computeSpriteSheetFrameRect(sheet, 512, 256, 0.0, 12);
+  assert.equal(r0.frameIndex, 0);
+  assert.equal(r0.sx, 0);
+  assert.equal(r0.sy, 0);
+  assert.equal(r0.sw, 128);
+  assert.equal(r0.sh, 128);
+
+  // At t=0.5s * 12fps = frame 6 -> loops to frame 0 (frameCount=6)
+  const rLoop = computeSpriteSheetFrameRect(sheet, 512, 256, 0.5, 12);
+  assert.equal(rLoop.frameIndex, 0);
+
+  // Non-looping sheet clamps at last frame (5 => col 1, row 1)
+  const nonLoopSheet = normalizeSpriteSheetConfig({ cols: 4, rows: 2, frameCount: 6, fps: 12, loop: false });
+  const rClamped = computeSpriteSheetFrameRect(nonLoopSheet, 512, 256, 2.0, 12);
+  assert.equal(rClamped.frameIndex, 5);
+  assert.equal(rClamped.col, 1);
+  assert.equal(rClamped.row, 1);
+  assert.equal(rClamped.sx, 128);
+  assert.equal(rClamped.sy, 128);
+
+  // Validator clamps out-of-range customPropSheet fields cleanly
+  const ep = clone(PRESET_EPISODES[0]);
+  ep.beats[0].customPropSheet = {
+    cols: 99,
+    rows: 0,
+    frameCount: 999,
+    fps: 120,
+    loop: false,
+  };
+  const val = validateEpisodeScript(ep);
+  assert.equal(val.ok, true);
+  if (val.ok) {
+    assert.equal(val.script.beats[0].customPropSheet?.cols, 16);
+    assert.equal(val.script.beats[0].customPropSheet?.rows, 1);
+    assert.equal(val.script.beats[0].customPropSheet?.frameCount, 16);
+    assert.equal(val.script.beats[0].customPropSheet?.fps, 30);
+    assert.equal(val.script.beats[0].customPropSheet?.loop, false);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Test 44 (Upgrade 24): Directional Ground Shadows & Wet-Surface / Water Reflections
+// ---------------------------------------------------------------------------
+test('44. Upgrade 24: getStageReflectionProfile covers all 50 stages + rain override & drawGroundedShadowAndReflection renders cleanly', () => {
+  assert.equal(getStageReflectionProfile('river_ghat', 'none').kind, 'water');
+  assert.equal(getStageReflectionProfile('underwater_atlantis', 'none').kind, 'water');
+  assert.equal(getStageReflectionProfile('neon_cyber_alley', 'none').kind, 'wet_street');
+  assert.equal(getStageReflectionProfile('royal_durbar', 'none').kind, 'polished_marble');
+  assert.equal(getStageReflectionProfile('banyan_clearing', 'none').kind, 'none');
+  // Outdoor non-reflective stage turns wet_street during rain/lightning_storm
+  assert.equal(getStageReflectionProfile('banyan_clearing', 'rain').kind, 'wet_street');
+  assert.equal(getStageReflectionProfile('banyan_clearing', 'lightning_storm').kind, 'wet_street');
+
+  const validKinds = new Set(['water', 'wet_street', 'polished_marble', 'none']);
+  for (const st of STAGE_CATALOG) {
+    const prof = getStageReflectionProfile(st.id, 'none');
+    assert.ok(validKinds.has(prof.kind), `Unexpected reflection kind ${prof.kind} for ${st.id}`);
+  }
+
+  const { ctx, getOps } = createMockCanvas2D();
+  const baseOps = getOps();
+  const beat = clone(PRESET_EPISODES[0].beats[0]);
+  beat.stage = 'neon_cyber_alley';
+  beat.weather = 'rain';
+  beat.lightSide = 'right';
+  drawGroundedShadowAndReflection(
+    ctx,
+    1280,
+    720,
+    beat,
+    [
+      { x: 420, y: 580, scale: 1.0, primaryColor: '#e11d48', accentColor: '#38bdf8' },
+      { x: 860, y: 580, scale: 1.0, primaryColor: '#f59e0b', accentColor: '#fef08a' },
+    ],
+    1.5,
+    MOOD_PALETTES.cyber_magenta
+  );
+  assert.ok(getOps() - baseOps >= 8, 'Expected directional cast shadows + wet reflection draw ops');
+});
+
+// ---------------------------------------------------------------------------
+// Test 45 (Upgrade 25): Foreground Framing Parallax Silhouettes
+// ---------------------------------------------------------------------------
+test('45. Upgrade 25: classifyForegroundFrame covers all 50 stages, all 10 motifs render cleanly & foregroundFraming clamps in validator', () => {
+  const seenMotifs = new Set<ForegroundMotifId>();
+  for (const st of STAGE_CATALOG) {
+    const motif = classifyForegroundFrame(st.id);
+    seenMotifs.add(motif);
+  }
+  assert.ok(seenMotifs.size >= 10, `Expected >=10 distinct foreground motifs across 50 stages, got ${seenMotifs.size}`);
+
+  const { ctx, getOps } = createMockCanvas2D();
+  const baseOps = getOps();
+  const sampleStages = [
+    'banyan_clearing',
+    'kali_temple',
+    'bamboo_forest',
+    'neon_cyber_alley',
+    'noir_rainy_street',
+    'gothic_cathedral',
+    'pirate_galleon_deck',
+    'snowy_mountain_pass',
+    'cherry_blossom_shrine',
+    'orbital_starship_bridge',
+  ] as const;
+
+  for (const stage of sampleStages) {
+    drawForegroundParallaxLayer(ctx, 1280, 720, stage, 'midnight_banyan', 18, 1.08, 1.2, 0.55);
+  }
+  assert.ok(getOps() - baseOps >= 20, 'Expected foreground parallax motifs to execute draw ops');
+
+  // Clamping in resolveVisualStyle & validateEpisodeScript
+  assert.equal(resolveVisualStyle({ foregroundFraming: 3.5 }).foregroundFraming, 1);
+  assert.equal(resolveVisualStyle({ foregroundFraming: -2 }).foregroundFraming, 0);
+  assert.equal(resolveVisualStyle({ hitstopEnabled: false }).hitstopEnabled, false);
+
+  const ep = clone(PRESET_EPISODES[0]);
+  ep.visualStyle = { ...(ep.visualStyle || {}), foregroundFraming: 1.9, hitstopEnabled: false };
+  const val = validateEpisodeScript(ep);
+  assert.equal(val.ok, true);
+  if (val.ok) {
+    assert.equal(val.script.visualStyle?.foregroundFraming, 1);
+    assert.equal(val.script.visualStyle?.hitstopEnabled, false);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Test 46 (Upgrade 26): Calibrated 0-3 Visual Craft Scorecard & Audit CLI
+// ---------------------------------------------------------------------------
+test('46. Upgrade 26: scoreEpisodeVisualCraft calibrates 0-3 rubric across 6 dimensions & determinism-audit.mjs supports --manifest & --max-frame-ms', () => {
+  // Minimal weak episode should score lower and emit actionable suggestions
+  const weakEp: EpisodeScript = {
+    id: 'weak_probe',
+    series: 'Test',
+    title: 'Weak Probe',
+    subtitle: '',
+    defaultRaag: 'bhairavi',
+    visualStyle: {
+      renderStyle: 'chiaroscuro',
+      lookPreset: 'classic_chiaroscuro',
+      colorGrade: 'default',
+      texture: 'clean',
+      shadowContrast: 1.0,
+      inkWeight: 1.0,
+      rimLight: 'auto',
+      captionStyle: 'classic_cinema',
+      frameBorder: 'clean_letterbox',
+      vignette: 0.0,
+      depthOfField: 0,
+      lightShafts: 0,
+      foregroundFraming: 0,
+      hitstopEnabled: false,
+      karaokeCaptions: false,
+    },
+    cast: [
+      { id: 'a', name: 'One', archetype: 'king', primaryColor: '#444444', accentColor: '#888888', skinColor: '#d9a06c' },
+    ],
+    beats: [
+      {
+        id: 'w1',
+        title: 'Flat',
+        duration: 4,
+        stage: 'banyan_clearing',
+        mood: 'midnight_banyan',
+        weather: 'none',
+        shot: 'wide_stage',
+        transition: 'hard_cut',
+        lightSide: 'right',
+        prop: 'none',
+        propSlot: 'center',
+        cameraMove: 'still',
+        fx: 'none',
+        sfx: 'none',
+        raag: 'bhairavi',
+        musicEnergy: 0.4,
+        actors: [{ castId: 'a', slot: 'center', pose: 'stand', expression: 'calm', facing: 'right', motion: 'still' }],
+        speakerId: 'a',
+        speakerLabel: 'One',
+        dialogue: 'This is a single static sentence that goes on and on with over twenty eight words so caption readability flags it cleanly for splitting into shorter subtitles.',
+      },
+    ],
+  };
+
+  const weakScore = scoreEpisodeVisualCraft(weakEp);
+  assert.equal(weakScore.categories.length, 6);
+  assert.equal(weakScore.maxScore, 18);
+  assert.ok(weakScore.categories.some((c) => c.score < 2 && Boolean(c.suggestion)));
+
+  // Rich flagship preset should score higher than weak probe
+  const richEp = clone(PRESET_EPISODES[0]);
+  richEp.visualStyle = resolveVisualStyle({
+    ...(richEp.visualStyle || {}),
+    colorGrade: 'warm_gold',
+    texture: 'parchment_grain',
+    depthOfField: 0.45,
+    lightShafts: 0.55,
+    foregroundFraming: 0.45,
+    hitstopEnabled: true,
+    karaokeCaptions: true,
+  });
+  const richScore = scoreEpisodeVisualCraft(richEp);
+  assert.ok(
+    richScore.totalScore > weakScore.totalScore,
+    `Expected rich episode (${richScore.totalScore}) > weak episode (${weakScore.totalScore})`
+  );
+
+  const md = formatVisualScorecardMarkdown(richScore);
+  assert.ok(md.includes('Visual Craft Scorecard'));
+  assert.ok(md.includes(`${richScore.totalScore}/18`));
+
+  // Verify determinism-audit.mjs supports Wave 4 flags & error capture without shell exec()
+  const auditSrc = fs.readFileSync(path.join(process.cwd(), 'scripts/determinism-audit.mjs'), 'utf8');
+  assert.ok(auditSrc.includes('--manifest'), 'determinism-audit.mjs must support --manifest');
+  assert.ok(auditSrc.includes('--max-frame-ms'), 'determinism-audit.mjs must support --max-frame-ms');
+  assert.ok(auditSrc.includes('pageerror'), 'determinism-audit.mjs must capture pageerror');
+  assert.ok(auditSrc.includes('scoreVisualCraft'), 'determinism-audit.mjs must include Visual Craft Scorecard');
+  assert.equal(/\bMath\.random\s*\(/.test(auditSrc), false);
+});
+
+// ---------------------------------------------------------------------------
+// Test 47 (Upgrade 27): Exportable Live Stagecraft Director SKILL.md Generator
+// ---------------------------------------------------------------------------
+test('47. Upgrade 27: buildStagecraftDirectorSkillMd dynamically reflects all live catalogs & Wave 4 schema levers', () => {
+  const md = buildStagecraftDirectorSkillMd();
+  assert.ok(md.startsWith('---\nname: stagecraft-director\n'), 'Expected valid YAML frontmatter');
+  assert.ok(md.includes(`Art Engines (${RENDER_STYLE_CATALOG.length})`));
+  assert.ok(md.includes(`Cast Archetypes (${ARCHETYPE_CATALOG.length})`));
+  assert.ok(md.includes(`Stage Backdrops (${STAGE_CATALOG.length})`));
+  assert.ok(md.includes(`(${SPRITE_WORKSHOP_PRESETS.length})`));
+  for (const token of [
+    'neon_cyber_alley',
+    'detective',
+    'holo_tablet',
+    'hitstopEnabled',
+    'foregroundFraming',
+    'customPropSheet',
+    'cameraKeyframes',
+    'locationCard',
+    'audioLeadSec',
+  ]) {
+    assert.ok(md.includes(token), `Expected Director SKILL.md to include "${token}"`);
   }
 });
 
