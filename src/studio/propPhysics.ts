@@ -32,6 +32,27 @@ const MYSTIC_FLOAT_PROPS = new Set<string>([
   'celestial_crown',
   'glowing_gem',
   'star_map',
+  // Wave 5 mystic / glowing / floating props
+  'crystal_ball',
+  'runestone_tablet',
+  'phoenix_feather',
+  'dragon_egg',
+  'enchanted_chalice',
+  'grimoire_chained',
+  'hourglass_sands',
+  'astral_orrery',
+  'magic_carpet',
+  'genie_lamp',
+  'ai_core_cube',
+  'dna_helix_vial',
+  'teleport_pad',
+  'hologram_globe',
+  'atom_model',
+  'origami_crane',
+  'lantern_storm',
+  'candle_candelabra',
+  'poison_vial_green',
+  'kite_diamond',
 ]);
 
 const WEAPON_SWING_PROPS = new Set<string>([
@@ -58,6 +79,24 @@ const WEAPON_SWING_PROPS = new Set<string>([
   'hammer',
   'shield',
   'dagger',
+  // Wave 5 weapons & kinetic swing props
+  'katana_blade',
+  'viking_battleaxe',
+  'knight_shield',
+  'crossbow_bolts',
+  'spear_halberd',
+  'flintlock_pistol',
+  'laser_rifle',
+  'plasma_cannon',
+  'shuriken_star',
+  'war_hammer',
+  'roman_gladius',
+  'grappling_hook',
+  'revolver_noir',
+  'cricket_bat_ball',
+  'boxing_gloves',
+  'hammer_wrench',
+  'war_horn_brass',
 ]);
 
 function clamp(v: number, lo: number, hi: number): number {

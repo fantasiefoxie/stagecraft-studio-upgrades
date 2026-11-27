@@ -1,15 +1,16 @@
 /**
- * Stagecraft Studio — Live Exportable Director `SKILL.md` Generator (Upgrade 27)
+ * Stagecraft Studio — Live Exportable Director `SKILL.md` Generator (Wave 5 Universal Atlas)
  *
- * Dynamically reflects EVERY live catalog (60 archetypes, 50 stages, 65 props,
- * 16 moods, 12 weathers, 12 crowds, 14 FX, 20 art engines, 12 acting macros,
- * 32 CharacterDNA sprite presets, plus J-cuts, camera splines, location banners,
- * hit stop, foreground parallax framing, and frame-locked sprite sheets) into a
- * ready-to-paste `SKILL.md` for Claude Code, Codex, or Gemini CLI agents.
+ * Dynamically reflects EVERY live catalog (160 archetypes, 150 stages, 185 props,
+ * 40 moods, 30 weathers, 30 crowds, 36 FX, 20 art engines, 12 acting macros,
+ * 192 CharacterDNA sprite presets, 84 backdrop themes, 84 prop presets, 25 act arcs)
+ * into a ready-to-paste `SKILL.md` for Claude Code, Codex, or Gemini CLI agents.
  */
 
 import { ACTING_MACRO_CATALOG } from './actingMacros';
-import { SPRITE_WORKSHOP_PRESETS } from './spriteWorkshopPresets';
+import { ACT_ARC_PRESETS, BACKDROP_THEMES, CUSTOM_PROP_PRESETS } from './backdropGenerator';
+import { HEADWEAR_CATALOG, SURFACE_PATTERN_CATALOG, TOP_STYLE_CATALOG } from './characterDna';
+import { SPRITE_PRESET_CATEGORIES, SPRITE_WORKSHOP_PRESETS } from './spriteWorkshopPresets';
 import {
   ARCHETYPE_CATALOG,
   CAPTION_STYLE_CATALOG,
@@ -57,7 +58,7 @@ export function buildStagecraftDirectorSkillMd(): string {
     `- **Art Engines (${RENDER_STYLE_CATALOG.length})**: ${joinIds(RENDER_STYLE_CATALOG)}`,
     `- **Cast Archetypes (${ARCHETYPE_CATALOG.length})**: ${joinIds(ARCHETYPE_CATALOG)}`,
     `- **Stage Backdrops (${STAGE_CATALOG.length})**: ${joinIds(STAGE_CATALOG)}`,
-    `- **Story Props (${nonEmptyProps.length} + \`none\`)**: ${joinIds(nonEmptyProps)}`,
+    `- **Story Props (${PROP_CATALOG.length}: ${nonEmptyProps.length} + \`none\`)**: ${joinIds(nonEmptyProps)}`,
     `- **Lighting Moods (${MOOD_CATALOG.length})**: ${joinIds(MOOD_CATALOG)}`,
     `- **Weather Systems (${WEATHER_LIST.length})**: ${joinStrings(WEATHER_LIST)}`,
     `- **Crowd Layers (${CROWD_CATALOG.length})**: ${joinIds(CROWD_CATALOG)}`,
@@ -70,15 +71,17 @@ export function buildStagecraftDirectorSkillMd(): string {
     `- **Post-FX Passes (${POST_FX_PASS_CATALOG.length})**: ${joinIds(POST_FX_PASS_CATALOG)}`,
     `- **Caption Styles (${CAPTION_STYLE_CATALOG.length})**: ${joinIds(CAPTION_STYLE_CATALOG)}`,
     `- **Character Acting Macros (${ACTING_MACRO_CATALOG.length})**: ${joinIds(ACTING_MACRO_CATALOG)}`,
-    `- **Curated CharacterDNA Sprite Presets (${SPRITE_WORKSHOP_PRESETS.length})**: ${joinIds(SPRITE_WORKSHOP_PRESETS)}`,
+    `- **Curated CharacterDNA Sprite Presets (${SPRITE_WORKSHOP_PRESETS.length})** across ${SPRITE_PRESET_CATEGORIES.length} categories: ${joinIds(SPRITE_WORKSHOP_PRESETS)}`,
+    `- **CharacterDNA Parts**: Headwear (${HEADWEAR_CATALOG.length}): ${joinIds(HEADWEAR_CATALOG)} | Tops (${TOP_STYLE_CATALOG.length}): ${joinIds(TOP_STYLE_CATALOG)} | Surface Patterns (${SURFACE_PATTERN_CATALOG.length}): ${joinIds(SURFACE_PATTERN_CATALOG)}`,
+    `- **Procedural Studio Generators**: ${BACKDROP_THEMES.length} Backdrop Themes, ${CUSTOM_PROP_PRESETS.length} Custom Prop Presets, ${ACT_ARC_PRESETS.length} 4-Act Visual Arc Presets`,
     '',
     '## 2. Recommended Episode Authoring Contract',
     '1. **Keep dialogue punchy & readable**: Aim for 8–22 words per beat (<= 145 chars, <= 3.8 words/sec) so kinetic karaoke captions stay clean in both `16:9` and `9:16`.',
     '2. **Vary framing every 1–2 beats**: Alternate `wide_stage`, `two_shot`, `closeup_left`, `closeup_right`, `split_faceoff`, `prop_spotlight`, and `motion_card` to keep Visual Craft Scorecard scores >= 2/3.',
-    '3. **Prevent twin silhouettes**: Give each cast member a distinct `archetype`, `primaryColor`, and optional `dna` (headwear: `fedora`, `cyber_visor`, `astronaut_helmet`, `tricorn_hat`, `wizard_hat`; tops: `trench_coat`, `lab_coat`, `cyber_jacket`, `space_suit`; patterns: `circuit_trace`, `pinstripe`, `camo_hex`, `starfield_speckle`).',
+    '3. **Prevent twin silhouettes**: Give each cast member a distinct `archetype`, `primaryColor`, and optional `dna` (headwear: `fedora`, `cyber_visor`, `astronaut_helmet`, `samurai_kabuto`, `chef_toque`, `viking_horns`, `cowboy_hat`, `elf_circlet`; tops: `trench_coat`, `lab_coat`, `business_suit`, `space_exo`, `kimono_robe`, `medieval_plate`, `sports_jersey`; patterns: `circuit_traces`, `starfield_constellation`, `camo_tactical`, `dragon_scales`, `plaid_tartan`, `wave_seigaiha`, `honeycomb_hex`, `floral_botanical`).',
     '4. **Use cinematic polish levers**:',
     '   - `visualStyle.hitstopEnabled: true` — 2–4 frame deterministic impact freeze + shockwave ring on `attack` poses, `cameraPunch >= 0.5`, `sword_clash` / `thunder_crack`, or `crimson_impact` / `shock_burst` / `shatter_glass` / `comic_pow`.',
-    '   - `visualStyle.foregroundFraming: 0.35` (`0..1`) — near-camera 1.28× parallax corner framing silhouettes across all 50 stages.',
+    `   - \`visualStyle.foregroundFraming: 0.35\` (\`0..1\`) — near-camera 1.28× parallax corner framing silhouettes across all ${STAGE_CATALOG.length} stages.`,
     '   - `visualStyle.depthOfField: 0.35`, `visualStyle.lightShafts: 0.4`, `visualStyle.spatialAudio: true`.',
     '   - Per-beat `audioLeadSec` (`-0.6..+0.6`): positive = J-cut pre-roll, negative = L-cut overlap.',
     '   - Per-beat `cameraKeyframes`: `[{ "atFrac": 0, "zoom": 1, "panX": 0, "panY": 0, "ease": "ease_in_out" }, { "atFrac": 1, "zoom": 1.18, "panX": 0.05, "panY": -0.02, "ease": "overshoot" }]`.',

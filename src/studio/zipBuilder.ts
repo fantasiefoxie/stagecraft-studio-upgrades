@@ -49,6 +49,10 @@ import studioAssetsExpandedTs from './renderAssetsExpanded.ts?raw';
 import studioAssetsEncyclopediaTs from './renderAssetsEncyclopedia.ts?raw';
 import studioAssetsWorldTs from './renderAssetsWorld.ts?raw';
 import studioAssetsUniversalTs from './renderAssetsUniversal.ts?raw';
+import studioAssetsAtmosphereAtlasTs from './renderAssetsAtmosphereAtlas.ts?raw';
+import studioAssetsArchetypesAtlasTs from './renderAssetsArchetypesAtlas.ts?raw';
+import studioAssetsStagesAtlasTs from './renderAssetsStagesAtlas.ts?raw';
+import studioAssetsPropsAtlasTs from './renderAssetsPropsAtlas.ts?raw';
 import studioAnimationEngineTs from './animationEngine.ts?raw';
 import studioAnimationPrinciplesTs from './animationPrinciples.ts?raw';
 import studioStyleEnginesTs from './styleEngines.ts?raw';
@@ -75,6 +79,7 @@ import studioKathaArchiveTs from './kathaArchive.ts?raw';
 import studioSeasonBoardTs from './seasonBoard.ts?raw';
 import studioCharacterDnaTs from './characterDna.ts?raw';
 import studioSpriteWorkshopPresetsTs from './spriteWorkshopPresets.ts?raw';
+import studioSpriteWorkshopPresetsAtlasTs from './spriteWorkshopPresetsAtlas.ts?raw';
 import studioModularEntityRendererTs from './modularEntityRenderer.ts?raw';
 import studioEntityWorkshopModalTsx from './EntityWorkshopModal.tsx?raw';
 import studioLongFormEngineTs from './longFormEngine.ts?raw';
@@ -462,6 +467,22 @@ export function collectAllMachinimaEntries(): ZipEntryInput[] {
       content: studioAssetsUniversalTs,
     },
     {
+      path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/renderAssetsAtmosphereAtlas.ts`,
+      content: studioAssetsAtmosphereAtlasTs,
+    },
+    {
+      path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/renderAssetsArchetypesAtlas.ts`,
+      content: studioAssetsArchetypesAtlasTs,
+    },
+    {
+      path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/renderAssetsStagesAtlas.ts`,
+      content: studioAssetsStagesAtlasTs,
+    },
+    {
+      path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/renderAssetsPropsAtlas.ts`,
+      content: studioAssetsPropsAtlasTs,
+    },
+    {
       path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/animationEngine.ts`,
       content: studioAnimationEngineTs,
     },
@@ -564,6 +585,10 @@ export function collectAllMachinimaEntries(): ZipEntryInput[] {
     {
       path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/spriteWorkshopPresets.ts`,
       content: studioSpriteWorkshopPresetsTs,
+    },
+    {
+      path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/spriteWorkshopPresetsAtlas.ts`,
+      content: studioSpriteWorkshopPresetsAtlasTs,
     },
     {
       path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/modularEntityRenderer.ts`,

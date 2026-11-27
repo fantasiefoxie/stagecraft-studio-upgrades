@@ -42,6 +42,10 @@ import {
   drawUniversalStageBackdrop,
   drawUniversalStoryProp,
 } from './renderAssetsUniversal';
+import { ATLAS_MOOD_PALETTES } from './renderAssetsAtmosphereAtlas';
+import { drawAtlasActorCloseUp, drawAtlasActorFullBody } from './renderAssetsArchetypesAtlas';
+import { ATLAS_INDOOR_STAGES, drawAtlasStageBackdrop } from './renderAssetsStagesAtlas';
+import { drawAtlasStoryProp } from './renderAssetsPropsAtlas';
 import { drawModularEntityCloseUp, drawModularEntityFullBody } from './modularEntityRenderer';
 import {
   drawUnifiedEyePair,
@@ -255,6 +259,7 @@ export const MOOD_PALETTES: Record<MoodId, MoodPalette> = {
     accent: '#d97706',
     shadowTint: '#302217',
   },
+  ...ATLAS_MOOD_PALETTES,
 };
 
 export function snap24(t: number): number {
@@ -317,7 +322,8 @@ export function drawStageBackdrop(
     stage === 'nordic_fjord_hall' ||
     stage === 'gothic_cathedral' ||
     stage === 'steampunk_clocktower' ||
-    stage === 'vintage_train_car';
+    stage === 'vintage_train_car' ||
+    ATLAS_INDOOR_STAGES.has(stage);
 
   // Crisp twinkling starfield on nocturnal outdoor moods
   if (
@@ -380,6 +386,9 @@ export function drawStageBackdrop(
     return;
   }
   if (drawUniversalStageBackdrop(ctx, w, h, stage, pal, t)) {
+    return;
+  }
+  if (drawAtlasStageBackdrop(ctx, w, h, stage, pal, t)) {
     return;
   }
 
@@ -1122,6 +1131,10 @@ export function drawActorCloseUp(
     drawCastIdentityOverlays(ctx, cast, lightSide);
     return;
   }
+  if (drawAtlasActorCloseUp(ctx, cast, expression, viseme, speechEnergy, lightSide, t)) {
+    drawCastIdentityOverlays(ctx, cast, lightSide);
+    return;
+  }
 
   const ts = snap24(t);
   const lightRight = lightSide === 'right';
@@ -1452,6 +1465,10 @@ export function drawActorFullBody(
     return;
   }
   if (drawUniversalActorFullBody(ctx, cast, pose, expression, viseme, speechEnergy, stride, ts)) {
+    ctx.restore();
+    return;
+  }
+  if (drawAtlasActorFullBody(ctx, cast, pose, expression, viseme, speechEnergy, stride, ts)) {
     ctx.restore();
     return;
   }
@@ -2058,7 +2075,9 @@ export function drawStoryProp(
   } else if (!drawExpandedStoryProp(ctx, prop, t)) {
     if (!drawEncyclopedicStoryProp(ctx, prop, t)) {
       if (!drawWorldStoryProp(ctx, prop, t)) {
-        drawUniversalStoryProp(ctx, prop, t);
+        if (!drawUniversalStoryProp(ctx, prop, t)) {
+          drawAtlasStoryProp(ctx, prop, t);
+        }
       }
     }
   }

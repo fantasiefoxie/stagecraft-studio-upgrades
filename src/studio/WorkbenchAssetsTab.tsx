@@ -40,74 +40,22 @@ import { AssetThumb } from './AssetThumb';
 
 export type AssetCatalogTab = 'cast' | 'stages' | 'props';
 
-const ALL_ARCHETYPE_GROUPS: readonly ArchetypeGroup[] = [
-  'Epic & Divine',
-  'Royalty & Folk',
-  'Fable Fauna',
-  'World Legends',
-  'Modern & Sci-Fi',
-  'Fantasy & Creatures',
-];
+const ALL_ARCHETYPE_GROUPS: readonly ArchetypeGroup[] = Array.from(
+  new Set(ARCHETYPE_CATALOG.map((a) => a.group))
+);
 
-const MODERN_SCIFI_STAGES = new Set<StageId>([
-  'neon_cyber_alley',
-  'orbital_starship_bridge',
-  'mars_colony_dome',
-  'noir_rainy_street',
-  'modern_news_studio',
-  'cozy_bookshop_cafe',
-  'high_tech_lab',
-  'courtroom_hall',
-  'vintage_train_car',
-]);
+const ALL_STAGE_CATEGORIES: readonly string[] = Array.from(
+  new Set(STAGE_CATALOG.map((s) => s.category || 'World & Folklore'))
+);
 
-const FANTASY_HISTORIC_STAGES = new Set<StageId>([
-  'ancient_egypt_temple',
-  'roman_colosseum',
-  'nordic_fjord_hall',
-  'gothic_cathedral',
-  'steampunk_clocktower',
-  'pirate_galleon_deck',
-  'underwater_atlantis',
-  'volcanic_citadel',
-  'snowy_mountain_pass',
-  'cherry_blossom_shrine',
-  'astral_observatory',
-]);
+const ALL_PROP_CATEGORIES: readonly string[] = Array.from(
+  new Set(
+    PROP_CATALOG.filter((p) => p.id !== 'none').map((p) => p.category || 'Folklore & World')
+  )
+);
 
-const MODERN_SCIFI_PROPS = new Set<PropId>([
-  'magnifying_glass',
-  'holo_tablet',
-  'energy_blade',
-  'neon_drone',
-  'vintage_camera',
-  'microphone_stand',
-  'briefcase',
-  'newspaper_frontpage',
-  'coffee_mug',
-  'laptop_screen',
-  'electric_guitar',
-  'golden_trophy',
-  'judge_gavel',
-  'microscope',
-  'rocket_model',
-]);
-
-const FANTASY_MAGIC_PROPS = new Set<PropId>([
-  'potion_flask',
-  'spellbook_tome',
-  'wizard_staff',
-  'crystal_amulet',
-  'brass_compass',
-  'antique_pocketwatch',
-  'violin_bow',
-  'pirate_map',
-  'key_ornate',
-  'treasure_chest',
-]);
-
-type StageCategoryFilter = 'All' | 'Modern & Sci-Fi' | 'Fantasy & Historic' | 'Folklore & World';
-type PropCategoryFilter = 'All' | 'Modern & Sci-Fi' | 'Fantasy & Magic' | 'Folklore & Historic';
+type StageCategoryFilter = 'All' | string;
+type PropCategoryFilter = 'All' | string;
 type CastCategoryFilter = 'All' | 'Quick Sprites' | ArchetypeGroup;
 
 interface WorkbenchAssetsTabProps {
@@ -171,8 +119,38 @@ export const WorkbenchAssetsTab: React.FC<WorkbenchAssetsTabProps> = React.memo(
     const [spriteGenre, setSpriteGenre] = useState<'All' | SpritePresetCategory>('All');
     const [stageFilter, setStageFilter] = useState<StageCategoryFilter>('All');
     const [propFilter, setPropFilter] = useState<PropCategoryFilter>('All');
+    const [backdropThemeQuery, setBackdropThemeQuery] = useState('');
+    const [propPresetQuery, setPropPresetQuery] = useState('');
 
     const normalizedQuery = searchQuery.trim().toLowerCase();
+
+    const filteredBackdropThemes = useMemo(() => {
+      const q = backdropThemeQuery.trim().toLowerCase();
+      if (!q) return BACKDROP_THEMES;
+      const matched = BACKDROP_THEMES.filter(
+        (t) =>
+          t.label.toLowerCase().includes(q) ||
+          t.vibe.toLowerCase().includes(q) ||
+          t.id.toLowerCase().includes(q)
+      );
+      if (matched.some((t) => t.id === procBackdropTheme)) return matched;
+      const current = BACKDROP_THEMES.find((t) => t.id === procBackdropTheme);
+      return current ? [current, ...matched] : matched;
+    }, [backdropThemeQuery, procBackdropTheme]);
+
+    const filteredPropPresets = useMemo(() => {
+      const q = propPresetQuery.trim().toLowerCase();
+      if (!q) return CUSTOM_PROP_PRESETS;
+      const matched = CUSTOM_PROP_PRESETS.filter(
+        (p) =>
+          p.label.toLowerCase().includes(q) ||
+          p.note.toLowerCase().includes(q) ||
+          p.id.toLowerCase().includes(q)
+      );
+      if (matched.some((p) => p.id === procPropPreset)) return matched;
+      const current = CUSTOM_PROP_PRESETS.find((p) => p.id === procPropPreset);
+      return current ? [current, ...matched] : matched;
+    }, [propPresetQuery, procPropPreset]);
 
     const filteredSpritePresets = useMemo(() => {
       return SPRITE_WORKSHOP_PRESETS.filter((p) => {
@@ -213,19 +191,13 @@ export const WorkbenchAssetsTab: React.FC<WorkbenchAssetsTabProps> = React.memo(
 
     const filteredStages = useMemo(() => {
       return STAGE_CATALOG.filter((st) => {
-        if (stageFilter === 'Modern & Sci-Fi' && !MODERN_SCIFI_STAGES.has(st.id)) return false;
-        if (stageFilter === 'Fantasy & Historic' && !FANTASY_HISTORIC_STAGES.has(st.id))
-          return false;
-        if (
-          stageFilter === 'Folklore & World' &&
-          (MODERN_SCIFI_STAGES.has(st.id) || FANTASY_HISTORIC_STAGES.has(st.id))
-        ) {
-          return false;
-        }
+        const cat = st.category || 'World & Folklore';
+        if (stageFilter !== 'All' && cat !== stageFilter) return false;
         if (!normalizedQuery) return true;
         return (
           st.label.toLowerCase().includes(normalizedQuery) ||
           st.useCase.toLowerCase().includes(normalizedQuery) ||
+          cat.toLowerCase().includes(normalizedQuery) ||
           st.id.toLowerCase().includes(normalizedQuery)
         );
       });
@@ -234,18 +206,13 @@ export const WorkbenchAssetsTab: React.FC<WorkbenchAssetsTabProps> = React.memo(
     const filteredProps = useMemo(() => {
       return PROP_CATALOG.filter((p) => {
         if (p.id === 'none') return false;
-        if (propFilter === 'Modern & Sci-Fi' && !MODERN_SCIFI_PROPS.has(p.id)) return false;
-        if (propFilter === 'Fantasy & Magic' && !FANTASY_MAGIC_PROPS.has(p.id)) return false;
-        if (
-          propFilter === 'Folklore & Historic' &&
-          (MODERN_SCIFI_PROPS.has(p.id) || FANTASY_MAGIC_PROPS.has(p.id))
-        ) {
-          return false;
-        }
+        const cat = p.category || 'Folklore & World';
+        if (propFilter !== 'All' && cat !== propFilter) return false;
         if (!normalizedQuery) return true;
         return (
           p.label.toLowerCase().includes(normalizedQuery) ||
           p.note.toLowerCase().includes(normalizedQuery) ||
+          cat.toLowerCase().includes(normalizedQuery) ||
           p.id.toLowerCase().includes(normalizedQuery)
         );
       });
@@ -285,10 +252,10 @@ export const WorkbenchAssetsTab: React.FC<WorkbenchAssetsTabProps> = React.memo(
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={
                 assetCat === 'cast'
-                  ? 'Search 60 archetypes & 32 DNA sprites...'
+                  ? `Search ${ARCHETYPE_CATALOG.length} archetypes & ${SPRITE_WORKSHOP_PRESETS.length} DNA sprites...`
                   : assetCat === 'stages'
-                  ? 'Search 50 stages (cyber, mars, shrine, temple...)'
-                  : 'Search 64 story props (blade, laptop, potion...)'
+                  ? `Search ${STAGE_CATALOG.length} stages (cyber, temple, stadium, biome...)`
+                  : `Search ${PROP_CATALOG.length - 1} story props (katana, laptop, potion...)`
               }
               className="w-full h-8 pl-8 pr-7 rounded-md bg-[#111629] border border-white/12 text-xs text-white placeholder:text-[#6f7894] focus:outline-none focus:border-[#f2c85b]"
             />
@@ -322,7 +289,7 @@ export const WorkbenchAssetsTab: React.FC<WorkbenchAssetsTabProps> = React.memo(
                     Build Custom Character, Animal or Spirit
                   </div>
                   <div className="text-[10px] text-[#9aa3bd] mt-0.5">
-                    Open Entity DNA Workshop (6 chassis · 32 curated presets · morph sliders)
+                    Open Entity DNA Workshop (6 chassis · {SPRITE_WORKSHOP_PRESETS.length} presets across {SPRITE_PRESET_CATEGORIES.length} genres · morph sliders)
                   </div>
                 </div>
                 <Plus className="w-4 h-4 text-[#f2c85b] shrink-0" />
@@ -543,12 +510,32 @@ export const WorkbenchAssetsTab: React.FC<WorkbenchAssetsTabProps> = React.memo(
                     <span>#{procBackdropSeed}</span>
                   </button>
                 </div>
+                <div className="relative">
+                  <Search className="w-3 h-3 text-[#7f89a6] absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={backdropThemeQuery}
+                    onChange={(e) => setBackdropThemeQuery(e.target.value)}
+                    placeholder={`Filter ${BACKDROP_THEMES.length} backdrop themes...`}
+                    className="w-full h-7 pl-6 pr-6 rounded bg-[#0c1020] border border-white/12 text-[10px] text-white placeholder:text-[#6f7894] focus:outline-none focus:border-cyan-400/60"
+                  />
+                  {backdropThemeQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setBackdropThemeQuery('')}
+                      className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[#8e97b0] hover:text-white cursor-pointer"
+                      aria-label="Clear theme filter"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
                 <select
                   value={procBackdropTheme}
                   onChange={(e) => onChangeProcBackdropTheme(e.target.value as BackdropThemeId)}
                   className="w-full h-8 px-2 rounded bg-[#0c1020] border border-white/15 text-[11px] text-white"
                 >
-                  {BACKDROP_THEMES.map((t) => (
+                  {filteredBackdropThemes.map((t) => (
                     <option key={t.id} value={t.id}>
                       {t.label} — {t.vibe}
                     </option>
@@ -600,24 +587,22 @@ export const WorkbenchAssetsTab: React.FC<WorkbenchAssetsTabProps> = React.memo(
                 </button>
               </div>
 
-              {/* Stage category filter strip */}
+              {/* Stage category filter strip (all 10 world families) */}
               <div className="flex flex-wrap gap-1">
-                {(['All', 'Modern & Sci-Fi', 'Fantasy & Historic', 'Folklore & World'] as const).map(
-                  (cat) => (
-                    <button
-                      key={cat}
-                      type="button"
-                      onClick={() => setStageFilter(cat)}
-                      className={`px-2 py-1 rounded text-[10px] font-semibold border transition-colors cursor-pointer ${
-                        stageFilter === cat
-                          ? 'bg-[#1c2440] border-[#f2c85b] text-[#f2c85b]'
-                          : 'bg-[#13182b] border-white/10 text-[#9aa3bd] hover:text-white'
-                      }`}
-                    >
-                      {cat}
-                    </button>
-                  )
-                )}
+                {(['All', ...ALL_STAGE_CATEGORIES] as const).map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setStageFilter(cat)}
+                    className={`px-2 py-1 rounded text-[10px] font-semibold border transition-colors cursor-pointer ${
+                      stageFilter === cat
+                        ? 'bg-[#1c2440] border-[#f2c85b] text-[#f2c85b]'
+                        : 'bg-[#13182b] border-white/10 text-[#9aa3bd] hover:text-white'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
               </div>
 
               {filteredStages.length === 0 ? (
@@ -696,12 +681,32 @@ export const WorkbenchAssetsTab: React.FC<WorkbenchAssetsTabProps> = React.memo(
                     <span>#{procPropSeed}</span>
                   </button>
                 </div>
+                <div className="relative">
+                  <Search className="w-3 h-3 text-[#7f89a6] absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={propPresetQuery}
+                    onChange={(e) => setPropPresetQuery(e.target.value)}
+                    placeholder={`Filter ${CUSTOM_PROP_PRESETS.length} prop presets...`}
+                    className="w-full h-7 pl-6 pr-6 rounded bg-[#0c1020] border border-white/12 text-[10px] text-white placeholder:text-[#6f7894] focus:outline-none focus:border-cyan-400/60"
+                  />
+                  {propPresetQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setPropPresetQuery('')}
+                      className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[#8e97b0] hover:text-white cursor-pointer"
+                      aria-label="Clear prop preset filter"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
                 <select
                   value={procPropPreset}
                   onChange={(e) => onChangeProcPropPreset(e.target.value as CustomPropPresetId)}
                   className="w-full h-8 px-2 rounded bg-[#0c1020] border border-white/15 text-[11px] text-white"
                 >
-                  {CUSTOM_PROP_PRESETS.map((p) => (
+                  {filteredPropPresets.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.label} — {p.note}
                     </option>
@@ -734,24 +739,22 @@ export const WorkbenchAssetsTab: React.FC<WorkbenchAssetsTabProps> = React.memo(
                 </div>
               </div>
 
-              {/* Prop category filter strip */}
+              {/* Prop category filter strip (all live prop categories) */}
               <div className="flex flex-wrap gap-1">
-                {(['All', 'Modern & Sci-Fi', 'Fantasy & Magic', 'Folklore & Historic'] as const).map(
-                  (cat) => (
-                    <button
-                      key={cat}
-                      type="button"
-                      onClick={() => setPropFilter(cat)}
-                      className={`px-2 py-1 rounded text-[10px] font-semibold border transition-colors cursor-pointer ${
-                        propFilter === cat
-                          ? 'bg-[#1c2440] border-[#f2c85b] text-[#f2c85b]'
-                          : 'bg-[#13182b] border-white/10 text-[#9aa3bd] hover:text-white'
-                      }`}
-                    >
-                      {cat}
-                    </button>
-                  )
-                )}
+                {(['All', ...ALL_PROP_CATEGORIES] as const).map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setPropFilter(cat)}
+                    className={`px-2 py-1 rounded text-[10px] font-semibold border transition-colors cursor-pointer ${
+                      propFilter === cat
+                        ? 'bg-[#1c2440] border-[#f2c85b] text-[#f2c85b]'
+                        : 'bg-[#13182b] border-white/10 text-[#9aa3bd] hover:text-white'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
               </div>
 
               {filteredProps.length === 0 ? (

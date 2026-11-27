@@ -37,6 +37,11 @@ import {
   drawUniversalCrowdLayer,
   drawUniversalWeather,
 } from './renderAssetsUniversal';
+import {
+  drawAtlasBeatFx,
+  drawAtlasCrowdLayer,
+  drawAtlasWeather,
+} from './renderAssetsAtmosphereAtlas';
 import { resolvePhonemeViseme } from './facialExpressions';
 import { applyPooledBackdropDof, computeBeatDepthOfFieldSpec } from './depthOfField';
 import { composeCameraWithKeyframes } from './cameraKeyframes';
@@ -505,7 +510,7 @@ export function computeSpeechWindowViseme(
 export function evaluateEpisodeAtTime(
   episode: EpisodeScript,
   globalT: number,
-  liveVoiceEnergy: number | null,
+  liveVoiceEnergy: number | null = null,
   speechWindow?: { startSec: number; endSec: number } | null
 ): EvaluatedBeat {
   const frameIndex = timeToFrameIndex(globalT, STUDIO_FPS);
@@ -567,7 +572,7 @@ export function evaluateEpisodeAtTime(
   const u = clamp(localT / dur, 0, 1);
 
   let speechEnergy = 0;
-  if (liveVoiceEnergy !== null) {
+  if (typeof liveVoiceEnergy === 'number' && Number.isFinite(liveVoiceEnergy)) {
     speechEnergy = clamp(liveVoiceEnergy, 0, 1);
   } else if (chosen.dialogue.trim().length > 0) {
     const fade =
@@ -631,6 +636,9 @@ function drawCrowdLayer(
   const startle = sfxChoreo?.crowdStartle || (beat?.fx === 'shock_burst' ? 0.55 : 0);
 
   if (drawUniversalCrowdLayer(ctx, w, h, crowd, pal, ts, beat, startle)) {
+    return;
+  }
+  if (drawAtlasCrowdLayer(ctx, w, h, crowd, pal, ts, beat, startle)) {
     return;
   }
 
@@ -1154,6 +1162,9 @@ function drawWeather(
   if (drawUniversalWeather(ctx, w, h, weather, pal, t)) {
     return;
   }
+  if (drawAtlasWeather(ctx, w, h, weather, pal, t)) {
+    return;
+  }
 
   if (weather === 'fireflies' || weather === 'embers') {
     for (let i = 0; i < 16; i++) {
@@ -1227,6 +1238,9 @@ function drawBeatFx(
 ): void {
   if (fx === 'none') return;
   if (drawUniversalBeatFx(ctx, w, h, fx, u, t)) {
+    return;
+  }
+  if (drawAtlasBeatFx(ctx, w, h, fx, u, t)) {
     return;
   }
   const s = Math.min(w, h) / 620;

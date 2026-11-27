@@ -51,7 +51,12 @@ export type ArchetypeGroup =
   | 'Fable Fauna'
   | 'World Legends'
   | 'Modern & Sci-Fi'
-  | 'Fantasy & Creatures';
+  | 'Fantasy & Creatures'
+  | 'Historical Eras'
+  | 'Civic & Media'
+  | 'Gothic & Horror'
+  | 'Wildlife & Mythic'
+  | 'Sports & Kids';
 
 export type ArchetypeId =
   | 'deva'
@@ -114,7 +119,118 @@ export type ArchetypeId =
   | 'journalist'
   | 'street_musician'
   | 'cat_mascot'
-  | 'robot_companion';
+  | 'robot_companion'
+  // Wave 5: 5x Universal Visual World Pack (+100 -> 160 total)
+  // World Mythology & Legends (10)
+  | 'zeus_thunderer'
+  | 'athena_strategist'
+  | 'anubis_guardian'
+  | 'valkyrie_shieldmaiden'
+  | 'kitsune_foxspirit'
+  | 'sun_wukong_trickster'
+  | 'quetzal_priest'
+  | 'celtic_druid'
+  | 'djinn_genie'
+  | 'poseidon_tideking'
+  // Historical & Cultural Eras (10)
+  | 'roman_centurion'
+  | 'spartan_hoplite'
+  | 'renaissance_painter'
+  | 'victorian_inventor'
+  | 'wild_west_sheriff'
+  | 'outlaw_bandit'
+  | 'feudal_shogun'
+  | 'maratha_commander'
+  | 'silk_road_nomad'
+  | 'caveman_hunter'
+  // Modern Everyday & Civic (10)
+  | 'doctor_surgeon'
+  | 'firefighter_rescuer'
+  | 'police_officer'
+  | 'judge_magistrate'
+  | 'lawyer_advocate'
+  | 'school_teacher'
+  | 'chef_culinary'
+  | 'delivery_courier'
+  | 'construction_engineer'
+  | 'farmer_grower'
+  // Media, Business & Explainer (10)
+  | 'ceo_founder'
+  | 'podcast_host'
+  | 'news_anchor'
+  | 'stock_trader'
+  | 'tech_developer'
+  | 'influencer_vlogger'
+  | 'historian_professor'
+  | 'coach_mentor'
+  | 'film_director'
+  | 'esports_gamer'
+  // Sci-Fi, Cyberpunk & Space (10)
+  | 'bounty_hunter'
+  | 'alien_diplomat'
+  | 'cyborg_enforcer'
+  | 'time_traveler'
+  | 'space_admiral'
+  | 'drone_operator'
+  | 'bio_geneticist'
+  | 'wasteland_scavenger'
+  | 'quantum_physicist'
+  | 'ai_hologram'
+  // High Fantasy & RPG Classes (10)
+  | 'paladin_crusader'
+  | 'necromancer_mage'
+  | 'alchemist_brewer'
+  | 'shadow_rogue'
+  | 'tavern_bard'
+  | 'beast_ranger'
+  | 'archmage_oracle'
+  | 'goblin_tinkerer'
+  | 'orc_warlord'
+  | 'celestial_angel'
+  // Dark Gothic, Horror & Folklore (10)
+  | 'werewolf_stalker'
+  | 'plague_doctor'
+  | 'mummy_sovereign'
+  | 'witch_herbalist'
+  | 'grim_reaper'
+  | 'gargoyle_sentinel'
+  | 'banshee_wraith'
+  | 'mad_scientist'
+  | 'occult_investigator'
+  | 'pumpkin_scarecrow'
+  // Wildlife & Prehistoric (10)
+  | 'trex_dinosaur'
+  | 'triceratops_dino'
+  | 'grizzly_bear'
+  | 'polar_penguin'
+  | 'giant_panda'
+  | 'bald_eagle'
+  | 'silverback_gorilla'
+  | 'desert_camel'
+  | 'great_white_shark'
+  | 'giant_octopus'
+  // Mythic Beasts & Companions (10)
+  | 'fire_phoenix'
+  | 'frost_unicorn'
+  | 'winged_griffin'
+  | 'sea_mermaid'
+  | 'sky_pegasus'
+  | 'forest_treant'
+  | 'stone_golem'
+  | 'crystal_slime'
+  | 'baby_dragon'
+  | 'clockwork_automaton'
+  // Kids, Sports & Entertainment (10)
+  | 'soccer_striker'
+  | 'cricket_batter'
+  | 'martial_artist'
+  | 'circus_ringmaster'
+  | 'stage_magician'
+  | 'orchestra_conductor'
+  | 'ballet_dancer'
+  | 'skateboard_kid'
+  | 'explorer_scout'
+  | 'toy_nutcracker';
 
 export type StageId =
   | 'banyan_clearing'
@@ -167,7 +283,118 @@ export type StageId =
   | 'snowy_mountain_pass'
   | 'cherry_blossom_shrine'
   | 'vintage_train_car'
-  | 'astral_observatory';
+  | 'astral_observatory'
+  // Wave 5: +100 New Stages / Environments (50 -> 150 total)
+  // Ancient & Sacred World (10)
+  | 'babylon_hanging_gardens'
+  | 'mayan_step_pyramid'
+  | 'stonehenge_circle'
+  | 'great_wall_watchtower'
+  | 'angkor_jungle_ruins'
+  | 'petra_canyon_temple'
+  | 'spartan_mountain_pass'
+  | 'persian_rose_palace'
+  | 'vedic_gurukul'
+  | 'tibetan_monastery'
+  // Historical Towns & Eras (10)
+  | 'wild_west_saloon'
+  | 'victorian_fog_alley'
+  | 'renaissance_plaza'
+  | 'medieval_castle_keep'
+  | 'medieval_tavern_inn'
+  | 'roaring_twenties_jazz'
+  | 'ancient_silk_caravanserai'
+  | 'viking_longship_fjord'
+  | 'feudal_dojo_hall'
+  | 'industrial_foundry'
+  // Modern City & Street (10)
+  | 'downtown_skyline_roof'
+  | 'subway_metro_platform'
+  | 'busy_crosswalk_plaza'
+  | 'suburban_cul_de_sac'
+  | 'neon_arcade_hall'
+  | 'airport_departure_gate'
+  | 'highway_overpass_night'
+  | 'harbor_container_dock'
+  | 'rooftop_helipad'
+  | 'public_park_fountain'
+  // Workplaces, Civic & Media (10)
+  | 'startup_war_room'
+  | 'stock_exchange_floor'
+  | 'hospital_operating_room'
+  | 'university_lecture_hall'
+  | 'elementary_classroom'
+  | 'podcast_recording_booth'
+  | 'restaurant_open_kitchen'
+  | 'science_cleanroom'
+  | 'police_precinct_desk'
+  | 'city_library_atrium'
+  // Interiors & Cozy Spaces (10)
+  | 'luxury_penthouse_lounge'
+  | 'warm_family_livingroom'
+  | 'attic_inventor_workshop'
+  | 'art_gallery_hall'
+  | 'grand_opera_theater'
+  | 'cozy_bakery_counter'
+  | 'greenhouse_conservatory'
+  | 'museum_dinosaur_hall'
+  | 'fitness_boxing_gym'
+  | 'retro_diner_booth'
+  // Sci-Fi & Cyberpunk (10)
+  | 'orbital_space_station'
+  | 'alien_bioluminescent_forest'
+  | 'dyson_sphere_vista'
+  | 'cyber_megamall_atrium'
+  | 'mech_hangar_bay'
+  | 'vr_cyberspace_grid'
+  | 'post_apoc_ruined_highway'
+  | 'underground_fallout_bunker'
+  | 'solarpunk_sky_garden'
+  | 'quantum_collider_chamber'
+  // High Fantasy & Magic (10)
+  | 'floating_sky_citadel'
+  | 'wizard_arcane_tower'
+  | 'dragon_hoard_cavern'
+  | 'elven_canopy_city'
+  | 'dwarven_forge_hall'
+  | 'enchanted_mushroom_grove'
+  | 'crystal_prism_cave'
+  | 'alchemist_apothecary'
+  | 'fairy_glade_bridge'
+  | 'cloud_coliseum'
+  // Horror, Mystery & Noir (10)
+  | 'haunted_manor_foyer'
+  | 'misty_graveyard_gates'
+  | 'abandoned_asylum_ward'
+  | 'lighthouse_storm_cliff'
+  | 'underground_catacombs'
+  | 'detective_noir_office'
+  | 'locked_bank_vault'
+  | 'foggy_london_pier'
+  | 'cursed_carnival_tent'
+  | 'prison_cellblock'
+  // Nature, Biomes & Prehistoric (10)
+  | 'coral_reef_lagoon'
+  | 'amazon_rainforest_canopy'
+  | 'arctic_glacier_icebergs'
+  | 'african_sunset_savanna'
+  | 'grand_canyon_overlook'
+  | 'jurassic_fern_valley'
+  | 'sahara_starlit_dunes'
+  | 'alpine_meadow_lake'
+  | 'bioluminescent_sea_cave'
+  | 'autumn_maple_river'
+  // Sports, Travel & Kids Worlds (10)
+  | 'floodlit_cricket_stadium'
+  | 'championship_soccer_pitch'
+  | 'racing_circuit_paddock'
+  | 'cruise_liner_promenade'
+  | 'hot_air_balloon_skies'
+  | 'treehouse_clubhouse'
+  | 'giant_toybox_playroom'
+  | 'circus_big_top_ring'
+  | 'amusement_ferris_boardwalk'
+  | 'candy_kingdom_bridge';
 
 export type MoodId =
   | 'midnight_banyan'
@@ -186,7 +413,32 @@ export type MoodId =
   | 'volcanic_inferno'
   | 'deep_abyss'
   | 'sakura_dawn'
-  | 'sepia_archive';
+  | 'sepia_archive'
+  // Wave 5: +24 Mood Palettes (16 -> 40 total)
+  | 'golden_hour_cinema'
+  | 'neon_tokyo_blue'
+  | 'pastel_storybook'
+  | 'desert_mirage'
+  | 'toxic_wasteland'
+  | 'lavender_twilight'
+  | 'cobalt_midnight'
+  | 'autumn_amber'
+  | 'spring_meadow'
+  | 'blood_moon_crimson'
+  | 'ice_palace_cyan'
+  | 'vintage_kodachrome'
+  | 'emerald_matrix'
+  | 'royal_amethyst'
+  | 'storm_slate'
+  | 'sunset_coral'
+  | 'candyland_pop'
+  | 'deep_space_void'
+  | 'copper_steampunk'
+  | 'candlelit_parchment'
+  | 'ocean_turquoise'
+  | 'monsoon_indigo'
+  | 'solarpunk_lime'
+  | 'obsidian_gold';
 
 export type PropId =
   | 'none'
@@ -254,7 +506,138 @@ export type PropId =
   | 'microscope'
   | 'rocket_model'
   | 'pirate_map'
-  | 'key_ornate';
+  | 'key_ornate'
+  // Wave 5: +120 Story Props (65 -> 185 total)
+  // Weapons & Armor (12)
+  | 'katana_blade'
+  | 'viking_battleaxe'
+  | 'knight_shield'
+  | 'crossbow_bolts'
+  | 'spear_halberd'
+  | 'flintlock_pistol'
+  | 'laser_rifle'
+  | 'plasma_cannon'
+  | 'shuriken_star'
+  | 'war_hammer'
+  | 'roman_gladius'
+  | 'grappling_hook'
+  // Magic & Mythic Relics (12)
+  | 'crystal_ball'
+  | 'runestone_tablet'
+  | 'phoenix_feather'
+  | 'dragon_egg'
+  | 'enchanted_chalice'
+  | 'grimoire_chained'
+  | 'hourglass_sands'
+  | 'astral_orrery'
+  | 'voodoo_totem'
+  | 'magic_carpet'
+  | 'genie_lamp'
+  | 'crown_jeweled'
+  // Sci-Fi & Tech Gadgets (12)
+  | 'smartphone_glow'
+  | 'vr_headset'
+  | 'cyber_deck'
+  | 'server_rack'
+  | 'ai_core_cube'
+  | 'dna_helix_vial'
+  | 'sat_dish_mini'
+  | 'jetpack_thruster'
+  | 'teleport_pad'
+  | 'mech_battery'
+  | 'radar_scanner'
+  | 'hologram_globe'
+  // Modern Office, Media & Finance (12)
+  | 'gold_bullion_bars'
+  | 'stock_chart_board'
+  | 'studio_camera_rig'
+  | 'clapperboard_slate'
+  | 'podcast_mic_arm'
+  | 'whiteboard_diagram'
+  | 'stack_of_cash'
+  | 'credit_card_gold'
+  | 'contract_dossier'
+  | 'megaphone_bullhorn'
+  | 'press_badge'
+  | 'trophy_cup_silver'
+  // Science, Medical & Lab (12)
+  | 'stethoscope_med'
+  | 'beaker_bubbling'
+  | 'telescope_brass'
+  | 'globe_terrestrial'
+  | 'skeleton_model'
+  | 'first_aid_kit'
+  | 'syringe_serum'
+  | 'x_ray_lightbox'
+  | 'chalkboard_equations'
+  | 'atom_model'
+  | 'geiger_counter'
+  | 'fossil_ammonite'
+  // Music, Art & Culture (12)
+  | 'sitar_instrument'
+  | 'tabla_drums'
+  | 'grand_piano_mini'
+  | 'paintbrush_palette'
+  | 'movie_projector'
+  | 'vinyl_turntable'
+  | 'dj_mixer_deck'
+  | 'theater_masks'
+  | 'origami_crane'
+  | 'calligraphy_brush'
+  | 'bamboo_flute'
+  | 'war_horn_brass'
+  // Food, Feast & Tavern (12)
+  | 'steaming_ramen_bowl'
+  | 'royal_thali_platter'
+  | 'birthday_cake_lit'
+  | 'pizza_slice_box'
+  | 'teapot_porcelain'
+  | 'spice_jar_rack'
+  | 'fruit_basket'
+  | 'campfire_kettle'
+  | 'goblet_wine'
+  | 'honey_jar'
+  | 'bread_loaf_basket'
+  | 'ice_cream_cone'
+  // Vehicles & Travel Gear (12)
+  | 'vintage_suitcase'
+  | 'treasure_map_tube'
+  | 'ship_wheel_helm'
+  | 'hot_air_basket'
+  | 'bicycle_classic'
+  | 'motorcycle_helmet'
+  | 'astronaut_helmet'
+  | 'anchor_iron'
+  | 'lantern_storm'
+  | 'boarding_pass'
+  | 'binoculars_field'
+  | 'tent_camping'
+  // Mystery, Crime & Noir (12)
+  | 'handcuffs_steel'
+  | 'evidence_bag'
+  | 'fingerprint_card'
+  | 'crime_tape_roll'
+  | 'revolver_noir'
+  | 'safe_dial_door'
+  | 'red_string_board'
+  | 'secret_envelope'
+  | 'skeleton_key_ring'
+  | 'poison_vial_green'
+  | 'candle_candelabra'
+  | 'skull_relic'
+  // Sports, Kids & Everyday (12)
+  | 'cricket_bat_ball'
+  | 'soccer_ball_classic'
+  | 'boxing_gloves'
+  | 'chess_board_set'
+  | 'rubber_ducky'
+  | 'teddy_bear'
+  | 'kite_diamond'
+  | 'gift_box_ribbon'
+  | 'skateboard_deck'
+  | 'watering_can'
+  | 'hammer_wrench'
+  | 'stopwatch_sport';
 
 export type ShotId =
   | 'wide_stage'
@@ -321,7 +704,26 @@ export type CrowdId =
   | 'pirate_crew'
   | 'scholars_hall'
   | 'spectral_flock'
-  | 'masquerade_ball';
+  | 'masquerade_ball'
+  // Wave 5: +18 Crowds (12 -> 30 total)
+  | 'stadium_fans'
+  | 'festival_dancers'
+  | 'bazaar_merchants'
+  | 'press_paparazzi'
+  | 'protest_rally'
+  | 'mech_squadron'
+  | 'fairy_wisps'
+  | 'undead_horde'
+  | 'safari_herd'
+  | 'ballroom_waltz'
+  | 'courtroom_gallery'
+  | 'orchestra_pit'
+  | 'space_dock_crew'
+  | 'tavern_patrons'
+  | 'school_hallway'
+  | 'roman_legion'
+  | 'ninja_clan'
+  | 'circus_audience';
 
 export type CameraMoveId =
   | 'still'
@@ -346,7 +748,30 @@ export type FxId =
   | 'spotlight_beam'
   | 'shatter_glass'
   | 'heartbeat_pulse'
-  | 'comic_pow';
+  | 'comic_pow'
+  // Wave 5: +22 Beat FX (14 -> 36 total)
+  | 'anime_impact_frame'
+  | 'chromatic_split'
+  | 'lens_flare_sweep'
+  | 'portal_vortex'
+  | 'time_freeze_ripple'
+  | 'sonic_boom_rings'
+  | 'ink_splatter_burst'
+  | 'holographic_scan'
+  | 'lightning_web'
+  | 'petal_cyclone'
+  | 'fire_breath_cone'
+  | 'frost_crystallize'
+  | 'shadow_tendrils'
+  | 'golden_halo_burst'
+  | 'crt_scan_flash'
+  | 'blood_moon_eclipse'
+  | 'laser_grid'
+  | 'starlight_nova'
+  | 'comic_speed_zoom'
+  | 'water_splash_arc'
+  | 'dust_shockwave'
+  | 'radar_ping';
 
 export type WeatherId =
   | 'fireflies'
@@ -361,7 +786,26 @@ export type WeatherId =
   | 'sandstorm'
   | 'starfall'
   | 'sakura_blossoms'
-  | 'data_matrix';
+  | 'data_matrix'
+  // Wave 5: +18 Weathers (12 -> 30 total)
+  | 'autumn_leaves'
+  | 'floating_lanterns'
+  | 'underwater_bubbles'
+  | 'confetti_shower'
+  | 'ash_fallout'
+  | 'acid_rain'
+  | 'aurora_ribbons'
+  | 'dandelion_seeds'
+  | 'meteor_shower'
+  | 'neon_sparks'
+  | 'golden_pollen'
+  | 'plasma_arcs'
+  | 'hailstorm'
+  | 'blizzard_gale'
+  | 'fog_bank'
+  | 'locust_swarm'
+  | 'volcanic_cinders'
+  | 'starlight_dust';
 
 export type RaagId =
   | 'bhairavi'
@@ -872,149 +1316,524 @@ export const ARCHETYPE_CATALOG: Array<{
   { id: 'elf_archer', label: 'Sylvan Elf Archer', group: 'Fantasy & Creatures', stories: 'Elven Kingdoms, Woodland Quests, RPG' },
   { id: 'dwarf_smith', label: 'Mountain Dwarf Smith', group: 'Fantasy & Creatures', stories: 'Forge Legends, Underground Citadels, RPG' },
   { id: 'ghost_phantom', label: 'Luminous Phantom', group: 'Fantasy & Creatures', stories: 'Ghost Stories, Haunted Halls, Supernatural' },
+  // Wave 5: World Mythology & Legends (10)
+  { id: 'zeus_thunderer', label: 'Zeus Thunderer', group: 'World Legends', stories: 'Greek Mythology, Olympus Epics, Lightning King' },
+  { id: 'athena_strategist', label: 'Athena Strategist', group: 'World Legends', stories: 'Greek Wisdom, Odyssey Counsel, Aegis Shield' },
+  { id: 'anubis_guardian', label: 'Anubis Guardian', group: 'World Legends', stories: 'Egyptian Underworld, Duat Scales, Pyramid Lore' },
+  { id: 'valkyrie_shieldmaiden', label: 'Valkyrie Shieldmaiden', group: 'World Legends', stories: 'Norse Mythology, Valhalla Riders, Saga Epics' },
+  { id: 'kitsune_foxspirit', label: 'Kitsune Nine-Tail Spirit', group: 'World Legends', stories: 'Japanese Yokai, Shrine Spirits, Fox Tricksters' },
+  { id: 'sun_wukong_trickster', label: 'Sun Wukong Monkey King', group: 'World Legends', stories: 'Journey to the West, Cloud Somersault, Staff' },
+  { id: 'quetzal_priest', label: 'Quetzal Feathered Priest', group: 'World Legends', stories: 'Mesoamerican Lore, Aztec & Mayan Sun Temples' },
+  { id: 'celtic_druid', label: 'Celtic Oak Druid', group: 'World Legends', stories: 'Stonehenge Rituals, Irish Folklore, Grove Seers' },
+  { id: 'djinn_genie', label: 'Astral Djinn / Genie', group: 'World Legends', stories: '1001 Nights, Lamp Spirits, Desert Wonders' },
+  { id: 'poseidon_tideking', label: 'Poseidon Tide King', group: 'World Legends', stories: 'Atlantis, Sea Voyages, Trident Storms' },
+  // Wave 5: Historical & Cultural Eras (10)
+  { id: 'roman_centurion', label: 'Roman Centurion', group: 'Historical Eras', stories: 'Roman Legions, Colosseum, Empire Campaigns' },
+  { id: 'spartan_hoplite', label: 'Spartan Hoplite', group: 'Historical Eras', stories: 'Thermopylae, Classical Greece, Phalanx' },
+  { id: 'renaissance_painter', label: 'Renaissance Master', group: 'Historical Eras', stories: 'Florence Studios, Art History, Da Vinci Era' },
+  { id: 'victorian_inventor', label: 'Victorian Inventor', group: 'Historical Eras', stories: 'Steampunk, Industrial Revolution, Clockwork' },
+  { id: 'wild_west_sheriff', label: 'Wild West Sheriff', group: 'Historical Eras', stories: 'Frontier Duels, Saloon Justice, Westerns' },
+  { id: 'outlaw_bandit', label: 'Frontier Outlaw Bandit', group: 'Historical Eras', stories: 'Train Heists, Wild West Legends, Rogues' },
+  { id: 'feudal_shogun', label: 'Feudal Shogun Warlord', group: 'Historical Eras', stories: 'Edo Period, Sengoku Epics, Samurai Clans' },
+  { id: 'maratha_commander', label: 'Maratha Fort Commander', group: 'Historical Eras', stories: 'Deccan Forts, Indian Historical Epics, Cavalry' },
+  { id: 'silk_road_nomad', label: 'Silk Road Nomad', group: 'Historical Eras', stories: 'Steppe Caravans, Marco Polo, Desert Trade' },
+  { id: 'caveman_hunter', label: 'Prehistoric Cave Hunter', group: 'Historical Eras', stories: 'Ice Age, Origins of Fire, Anthropology' },
+  // Wave 5: Modern Everyday & Civic (10)
+  { id: 'doctor_surgeon', label: 'Doctor & Surgeon', group: 'Civic & Media', stories: 'Medical Dramas, Health Explainers, ER Heroes' },
+  { id: 'firefighter_rescuer', label: 'Firefighter Rescuer', group: 'Civic & Media', stories: 'Emergency Rescue, Civic Courage, Safety' },
+  { id: 'police_officer', label: 'Police Officer', group: 'Civic & Media', stories: 'Crime Dramas, Precinct Cases, City Patrol' },
+  { id: 'judge_magistrate', label: 'Court Judge / Magistrate', group: 'Civic & Media', stories: 'Courtroom Trials, Legal History, Justice' },
+  { id: 'lawyer_advocate', label: 'Trial Lawyer / Advocate', group: 'Civic & Media', stories: 'Legal Debates, Famous Cases, Civics' },
+  { id: 'school_teacher', label: 'School Teacher', group: 'Civic & Media', stories: 'Classroom Lessons, EdTech, Kids Stories' },
+  { id: 'chef_culinary', label: 'Culinary Master Chef', group: 'Civic & Media', stories: 'Food History, Kitchen Dramas, Recipe Shorts' },
+  { id: 'delivery_courier', label: 'City Delivery Courier', group: 'Civic & Media', stories: 'Urban Slice-of-Life, Hustle Stories, Comedy' },
+  { id: 'construction_engineer', label: 'Construction Engineer', group: 'Civic & Media', stories: 'Megastructures, Engineering Explainers, Cities' },
+  { id: 'farmer_grower', label: 'Modern Farmer & Grower', group: 'Civic & Media', stories: 'Agriculture, Rural Tales, Sustainability' },
+  // Wave 5: Media, Business & Explainer (10)
+  { id: 'ceo_founder', label: 'Tech CEO / Founder', group: 'Civic & Media', stories: 'Startup Stories, Business Case Studies, Keynotes' },
+  { id: 'podcast_host', label: 'Podcast Studio Host', group: 'Civic & Media', stories: 'Interview Shows, Audio Essays, Creator Lore' },
+  { id: 'news_anchor', label: 'Broadcast News Anchor', group: 'Civic & Media', stories: 'Breaking Bulletins, Documentary Intros, Satire' },
+  { id: 'stock_trader', label: 'Wall Street Trader', group: 'Civic & Media', stories: 'Finance Explainers, Market Crashes, Economics' },
+  { id: 'tech_developer', label: 'Software Developer', group: 'Civic & Media', stories: 'Coding Tutorials, Startup Culture, AI Demos' },
+  { id: 'influencer_vlogger', label: 'Creator & Vlogger', group: 'Civic & Media', stories: 'Social Media Commentary, Travel Vlogs, Trends' },
+  { id: 'historian_professor', label: 'Historian Professor', group: 'Civic & Media', stories: 'Deep-Dive History, Museum Lectures, Timelines' },
+  { id: 'coach_mentor', label: 'Strategy Coach / Mentor', group: 'Civic & Media', stories: 'Sports Dramas, Self-Improvement, Leadership' },
+  { id: 'film_director', label: 'Cinema Film Director', group: 'Civic & Media', stories: 'Behind-the-Scenes, Movie Essays, Production' },
+  { id: 'esports_gamer', label: 'Esports Pro Gamer', group: 'Civic & Media', stories: 'Gaming Lore, Tournament Arcs, Tech Culture' },
+  // Wave 5: Sci-Fi, Cyberpunk & Space (10)
+  { id: 'bounty_hunter', label: 'Galactic Bounty Hunter', group: 'Modern & Sci-Fi', stories: 'Space Westerns, Cyber Hunts, Sci-Fi Action' },
+  { id: 'alien_diplomat', label: 'Alien Envoys & Diplomat', group: 'Modern & Sci-Fi', stories: 'First Contact, Galactic Senate, Exoplanets' },
+  { id: 'cyborg_enforcer', label: 'Cyborg Enforcer', group: 'Modern & Sci-Fi', stories: 'Cyberpunk Action, Augmentations, Neon Noir' },
+  { id: 'time_traveler', label: 'Chrono Time Traveler', group: 'Modern & Sci-Fi', stories: 'Paradox Mysteries, Era Hopping, Sci-Fi' },
+  { id: 'space_admiral', label: 'Starfleet Space Admiral', group: 'Modern & Sci-Fi', stories: 'Orbital Fleets, Space Operas, Command Decks' },
+  { id: 'drone_operator', label: 'Tactical Drone Operator', group: 'Modern & Sci-Fi', stories: 'Recon Missions, Autonomous Tech, Thrillers' },
+  { id: 'bio_geneticist', label: 'Bio-Geneticist', group: 'Modern & Sci-Fi', stories: 'CRISPR Explainers, Biotech Mysteries, Labs' },
+  { id: 'wasteland_scavenger', label: 'Wasteland Scavenger', group: 'Modern & Sci-Fi', stories: 'Post-Apocalyptic Survival, Desert Ruins' },
+  { id: 'quantum_physicist', label: 'Quantum Physicist', group: 'Modern & Sci-Fi', stories: 'Physics Explainers, Multiverse, Colliders' },
+  { id: 'ai_hologram', label: 'Sentient AI Hologram', group: 'Modern & Sci-Fi', stories: 'Digital Consciousness, Virtual Worlds, Guides' },
+  // Wave 5: High Fantasy & RPG Classes (10)
+  { id: 'paladin_crusader', label: 'Radiant Paladin Crusader', group: 'Fantasy & Creatures', stories: 'Sacred Oaths, Castle Sieges, RPG Parties' },
+  { id: 'necromancer_mage', label: 'Shadow Necromancer', group: 'Fantasy & Creatures', stories: 'Dark Citadels, Undead Legions, Forbidden Lore' },
+  { id: 'alchemist_brewer', label: 'Master Alchemist', group: 'Fantasy & Creatures', stories: 'Potion Shops, Elixir Quests, Arcane Science' },
+  { id: 'shadow_rogue', label: 'Guild Shadow Rogue', group: 'Fantasy & Creatures', stories: 'Thieves Guilds, Rooftop Heists, Stealth RPG' },
+  { id: 'tavern_bard', label: 'Minstrel Tavern Bard', group: 'Fantasy & Creatures', stories: 'Tavern Ballads, Storytelling Quests, Comedy' },
+  { id: 'beast_ranger', label: 'Woodland Beast Ranger', group: 'Fantasy & Creatures', stories: 'Wilderness Trackers, Forest Quests, Archers' },
+  { id: 'archmage_oracle', label: 'Celestial Archmage Oracle', group: 'Fantasy & Creatures', stories: 'Prophecies, Arcane Towers, Astral Magic' },
+  { id: 'goblin_tinkerer', label: 'Goblin Gear Tinkerer', group: 'Fantasy & Creatures', stories: 'Fantasy Comedy, Contraptions, Cave Markets' },
+  { id: 'orc_warlord', label: 'Ironclad Orc Warlord', group: 'Fantasy & Creatures', stories: 'Fantasy Battles, Rival Clans, Sieges' },
+  { id: 'celestial_angel', label: 'Winged Celestial Angel', group: 'Fantasy & Creatures', stories: 'Sky Citadels, Divine Messengers, Epics' },
+  // Wave 5: Dark Gothic, Horror & Folklore (10)
+  { id: 'werewolf_stalker', label: 'Moonlit Werewolf Stalker', group: 'Gothic & Horror', stories: 'Full Moon Curses, Dark Woods, Folklore Horror' },
+  { id: 'plague_doctor', label: 'Beaked Plague Doctor', group: 'Gothic & Horror', stories: 'Gothic Mystery, Medieval Epidemics, Alchemists' },
+  { id: 'mummy_sovereign', label: 'Cursed Mummy Sovereign', group: 'Gothic & Horror', stories: 'Tomb Raiders, Ancient Curses, Crypt Horror' },
+  { id: 'witch_herbalist', label: 'Moonlight Witch Herbalist', group: 'Gothic & Horror', stories: 'Cauldron Spells, Forest Cottages, Halloween' },
+  { id: 'grim_reaper', label: 'Cloaked Grim Reaper', group: 'Gothic & Horror', stories: 'Underworld Bargains, Ghost Lore, Parables' },
+  { id: 'gargoyle_sentinel', label: 'Stone Gargoyle Sentinel', group: 'Gothic & Horror', stories: 'Cathedral Rooftops, Awakened Statues, Gothic' },
+  { id: 'banshee_wraith', label: 'Celtic Banshee Wraith', group: 'Gothic & Horror', stories: 'Irish Ghost Lore, Misty Moors, Hauntings' },
+  { id: 'mad_scientist', label: 'Gothic Mad Scientist', group: 'Gothic & Horror', stories: 'Frankenstein Labs, Lightning Experiments' },
+  { id: 'occult_investigator', label: 'Occult Investigator', group: 'Gothic & Horror', stories: 'Paranormal Files, Eldritch Mysteries, Noir' },
+  { id: 'pumpkin_scarecrow', label: 'Lantern Pumpkin Scarecrow', group: 'Gothic & Horror', stories: 'Autumn Folklore, Harvest Fables, Spooky Kids' },
+  // Wave 5: Wildlife & Prehistoric (10)
+  { id: 'trex_dinosaur', label: 'T-Rex Apex Dinosaur', group: 'Wildlife & Mythic', stories: 'Jurassic Valleys, Dino Science, Kids Epics' },
+  { id: 'triceratops_dino', label: 'Horned Triceratops', group: 'Wildlife & Mythic', stories: 'Prehistoric Herds, Paleontology, Kids Tales' },
+  { id: 'grizzly_bear', label: 'Mountain Grizzly Bear', group: 'Wildlife & Mythic', stories: 'Wilderness Survival, Forest Fables, Wildlife' },
+  { id: 'polar_penguin', label: 'Emperor Polar Penguin', group: 'Wildlife & Mythic', stories: 'Antarctic Expeditions, Kids Comedy, Climate' },
+  { id: 'giant_panda', label: 'Bamboo Giant Panda', group: 'Wildlife & Mythic', stories: 'Eastern Bamboo Groves, Martial Fables, Kids' },
+  { id: 'bald_eagle', label: 'Soaring Bald Eagle', group: 'Wildlife & Mythic', stories: 'Mountain Peaks, Sky Scouts, Wildlife Docs' },
+  { id: 'silverback_gorilla', label: 'Silverback Jungle Gorilla', group: 'Wildlife & Mythic', stories: 'Rainforest Guardians, Wildlife Stories' },
+  { id: 'desert_camel', label: 'Caravan Desert Camel', group: 'Wildlife & Mythic', stories: 'Sahara Expeditions, Silk Road Fables' },
+  { id: 'great_white_shark', label: 'Great White Ocean Shark', group: 'Wildlife & Mythic', stories: 'Deep Reef Docs, Sea Adventures, Ocean Lore' },
+  { id: 'giant_octopus', label: 'Kraken Giant Octopus', group: 'Wildlife & Mythic', stories: 'Deep Sea Mysteries, Sunken Ships, Marine Bio' },
+  // Wave 5: Mythic Beasts & Companions (10)
+  { id: 'fire_phoenix', label: 'Reborn Fire Phoenix', group: 'Wildlife & Mythic', stories: 'Resurrection Myths, Flame Guardians, Fantasy' },
+  { id: 'frost_unicorn', label: 'Starlight Frost Unicorn', group: 'Wildlife & Mythic', stories: 'Enchanted Glades, Fairy Tales, Kids Magic' },
+  { id: 'winged_griffin', label: 'Royal Winged Griffin', group: 'Wildlife & Mythic', stories: 'Sky Citadels, Treasure Guardians, Heraldry' },
+  { id: 'sea_mermaid', label: 'Coral Sea Mermaid', group: 'Wildlife & Mythic', stories: 'Ocean Kingdoms, Lagoon Folklore, Fairy Tales' },
+  { id: 'sky_pegasus', label: 'Cloud Sky Pegasus', group: 'Wildlife & Mythic', stories: 'Olympus Skies, Hero Mounts, Mythic Flight' },
+  { id: 'forest_treant', label: 'Ancient Forest Treant', group: 'Wildlife & Mythic', stories: 'Living Woods, Nature Spirits, High Fantasy' },
+  { id: 'stone_golem', label: 'Runic Stone Golem', group: 'Wildlife & Mythic', stories: 'Temple Guardians, Dwarven Halls, Constructs' },
+  { id: 'crystal_slime', label: 'Glowing Crystal Slime', group: 'Wildlife & Mythic', stories: 'RPG Companions, Dungeon Comedy, Cute Mascots' },
+  { id: 'baby_dragon', label: 'Ember Baby Dragon', group: 'Wildlife & Mythic', stories: 'Kids Fantasy, Sidekick Hatchling, Quests' },
+  { id: 'clockwork_automaton', label: 'Brass Clockwork Automaton', group: 'Wildlife & Mythic', stories: 'Steampunk Workshops, Mechanical Lore, Sci-Fi' },
+  // Wave 5: Kids, Sports & Entertainment (10)
+  { id: 'soccer_striker', label: 'Championship Soccer Striker', group: 'Sports & Kids', stories: 'World Cup Moments, Sports Shorts, Teamwork' },
+  { id: 'cricket_batter', label: 'Stadium Cricket Batter', group: 'Sports & Kids', stories: 'Final-Over Thrillers, Cricket Legends, Sports' },
+  { id: 'martial_artist', label: 'Dojo Martial Artist', group: 'Sports & Kids', stories: 'Kung Fu & Karate Training, Discipline Stories' },
+  { id: 'circus_ringmaster', label: 'Big-Top Circus Ringmaster', group: 'Sports & Kids', stories: 'Carnival Showtime, Variety Acts, Spectacles' },
+  { id: 'stage_magician', label: 'Illusionist Stage Magician', group: 'Sports & Kids', stories: 'Magic Tricks, Theater Mysteries, Kids Shows' },
+  { id: 'orchestra_conductor', label: 'Symphony Conductor', group: 'Sports & Kids', stories: 'Music History, Opera Halls, Classical Shorts' },
+  { id: 'ballet_dancer', label: 'Principal Ballet Dancer', group: 'Sports & Kids', stories: 'Swan Lake, Dance Stories, Stage Arts' },
+  { id: 'skateboard_kid', label: 'Street Skateboard Kid', group: 'Sports & Kids', stories: 'Suburban Adventures, Kids Comedy, Urban Fun' },
+  { id: 'explorer_scout', label: 'Junior Explorer Scout', group: 'Sports & Kids', stories: 'Campfire Quests, Nature Science, Treehouse' },
+  { id: 'toy_nutcracker', label: 'Clockwork Toy Nutcracker', group: 'Sports & Kids', stories: 'Holiday Tales, Playroom Magic, Fairy Tales' },
 ];
 
-export const STAGE_CATALOG: Array<{ id: StageId; label: string; useCase: string }> = [
-  { id: 'banyan_clearing', label: 'Banyan Forest Clearing', useCase: 'Vikram & Betaal, Jataka groves' },
-  { id: 'royal_durbar', label: 'Royal Durbar Hall', useCase: 'Tenali Rama, Gopal Bhar, Ayodhya court' },
-  { id: 'mughal_courtyard', label: 'Mughal Sandstone Courtyard', useCase: 'Akbar & Birbal Fatehpur court' },
-  { id: 'ashoka_vatika', label: 'Ashoka Vatika Grove', useCase: 'Ramayana Sita & Hanuman in Lanka' },
-  { id: 'golden_lanka', label: 'Golden Spires of Lanka', useCase: 'Ramayana Ravana citadel & celestial cities' },
-  { id: 'kali_temple', label: 'Shadowed Kali Temple', useCase: 'Singhasan Battisi vows, divine boons' },
-  { id: 'throne_mound', label: 'Buried Throne Mound', useCase: 'Singhasan Battisi ancient excavation' },
-  { id: 'moonlit_terrace', label: 'Moonlit Marble Terrace', useCase: 'Palace nights, lotus clues, intrigue' },
-  { id: 'royal_bedchamber', label: 'Royal Bedchamber', useCase: 'Palace secrets, seven mattresses' },
-  { id: 'palace_garden', label: 'Lantern Palace Garden', useCase: 'Tenali Rama, Gopal Bhar, nocturnal strolls' },
-  { id: 'river_ghat', label: 'Lantern River Ghat', useCase: 'Yamuna crossings, Sarayu, crocodile banks' },
-  { id: 'enchanted_lake', label: 'Enchanted Lotus Lake', useCase: 'Yaksha Prashna, Hitopadesha pond' },
-  { id: 'bamboo_forest', label: 'Dense Jungle Grove', useCase: 'Panchatantra, Dandaka forest, Jataka' },
-  { id: 'cave_den', label: 'Mountain Cave & Den', useCase: 'Talking Cave, Kishkindha, lion’s den' },
-  { id: 'ocean_ship', label: 'Ocean Crossing & Ram Setu', useCase: 'Sea voyages, Odyssey, Lanka crossing' },
-  { id: 'bazaar_lane', label: 'Lantern Bazaar Street', useCase: 'Tenali, Birbal, Arabian Nights & merchants' },
-  { id: 'courtyard_well', label: 'Stone Courtyard Well', useCase: 'Lion & Clever Hare, Frog in the Well' },
-  { id: 'royal_dungeon', label: 'Iron-Barred Dungeon', useCase: 'Captive princes, twists, courtroom rescues' },
-  { id: 'desert_caravan', label: 'Starlit Caravan Dunes', useCase: '1001 Nights, Silk Road & desert parables' },
-  { id: 'himalayan_hermitage', label: 'Himalayan Hermitage', useCase: 'Rishi ashrams, Valmiki, mountain sages' },
-  { id: 'cloud_skies', label: 'Moonlit Cloud Skies', useCase: 'Hanuman, Sun Wukong, Raven & Icarus flight' },
-  { id: 'kurukshetra_field', label: 'Epic Battlefield', useCase: 'Mahabharata, Ramayana, Troy & Arthurian battles' },
-  { id: 'village_chowk', label: 'Lantern Village Square', useCase: 'Folk comedy, merchants, thieves' },
-  { id: 'cremation_ground', label: 'Smoldering Cremation Ground', useCase: 'Betaal & eerie Tantrik rituals' },
-  { id: 'olympus_acropolis', label: 'Greek Acropolis & Olive Grove', useCase: 'Aesop’s Fables, Greek Mythology & Odyssey' },
-  { id: 'bamboo_pagoda', label: 'Misty Pagoda & Torii Shrine', useCase: 'Journey to the West, Japanese & Chinese Tales' },
-  { id: 'enchanted_cottage', label: 'Nordic Pine Woods & Cottage', useCase: 'Grimm’s Fairy Tales, Celtic & Norse Folklore' },
-  { id: 'savanna_baobab', label: 'African Savanna & Great Baobab', useCase: 'Anansi the Spider & African Griot Fables' },
-  { id: 'red_canyon_mesa', label: 'Red Rock Canyon & Starry Mesa', useCase: 'Indigenous American & Mesoamerican Legends' },
-  { id: 'tropical_archipelago', label: 'Javanese Banyan & Volcano Bay', useCase: 'Sang Kancil, Wayang & Southeast Asian Tales' },
+export const STAGE_CATALOG: Array<{ id: StageId; label: string; useCase: string; category?: string }> = [
+  { id: 'banyan_clearing', label: 'Banyan Forest Clearing', useCase: 'Vikram & Betaal, Jataka groves', category: 'Mythic & Sacred' },
+  { id: 'royal_durbar', label: 'Royal Durbar Hall', useCase: 'Tenali Rama, Gopal Bhar, Ayodhya court', category: 'Historical & Eras' },
+  { id: 'mughal_courtyard', label: 'Mughal Sandstone Courtyard', useCase: 'Akbar & Birbal Fatehpur court', category: 'Historical & Eras' },
+  { id: 'ashoka_vatika', label: 'Ashoka Vatika Grove', useCase: 'Ramayana Sita & Hanuman in Lanka', category: 'Mythic & Sacred' },
+  { id: 'golden_lanka', label: 'Golden Spires of Lanka', useCase: 'Ramayana Ravana citadel & celestial cities', category: 'Mythic & Sacred' },
+  { id: 'kali_temple', label: 'Shadowed Kali Temple', useCase: 'Singhasan Battisi vows, divine boons', category: 'Mythic & Sacred' },
+  { id: 'throne_mound', label: 'Buried Throne Mound', useCase: 'Singhasan Battisi ancient excavation', category: 'Mythic & Sacred' },
+  { id: 'moonlit_terrace', label: 'Moonlit Marble Terrace', useCase: 'Palace nights, lotus clues, intrigue', category: 'Historical & Eras' },
+  { id: 'royal_bedchamber', label: 'Royal Bedchamber', useCase: 'Palace secrets, seven mattresses', category: 'Interiors & Cozy' },
+  { id: 'palace_garden', label: 'Lantern Palace Garden', useCase: 'Tenali Rama, Gopal Bhar, nocturnal strolls', category: 'Historical & Eras' },
+  { id: 'river_ghat', label: 'Lantern River Ghat', useCase: 'Yamuna crossings, Sarayu, crocodile banks', category: 'Mythic & Sacred' },
+  { id: 'enchanted_lake', label: 'Enchanted Lotus Lake', useCase: 'Yaksha Prashna, Hitopadesha pond', category: 'Nature & Biomes' },
+  { id: 'bamboo_forest', label: 'Dense Jungle Grove', useCase: 'Panchatantra, Dandaka forest, Jataka', category: 'Nature & Biomes' },
+  { id: 'cave_den', label: 'Mountain Cave & Den', useCase: 'Talking Cave, Kishkindha, lion’s den', category: 'Nature & Biomes' },
+  { id: 'ocean_ship', label: 'Ocean Crossing & Ram Setu', useCase: 'Sea voyages, Odyssey, Lanka crossing', category: 'Nature & Biomes' },
+  { id: 'bazaar_lane', label: 'Lantern Bazaar Street', useCase: 'Tenali, Birbal, Arabian Nights & merchants', category: 'Historical & Eras' },
+  { id: 'courtyard_well', label: 'Stone Courtyard Well', useCase: 'Lion & Clever Hare, Frog in the Well', category: 'Historical & Eras' },
+  { id: 'royal_dungeon', label: 'Iron-Barred Dungeon', useCase: 'Captive princes, twists, courtroom rescues', category: 'Horror & Noir' },
+  { id: 'desert_caravan', label: 'Starlit Caravan Dunes', useCase: '1001 Nights, Silk Road & desert parables', category: 'Nature & Biomes' },
+  { id: 'himalayan_hermitage', label: 'Himalayan Hermitage', useCase: 'Rishi ashrams, Valmiki, mountain sages', category: 'Mythic & Sacred' },
+  { id: 'cloud_skies', label: 'Moonlit Cloud Skies', useCase: 'Hanuman, Sun Wukong, Raven & Icarus flight', category: 'High Fantasy' },
+  { id: 'kurukshetra_field', label: 'Epic Battlefield', useCase: 'Mahabharata, Ramayana, Troy & Arthurian battles', category: 'Mythic & Sacred' },
+  { id: 'village_chowk', label: 'Lantern Village Square', useCase: 'Folk comedy, merchants, thieves', category: 'Historical & Eras' },
+  { id: 'cremation_ground', label: 'Smoldering Cremation Ground', useCase: 'Betaal & eerie Tantrik rituals', category: 'Horror & Noir' },
+  { id: 'olympus_acropolis', label: 'Greek Acropolis & Olive Grove', useCase: 'Aesop’s Fables, Greek Mythology & Odyssey', category: 'Mythic & Sacred' },
+  { id: 'bamboo_pagoda', label: 'Misty Pagoda & Torii Shrine', useCase: 'Journey to the West, Japanese & Chinese Tales', category: 'Mythic & Sacred' },
+  { id: 'enchanted_cottage', label: 'Nordic Pine Woods & Cottage', useCase: 'Grimm’s Fairy Tales, Celtic & Norse Folklore', category: 'High Fantasy' },
+  { id: 'savanna_baobab', label: 'African Savanna & Great Baobab', useCase: 'Anansi the Spider & African Griot Fables', category: 'Nature & Biomes' },
+  { id: 'red_canyon_mesa', label: 'Red Rock Canyon & Starry Mesa', useCase: 'Indigenous American & Mesoamerican Legends', category: 'Nature & Biomes' },
+  { id: 'tropical_archipelago', label: 'Javanese Banyan & Volcano Bay', useCase: 'Sang Kancil, Wayang & Southeast Asian Tales', category: 'Nature & Biomes' },
   // Wave 3: +20 Multi-Genre Stages (50 total)
-  { id: 'neon_cyber_alley', label: 'Neon Cyber Alley', useCase: 'Cyberpunk thrillers, rain-slicked sci-fi noir' },
-  { id: 'orbital_starship_bridge', label: 'Orbital Starship Bridge', useCase: 'Deep space command deck, sci-fi dramas' },
-  { id: 'mars_colony_dome', label: 'Mars Colony Dome', useCase: 'Planetary exploration, future frontiers' },
-  { id: 'noir_rainy_street', label: '1940s Noir Rainy Street', useCase: 'Detective mysteries, true crime, art-deco' },
-  { id: 'modern_news_studio', label: 'Modern Broadcast Studio', useCase: 'News explainers, tech briefings, commentary' },
-  { id: 'cozy_bookshop_cafe', label: 'Cozy Bookshop Café', useCase: 'Slice-of-life, literary essays, warm talks' },
-  { id: 'high_tech_lab', label: 'High-Tech Research Lab', useCase: 'STEM explainers, biotech, AI experiments' },
-  { id: 'courtroom_hall', label: 'Grand Courtroom Hall', useCase: 'Legal dramas, debates, historical trials' },
-  { id: 'ancient_egypt_temple', label: 'Ancient Egypt Temple', useCase: 'Pharaoh chronicles, pyramid mysteries' },
-  { id: 'roman_colosseum', label: 'Roman Colosseum Arena', useCase: 'Classical history, gladiator epics, Rome' },
-  { id: 'nordic_fjord_hall', label: 'Nordic Fjord Longhouse', useCase: 'Viking sagas, aurora legends, Norse lore' },
-  { id: 'gothic_cathedral', label: 'Gothic Rose Cathedral', useCase: 'Victorian horror, vampire tales, dark fantasy' },
-  { id: 'steampunk_clocktower', label: 'Steampunk Clocktower', useCase: 'Brass gearworks, time-travel adventures' },
-  { id: 'pirate_galleon_deck', label: 'Pirate Galleon Deck', useCase: 'High-seas battles, treasure voyages' },
-  { id: 'underwater_atlantis', label: 'Sunken Atlantis Ruins', useCase: 'Oceanic myths, underwater exploration' },
-  { id: 'volcanic_citadel', label: 'Obsidian Volcanic Citadel', useCase: 'Dark fantasy climaxes, dragon lairs' },
-  { id: 'snowy_mountain_pass', label: 'Snowy Alpine Pass', useCase: 'Survival treks, Himalayan & Nordic quests' },
-  { id: 'cherry_blossom_shrine', label: 'Cherry Blossom Shrine', useCase: 'Anime romance, samurai duels, sakura spring' },
-  { id: 'vintage_train_car', label: 'Vintage Express Train Car', useCase: 'Murder mysteries, cross-country journeys' },
-  { id: 'astral_observatory', label: 'Astral Cosmos Observatory', useCase: 'Astronomy explainers, arcane starlore' },
+  { id: 'neon_cyber_alley', label: 'Neon Cyber Alley', useCase: 'Cyberpunk thrillers, rain-slicked sci-fi noir', category: 'Sci-Fi & Cyber' },
+  { id: 'orbital_starship_bridge', label: 'Orbital Starship Bridge', useCase: 'Deep space command deck, sci-fi dramas', category: 'Sci-Fi & Cyber' },
+  { id: 'mars_colony_dome', label: 'Mars Colony Dome', useCase: 'Planetary exploration, future frontiers', category: 'Sci-Fi & Cyber' },
+  { id: 'noir_rainy_street', label: '1940s Noir Rainy Street', useCase: 'Detective mysteries, true crime, art-deco', category: 'Horror & Noir' },
+  { id: 'modern_news_studio', label: 'Modern Broadcast Studio', useCase: 'News explainers, tech briefings, commentary', category: 'Workplaces & Civic' },
+  { id: 'cozy_bookshop_cafe', label: 'Cozy Bookshop Café', useCase: 'Slice-of-life, literary essays, warm talks', category: 'Interiors & Cozy' },
+  { id: 'high_tech_lab', label: 'High-Tech Research Lab', useCase: 'STEM explainers, biotech, AI experiments', category: 'Workplaces & Civic' },
+  { id: 'courtroom_hall', label: 'Grand Courtroom Hall', useCase: 'Legal dramas, debates, historical trials', category: 'Workplaces & Civic' },
+  { id: 'ancient_egypt_temple', label: 'Ancient Egypt Temple', useCase: 'Pharaoh chronicles, pyramid mysteries', category: 'Mythic & Sacred' },
+  { id: 'roman_colosseum', label: 'Roman Colosseum Arena', useCase: 'Classical history, gladiator epics, Rome', category: 'Mythic & Sacred' },
+  { id: 'nordic_fjord_hall', label: 'Nordic Fjord Longhouse', useCase: 'Viking sagas, aurora legends, Norse lore', category: 'Historical & Eras' },
+  { id: 'gothic_cathedral', label: 'Gothic Rose Cathedral', useCase: 'Victorian horror, vampire tales, dark fantasy', category: 'Horror & Noir' },
+  { id: 'steampunk_clocktower', label: 'Steampunk Clocktower', useCase: 'Brass gearworks, time-travel adventures', category: 'Historical & Eras' },
+  { id: 'pirate_galleon_deck', label: 'Pirate Galleon Deck', useCase: 'High-seas battles, treasure voyages', category: 'Historical & Eras' },
+  { id: 'underwater_atlantis', label: 'Sunken Atlantis Ruins', useCase: 'Oceanic myths, underwater exploration', category: 'High Fantasy' },
+  { id: 'volcanic_citadel', label: 'Obsidian Volcanic Citadel', useCase: 'Dark fantasy climaxes, dragon lairs', category: 'High Fantasy' },
+  { id: 'snowy_mountain_pass', label: 'Snowy Alpine Pass', useCase: 'Survival treks, Himalayan & Nordic quests', category: 'Nature & Biomes' },
+  { id: 'cherry_blossom_shrine', label: 'Cherry Blossom Shrine', useCase: 'Anime romance, samurai duels, sakura spring', category: 'Mythic & Sacred' },
+  { id: 'vintage_train_car', label: 'Vintage Express Train Car', useCase: 'Murder mysteries, cross-country journeys', category: 'Historical & Eras' },
+  { id: 'astral_observatory', label: 'Astral Cosmos Observatory', useCase: 'Astronomy explainers, arcane starlore', category: 'Sci-Fi & Cyber' },
+  // Wave 5: Ancient & Sacred World (10)
+  { id: 'babylon_hanging_gardens', label: 'Babylon Hanging Gardens', useCase: 'Ancient Mesopotamia terraced wonders & waterfalls', category: 'Mythic & Sacred' },
+  { id: 'mayan_step_pyramid', label: 'Mayan Step Pyramid', useCase: 'Mesoamerican sun temples & jungle plazas', category: 'Mythic & Sacred' },
+  { id: 'stonehenge_circle', label: 'Stonehenge Megalith Circle', useCase: 'Solstice druids, Celtic mystery & ancient stars', category: 'Mythic & Sacred' },
+  { id: 'great_wall_watchtower', label: 'Great Wall Watchtower', useCase: 'Imperial frontier beacons & mountain ridges', category: 'Mythic & Sacred' },
+  { id: 'angkor_jungle_ruins', label: 'Angkor Jungle Ruins', useCase: 'Banyan-wrapped sandstone shrines & lost temples', category: 'Mythic & Sacred' },
+  { id: 'petra_canyon_temple', label: 'Petra Rose Canyon Temple', useCase: 'Carved desert treasury cliff & torchlit siq', category: 'Mythic & Sacred' },
+  { id: 'spartan_mountain_pass', label: 'Spartan Thermopylae Pass', useCase: 'Narrow sea cliffs, phalanx shields & epics', category: 'Mythic & Sacred' },
+  { id: 'persian_rose_palace', label: 'Persian Rose Palace', useCase: 'Persepolis arches, turquoise tiles & courtyards', category: 'Mythic & Sacred' },
+  { id: 'vedic_gurukul', label: 'Vedic Forest Gurukul', useCase: 'Sacred ashram huts, banyan study & havan fire', category: 'Mythic & Sacred' },
+  { id: 'tibetan_monastery', label: 'Tibetan Cliff Monastery', useCase: 'Prayer flags, snow peaks & golden stupas', category: 'Mythic & Sacred' },
+  // Wave 5: Historical Towns & Eras (10)
+  { id: 'wild_west_saloon', label: 'Wild West Saloon', useCase: 'Swinging wooden doors, frontier showdown & piano', category: 'Historical & Eras' },
+  { id: 'victorian_fog_alley', label: 'Victorian Fog Alley', useCase: 'Gaslamps, cobblestones, Sherlock & steampunk', category: 'Historical & Eras' },
+  { id: 'renaissance_plaza', label: 'Renaissance Florence Plaza', useCase: 'Marble dome, sunlit colonnade & guild banners', category: 'Historical & Eras' },
+  { id: 'medieval_castle_keep', label: 'Medieval Castle Keep', useCase: 'Battlements, drawbridge, knightly sieges', category: 'Historical & Eras' },
+  { id: 'medieval_tavern_inn', label: 'Medieval Tavern Inn', useCase: 'Hearth fire, timber beams, bards & quests', category: 'Historical & Eras' },
+  { id: 'roaring_twenties_jazz', label: '1920s Art-Deco Jazz Club', useCase: 'Golden sunburst stage, speakeasy & brass band', category: 'Historical & Eras' },
+  { id: 'ancient_silk_caravanserai', label: 'Silk Road Caravanserai', useCase: 'Vaulted oasis courtyard, spice carts & lanterns', category: 'Historical & Eras' },
+  { id: 'viking_longship_fjord', label: 'Viking Longship Fjord', useCase: 'Dragon-prow sails, icy cliffs & northern lights', category: 'Historical & Eras' },
+  { id: 'feudal_dojo_hall', label: 'Feudal Tatami Dojo Hall', useCase: 'Shoji screens, calligraphy scroll & sword rack', category: 'Historical & Eras' },
+  { id: 'industrial_foundry', label: 'Industrial Steam Foundry', useCase: 'Molten crucible, iron gears & Victorian steam', category: 'Historical & Eras' },
+  // Wave 5: Modern City & Street (10)
+  { id: 'downtown_skyline_roof', label: 'Downtown Skyline Rooftop', useCase: 'Metropolis towers, water tank & twilight skyline', category: 'Modern City' },
+  { id: 'subway_metro_platform', label: 'Subway Metro Platform', useCase: 'Tiled station, incoming rail lights & urban commute', category: 'Modern City' },
+  { id: 'busy_crosswalk_plaza', label: 'Busy Neon Crosswalk Plaza', useCase: 'Shibuya/Times Square billboards & pedestrian zebra', category: 'Modern City' },
+  { id: 'suburban_cul_de_sac', label: 'Suburban Cul-de-Sac', useCase: 'Tree-lined homes, porches & neighborhood stories', category: 'Modern City' },
+  { id: 'neon_arcade_hall', label: 'Retro Neon Arcade Hall', useCase: 'Glowing cabinet rows, synth grid & esports vibes', category: 'Modern City' },
+  { id: 'airport_departure_gate', label: 'Airport Departure Gate', useCase: 'Glass concourse, runway jetliner & travel drama', category: 'Modern City' },
+  { id: 'highway_overpass_night', label: 'Night Highway Overpass', useCase: 'City light trails, streetlamps & midnight chase', category: 'Modern City' },
+  { id: 'harbor_container_dock', label: 'Harbor Container Dock', useCase: 'Gantry cranes, stacked freight & seafront mystery', category: 'Modern City' },
+  { id: 'rooftop_helipad', label: 'Skyscraper Rooftop Helipad', useCase: 'H-pad beacons, action evac & skyline wind', category: 'Modern City' },
+  { id: 'public_park_fountain', label: 'City Park Fountain Plaza', useCase: 'Tiered stone fountain, benches & autumn trees', category: 'Modern City' },
+  // Wave 5: Workplaces, Civic & Media (10)
+  { id: 'startup_war_room', label: 'Startup Glass War Room', useCase: 'Whiteboards, sticky notes, product launch sprint', category: 'Workplaces & Civic' },
+  { id: 'stock_exchange_floor', label: 'Stock Exchange Trading Floor', useCase: 'LED market tickers, trading pods & finance drama', category: 'Workplaces & Civic' },
+  { id: 'hospital_operating_room', label: 'Hospital Operating Room', useCase: 'Surgical lamps, telemetry monitors & medical story', category: 'Workplaces & Civic' },
+  { id: 'university_lecture_hall', label: 'University Lecture Hall', useCase: 'Tiered seating, chalkboard equations & academia', category: 'Workplaces & Civic' },
+  { id: 'elementary_classroom', label: 'Bright Elementary Classroom', useCase: 'ABC board, desks, globe & kids educational tales', category: 'Workplaces & Civic' },
+  { id: 'podcast_recording_booth', label: 'Podcast Recording Booth', useCase: 'Acoustic foam, ON AIR sign & warm studio mics', category: 'Workplaces & Civic' },
+  { id: 'restaurant_open_kitchen', label: 'Chef Open Kitchen Pass', useCase: 'Copper pans, flame burners & culinary showdowns', category: 'Workplaces & Civic' },
+  { id: 'science_cleanroom', label: 'Biotech Science Cleanroom', useCase: 'Sterile glass pods, laser optics & lab discoveries', category: 'Workplaces & Civic' },
+  { id: 'police_precinct_desk', label: 'Police Precinct Bullpen', useCase: 'Case boards, desk lamps & detective briefings', category: 'Workplaces & Civic' },
+  { id: 'city_library_atrium', label: 'Grand City Library Atrium', useCase: 'Towering book galleries, reading lamps & skylight', category: 'Workplaces & Civic' },
+  // Wave 5: Interiors & Cozy Spaces (10)
+  { id: 'luxury_penthouse_lounge', label: 'Luxury Penthouse Lounge', useCase: 'Floor-to-ceiling skyline glass & fireplace sofa', category: 'Interiors & Cozy' },
+  { id: 'warm_family_livingroom', label: 'Warm Family Living Room', useCase: 'Cozy hearth, bookshelf, armchair & storytelling', category: 'Interiors & Cozy' },
+  { id: 'attic_inventor_workshop', label: 'Attic Inventor Workshop', useCase: 'Blueprints, brass gears, skylights & tinkering', category: 'Interiors & Cozy' },
+  { id: 'art_gallery_hall', label: 'Modern Art Gallery Hall', useCase: 'Spotlit framed masterpieces & polished floor', category: 'Interiors & Cozy' },
+  { id: 'grand_opera_theater', label: 'Grand Opera Theater', useCase: 'Velvet curtains, gilded balconies & proscenium', category: 'Interiors & Cozy' },
+  { id: 'cozy_bakery_counter', label: 'Cozy Patisserie Bakery', useCase: 'Pastry display, brick oven & morning aroma', category: 'Interiors & Cozy' },
+  { id: 'greenhouse_conservatory', label: 'Botanical Greenhouse', useCase: 'Glass Victorian dome, hanging vines & rare palms', category: 'Interiors & Cozy' },
+  { id: 'museum_dinosaur_hall', label: 'Natural History Dino Hall', useCase: 'Towering fossil skeleton & vaulted museum arches', category: 'Interiors & Cozy' },
+  { id: 'fitness_boxing_gym', label: 'Championship Boxing Gym', useCase: 'Roped ring, heavy bags & training montage', category: 'Interiors & Cozy' },
+  { id: 'retro_diner_booth', label: '1950s Retro Neon Diner', useCase: 'Checkered floor, red booths & neon jukebox', category: 'Interiors & Cozy' },
+  // Wave 5: Sci-Fi & Cyberpunk (10)
+  { id: 'orbital_space_station', label: 'Orbital Ring Space Station', useCase: 'Curved viewport over planet & zero-G corridor', category: 'Sci-Fi & Cyber' },
+  { id: 'alien_bioluminescent_forest', label: 'Alien Bioluminescent Forest', useCase: 'Glowing exoplanet flora, twin moons & spores', category: 'Sci-Fi & Cyber' },
+  { id: 'dyson_sphere_vista', label: 'Dyson Sphere Megastructure', useCase: 'Star-encircling orbital rings & cosmic scale', category: 'Sci-Fi & Cyber' },
+  { id: 'cyber_megamall_atrium', label: 'Cyberpunk Megamall Atrium', useCase: 'Floating holo-ads, skybridges & neon balconies', category: 'Sci-Fi & Cyber' },
+  { id: 'mech_hangar_bay', label: 'Giant Mech Hangar Bay', useCase: 'Gantry cranes, armored titan bay & launch lights', category: 'Sci-Fi & Cyber' },
+  { id: 'vr_cyberspace_grid', label: 'VR Cyberspace Laser Grid', useCase: 'Perspective neon horizon, data monoliths & synth', category: 'Sci-Fi & Cyber' },
+  { id: 'post_apoc_ruined_highway', label: 'Post-Apoc Ruined Highway', useCase: 'Broken overpass pillars, dust haze & wasteland', category: 'Sci-Fi & Cyber' },
+  { id: 'underground_fallout_bunker', label: 'Underground Vault Bunker', useCase: 'Blast gear door, amber emergency lights & pipes', category: 'Sci-Fi & Cyber' },
+  { id: 'solarpunk_sky_garden', label: 'Solarpunk Sky Garden', useCase: 'Solar glass spires, cascading terraces & turbines', category: 'Sci-Fi & Cyber' },
+  { id: 'quantum_collider_chamber', label: 'Quantum Collider Chamber', useCase: 'Concentric superconducting torus & plasma glow', category: 'Sci-Fi & Cyber' },
+  // Wave 5: High Fantasy & Magic (10)
+  { id: 'floating_sky_citadel', label: 'Floating Sky Citadel', useCase: 'Levitation islands, waterfalls into clouds & spires', category: 'High Fantasy' },
+  { id: 'wizard_arcane_tower', label: 'Wizard Arcane Tower', useCase: 'Floating runes, spiral library & starry dome', category: 'High Fantasy' },
+  { id: 'dragon_hoard_cavern', label: 'Dragon Hoard Gold Cavern', useCase: 'Glittering treasure mounds, lava cracks & pillars', category: 'High Fantasy' },
+  { id: 'elven_canopy_city', label: 'Elven Treetop Canopy City', useCase: 'Luminous swan-bridges among giant ancient trees', category: 'High Fantasy' },
+  { id: 'dwarven_forge_hall', label: 'Dwarven Runic Forge Hall', useCase: 'Colossal carved stone pillars & molten anvil', category: 'High Fantasy' },
+  { id: 'enchanted_mushroom_grove', label: 'Enchanted Mushroom Grove', useCase: 'Giant glowing toadstools, fireflies & fae mist', category: 'High Fantasy' },
+  { id: 'crystal_prism_cave', label: 'Crystal Prism Cavern', useCase: 'Refracting giant amethyst & cyan quartz spires', category: 'High Fantasy' },
+  { id: 'alchemist_apothecary', label: 'Alchemist Apothecary Shop', useCase: 'Shelves of glowing potions, alembics & herbs', category: 'High Fantasy' },
+  { id: 'fairy_glade_bridge', label: 'Fairy Glade Stone Bridge', useCase: 'Arching moss bridge, moonlit creek & willow', category: 'High Fantasy' },
+  { id: 'cloud_coliseum', label: 'Celestial Cloud Coliseum', useCase: 'Marble sky arena, golden rings & mythic duels', category: 'High Fantasy' },
+  // Wave 5: Horror, Mystery & Noir (10)
+  { id: 'haunted_manor_foyer', label: 'Haunted Manor Grand Foyer', useCase: 'Twin staircase, chandelier, lightning window', category: 'Horror & Noir' },
+  { id: 'misty_graveyard_gates', label: 'Misty Graveyard Iron Gates', useCase: 'Wrought-iron arch, headstones & full moon mist', category: 'Horror & Noir' },
+  { id: 'abandoned_asylum_ward', label: 'Abandoned Gothic Ward', useCase: 'Flickering corridor, arched bars & eerie shadows', category: 'Horror & Noir' },
+  { id: 'lighthouse_storm_cliff', label: 'Storm Cliff Lighthouse', useCase: 'Sweeping beacon beam, crashing waves & rocks', category: 'Horror & Noir' },
+  { id: 'underground_catacombs', label: 'Torchlit Stone Catacombs', useCase: 'Vaulted crypt tunnels, sconces & hidden passages', category: 'Horror & Noir' },
+  { id: 'detective_noir_office', label: '1940s Detective Noir Office', useCase: 'Venetian blind shadows, frosted door & city rain', category: 'Horror & Noir' },
+  { id: 'locked_bank_vault', label: 'Locked Steel Bank Vault', useCase: 'Giant circular vault door, safe boxes & laser alarm', category: 'Horror & Noir' },
+  { id: 'foggy_london_pier', label: 'Foggy Victorian Pier', useCase: 'Wooden pilings, moored ship & gaslamp harbor fog', category: 'Horror & Noir' },
+  { id: 'cursed_carnival_tent', label: 'Cursed Midnight Carnival', useCase: 'Striped midway tent, eerie bulbs & dark ferris', category: 'Horror & Noir' },
+  { id: 'prison_cellblock', label: 'Iron-Tiered Prison Cellblock', useCase: 'Barred galleries, spotlight sweep & breakout drama', category: 'Horror & Noir' },
+  // Wave 5: Nature, Biomes & Prehistoric (10)
+  { id: 'coral_reef_lagoon', label: 'Sunlit Coral Reef Lagoon', useCase: 'Underwater caustics, staghorn coral & reef fish', category: 'Nature & Biomes' },
+  { id: 'amazon_rainforest_canopy', label: 'Amazon Rainforest Canopy', useCase: 'Layered emerald jungle, liana vines & mist sunbeams', category: 'Nature & Biomes' },
+  { id: 'arctic_glacier_icebergs', label: 'Arctic Glacier Icebergs', useCase: 'Towering blue ice floes, frozen sea & polar sky', category: 'Nature & Biomes' },
+  { id: 'african_sunset_savanna', label: 'African Sunset Savanna', useCase: 'Acacia silhouettes, giant crimson sun & golden grass', category: 'Nature & Biomes' },
+  { id: 'grand_canyon_overlook', label: 'Grand Canyon Rim Overlook', useCase: 'Layered red-rock mesas & winding gorge river', category: 'Nature & Biomes' },
+  { id: 'jurassic_fern_valley', label: 'Jurassic Fern Volcano Valley', useCase: 'Prehistoric ferns, smoking volcano & misty lake', category: 'Nature & Biomes' },
+  { id: 'sahara_starlit_dunes', label: 'Sahara Starlit Sand Dunes', useCase: 'Sweeping wind-carved erg dunes & Milky Way arc', category: 'Nature & Biomes' },
+  { id: 'alpine_meadow_lake', label: 'Alpine Wildflower Meadow', useCase: 'Snow-capped peaks, mirror lake & pine slopes', category: 'Nature & Biomes' },
+  { id: 'bioluminescent_sea_cave', label: 'Bioluminescent Sea Cave', useCase: 'Glowing cyan surf inside basalt sea-arch grotto', category: 'Nature & Biomes' },
+  { id: 'autumn_maple_river', label: 'Autumn Maple Footbridge', useCase: 'Crimson Japanese maples, stepping stones & stream', category: 'Nature & Biomes' },
+  // Wave 5: Sports, Travel & Kids Worlds (10)
+  { id: 'floodlit_cricket_stadium', label: 'Floodlit Cricket Stadium', useCase: 'Towering light pylons, green oval & packed stands', category: 'Sports & Kids' },
+  { id: 'championship_soccer_pitch', label: 'Championship Soccer Pitch', useCase: 'Striped turf, goal net, stadium bowl & spotlights', category: 'Sports & Kids' },
+  { id: 'racing_circuit_paddock', label: 'Grand Prix Racing Paddock', useCase: 'Checkered start gantry, pit garages & speedway', category: 'Sports & Kids' },
+  { id: 'cruise_liner_promenade', label: 'Ocean Cruise Promenade', useCase: 'Teak railing, sunset wake, lifeboats & deck lights', category: 'Sports & Kids' },
+  { id: 'hot_air_balloon_skies', label: 'Hot-Air Balloon Festival Skies', useCase: 'Cappadocia valleys & colorful drifting balloons', category: 'Sports & Kids' },
+  { id: 'treehouse_clubhouse', label: 'Backyard Treehouse Clubhouse', useCase: 'Oak boughs, rope ladder, fairy lights & kids quest', category: 'Sports & Kids' },
+  { id: 'giant_toybox_playroom', label: 'Giant Toybox Playroom', useCase: 'Oversized wooden blocks, bunting & storybook floor', category: 'Sports & Kids' },
+  { id: 'circus_big_top_ring', label: 'Circus Big-Top Center Ring', useCase: 'Red-and-cream canopy, spotlights & sawdust ring', category: 'Sports & Kids' },
+  { id: 'amusement_ferris_boardwalk', label: 'Amusement Ferris Boardwalk', useCase: 'Illuminated Ferris wheel, pier planks & twilight sea', category: 'Sports & Kids' },
+  { id: 'candy_kingdom_bridge', label: 'Candy Kingdom Rainbow Bridge', useCase: 'Peppermint spires, pastel hills & wafer archway', category: 'Sports & Kids' },
 ];
 
-export const MOOD_CATALOG: Array<{ id: MoodId; label: string }> = [
-  { id: 'midnight_banyan', label: 'Midnight Indigo' },
-  { id: 'crimson_wrath', label: 'Crimson Wrath' },
-  { id: 'golden_durbar', label: 'Golden Durbar' },
-  { id: 'sandstone_dusk', label: 'Mughal Sandstone' },
-  { id: 'twilight_temple', label: 'Twilight Violet' },
-  { id: 'moonlit_marble', label: 'Silver Moonlight' },
-  { id: 'emerald_jungle', label: 'Emerald Jungle' },
-  { id: 'mystic_teal', label: 'Mystic Lake Teal' },
+export const MOOD_CATALOG: Array<{ id: MoodId; label: string; category?: string }> = [
+  { id: 'midnight_banyan', label: 'Midnight Indigo', category: 'Classic Folklore' },
+  { id: 'crimson_wrath', label: 'Crimson Wrath', category: 'Classic Folklore' },
+  { id: 'golden_durbar', label: 'Golden Durbar', category: 'Classic Folklore' },
+  { id: 'sandstone_dusk', label: 'Mughal Sandstone', category: 'Classic Folklore' },
+  { id: 'twilight_temple', label: 'Twilight Violet', category: 'Classic Folklore' },
+  { id: 'moonlit_marble', label: 'Silver Moonlight', category: 'Classic Folklore' },
+  { id: 'emerald_jungle', label: 'Emerald Jungle', category: 'Nature & Biomes' },
+  { id: 'mystic_teal', label: 'Mystic Lake Teal', category: 'Fantasy & Magic' },
   // Wave 3: +8 Mood Palettes (16 total)
-  { id: 'cyber_magenta', label: 'Cyberpunk Neon Magenta' },
-  { id: 'noir_monochrome', label: 'Silver Noir Monochrome' },
-  { id: 'arctic_aurora', label: 'Arctic Aurora Glow' },
-  { id: 'sunlit_morning', label: 'Crisp Sunlit Morning' },
-  { id: 'volcanic_inferno', label: 'Volcanic Molten Inferno' },
-  { id: 'deep_abyss', label: 'Deep Ocean Abyss' },
-  { id: 'sakura_dawn', label: 'Sakura Blossom Dawn' },
-  { id: 'sepia_archive', label: 'Vintage Sepia Archive' },
+  { id: 'cyber_magenta', label: 'Cyberpunk Neon Magenta', category: 'Sci-Fi & Neon' },
+  { id: 'noir_monochrome', label: 'Silver Noir Monochrome', category: 'Noir & Vintage' },
+  { id: 'arctic_aurora', label: 'Arctic Aurora Glow', category: 'Nature & Biomes' },
+  { id: 'sunlit_morning', label: 'Crisp Sunlit Morning', category: 'Cinematic & Daylight' },
+  { id: 'volcanic_inferno', label: 'Volcanic Molten Inferno', category: 'Horror & Drama' },
+  { id: 'deep_abyss', label: 'Deep Ocean Abyss', category: 'Nature & Biomes' },
+  { id: 'sakura_dawn', label: 'Sakura Blossom Dawn', category: 'Cinematic & Daylight' },
+  { id: 'sepia_archive', label: 'Vintage Sepia Archive', category: 'Noir & Vintage' },
+  // Wave 5: +24 Mood Palettes (40 total)
+  { id: 'golden_hour_cinema', label: 'Golden Hour Cinema', category: 'Cinematic & Daylight' },
+  { id: 'neon_tokyo_blue', label: 'Neon Tokyo Electric Blue', category: 'Sci-Fi & Neon' },
+  { id: 'pastel_storybook', label: 'Pastel Storybook Morning', category: 'Kids & Whimsical' },
+  { id: 'desert_mirage', label: 'Desert Sun Mirage', category: 'Nature & Biomes' },
+  { id: 'toxic_wasteland', label: 'Toxic Acid Wasteland', category: 'Sci-Fi & Neon' },
+  { id: 'lavender_twilight', label: 'Lavender Dream Twilight', category: 'Fantasy & Magic' },
+  { id: 'cobalt_midnight', label: 'Cobalt Noir Midnight', category: 'Noir & Vintage' },
+  { id: 'autumn_amber', label: 'Autumn Maple Amber', category: 'Nature & Biomes' },
+  { id: 'spring_meadow', label: 'Spring Meadow Breeze', category: 'Cinematic & Daylight' },
+  { id: 'blood_moon_crimson', label: 'Blood Moon Eclipse Crimson', category: 'Horror & Drama' },
+  { id: 'ice_palace_cyan', label: 'Ice Palace Glacial Cyan', category: 'Fantasy & Magic' },
+  { id: 'vintage_kodachrome', label: 'Vintage 1970s Kodachrome', category: 'Noir & Vintage' },
+  { id: 'emerald_matrix', label: 'Emerald Code Matrix', category: 'Sci-Fi & Neon' },
+  { id: 'royal_amethyst', label: 'Royal Velvet Amethyst', category: 'Fantasy & Magic' },
+  { id: 'storm_slate', label: 'Tempest Storm Slate', category: 'Horror & Drama' },
+  { id: 'sunset_coral', label: 'Tropical Sunset Coral', category: 'Cinematic & Daylight' },
+  { id: 'candyland_pop', label: 'Candyland Sugar Pop', category: 'Kids & Whimsical' },
+  { id: 'deep_space_void', label: 'Deep Space Nebula Void', category: 'Sci-Fi & Neon' },
+  { id: 'copper_steampunk', label: 'Copper Brass Steampunk', category: 'Noir & Vintage' },
+  { id: 'candlelit_parchment', label: 'Candlelit Parchment Warmth', category: 'Classic Folklore' },
+  { id: 'ocean_turquoise', label: 'Lagoon Ocean Turquoise', category: 'Nature & Biomes' },
+  { id: 'monsoon_indigo', label: 'Monsoon Cloud Indigo', category: 'Nature & Biomes' },
+  { id: 'solarpunk_lime', label: 'Solarpunk Botanical Lime', category: 'Sci-Fi & Neon' },
+  { id: 'obsidian_gold', label: 'Obsidian & Liquid Gold', category: 'Horror & Drama' },
 ];
 
-export const PROP_CATALOG: Array<{ id: PropId; label: string; note: string }> = [
-  { id: 'none', label: 'None', note: 'Clear stage focus' },
-  { id: 'khanda_sword', label: 'Khanda Broadsword', note: 'Gleaming royal steel' },
-  { id: 'bow_arrow', label: 'Divine Bow & Arrow', note: 'Rama Kodanda, Arjuna, Robin Hood' },
-  { id: 'gada_mace', label: 'Golden Gada Mace', note: 'Hanuman & Bhima war mace' },
-  { id: 'sudarshana_chakra', label: 'Sudarshana Chakra', note: 'Spinning golden celestial disc' },
-  { id: 'trishul', label: 'Sacred Trishul', note: 'Shiva, Devi & Poseidon trident' },
-  { id: 'sanjevani_mountain', label: 'Sanjeevani Peak', note: 'Glowing herb mountain carried aloft' },
-  { id: 'signet_ring', label: 'Royal Signet Ring', note: 'Rama’s Chudamani token & Shakuntala' },
-  { id: 'stone_well', label: 'Stone Reflection Well', note: 'Lion & Clever Hare water reflection' },
-  { id: 'wooden_cage', label: 'Hunter’s Wooden Cage', note: 'Panchatantra, Aesop & Jataka rescues' },
-  { id: 'flying_stick', label: 'Carried Bamboo Pole', note: 'Talkative Tortoise mid-air flight' },
-  { id: 'royal_palanquin', label: 'Royal Palki Palanquin', note: 'Royal processions & palanquin riddles' },
-  { id: 'poison_chalice', label: 'Smoking Poison Chalice', note: 'Palace intrigue & devotion trials' },
-  { id: 'golden_egg', label: 'Glowing Golden Egg', note: 'Aesop Goose & Folk boon fables' },
-  { id: 'hand_mirror', label: 'Ornate Brass Mirror', note: 'Vanity, reflections & fairy tales' },
-  { id: 'saffron_feast', label: 'Saffron Rice & Mist', note: 'Chowki, banana leaf, rising mist' },
-  { id: 'seven_mattresses', label: 'Seven Mattresses', note: '7 layers + red hair marker' },
-  { id: 'lotus_petal', label: 'Falling Lotus Petal', note: 'Animated drift + impact ring' },
-  { id: 'diya_lamp', label: 'Brass Diya / Oil Lamp', note: 'Warm flickering flame cone (Aladdin / Diya)' },
-  { id: 'treasure_chest', label: 'Treasure Chest', note: 'Gold coins & rubies' },
-  { id: 'royal_scroll', label: 'Palm-Leaf / Parchment Scroll', note: 'Riddles, decrees, wisdom' },
-  { id: 'kali_idol', label: 'Temple Shrine Idol', note: 'Glowing third-eye silhouette' },
-  { id: 'magic_chariot', label: 'Golden Chariot', note: 'Pushpaka Vimana, Helios & Epic war chariots' },
-  { id: 'earthen_pot', label: 'Terracotta Matka / Jar', note: 'Village, Tenali, Birbal & Folk pots' },
-  { id: 'sacred_fire', label: 'Sacred Campfire / Havan', note: 'Ritual flames & storytelling fire' },
-  { id: 'banyan_bough', label: 'Hanging Banyan Bough', note: 'Perch for Betaal / monkeys' },
-  { id: 'peacock_throne', label: 'Royal Throne', note: 'King seat for durbar & palace scenes' },
-  { id: 'gold_bangle', label: 'Golden Bangle', note: 'Hitopadesha gleaming gold trap' },
-  { id: 'hanging_khichdi_pot', label: 'Birbal Khichdi Tripod', note: 'Clay pot hung high over tiny fire' },
-  { id: 'golden_statue', label: 'Singhasan Putli Statue', note: 'Glowing golden guardian maiden' },
-  { id: 'lotus_pond', label: 'Sacred Lotus Pool', note: 'Moonlit ripples & blooming lotus' },
-  { id: 'measuring_stake', label: 'Earth-Measure Stake', note: 'Gopal Bhar survey peg & rope' },
-  { id: 'wooden_garuda', label: 'Mechanical Garuda', note: 'Kathasaritsagara winged automaton' },
-  { id: 'royal_scales', label: 'Scales of Justice', note: 'Tipping brass balance beam' },
-  { id: 'conch_shell', label: 'Sacred Shankha Conch', note: 'Epic proclamation soundwaves' },
-  { id: 'story_box', label: 'Nyame’s Golden Story Box', note: 'Anansi’s radiant African tale chest' },
-  { id: 'magic_staff', label: 'Ruyi Iron Staff / Wizard Staff', note: 'Sun Wukong’s gilded crimson staff' },
-  { id: 'golden_fleece', label: 'Greek Amphora & Laurel', note: 'Classical Attic vessel & victory wreath' },
-  { id: 'sun_orb', label: 'Radiant Stolen Sun Orb', note: 'Raven Steals the Sun & sky myths' },
-  { id: 'magic_peach', label: 'Giant Immortal Peach', note: 'Journey to the West, Momotaro & Grimm' },
-  { id: 'kris_dagger', label: 'Javanese Golden Kris', note: 'Southeast Asian Wayang & archipelago blade' },
+export const PROP_CATALOG: Array<{ id: PropId; label: string; note: string; category?: string }> = [
+  { id: 'none', label: 'None', note: 'Clear stage focus', category: 'General' },
+  { id: 'khanda_sword', label: 'Khanda Broadsword', note: 'Gleaming royal steel', category: 'Weapons & Armor' },
+  { id: 'bow_arrow', label: 'Divine Bow & Arrow', note: 'Rama Kodanda, Arjuna, Robin Hood', category: 'Weapons & Armor' },
+  { id: 'gada_mace', label: 'Golden Gada Mace', note: 'Hanuman & Bhima war mace', category: 'Weapons & Armor' },
+  { id: 'sudarshana_chakra', label: 'Sudarshana Chakra', note: 'Spinning golden celestial disc', category: 'Magic & Relics' },
+  { id: 'trishul', label: 'Sacred Trishul', note: 'Shiva, Devi & Poseidon trident', category: 'Weapons & Armor' },
+  { id: 'sanjevani_mountain', label: 'Sanjeevani Peak', note: 'Glowing herb mountain carried aloft', category: 'Magic & Relics' },
+  { id: 'signet_ring', label: 'Royal Signet Ring', note: 'Rama’s Chudamani token & Shakuntala', category: 'Magic & Relics' },
+  { id: 'stone_well', label: 'Stone Reflection Well', note: 'Lion & Clever Hare water reflection', category: 'Folklore & World' },
+  { id: 'wooden_cage', label: 'Hunter’s Wooden Cage', note: 'Panchatantra, Aesop & Jataka rescues', category: 'Folklore & World' },
+  { id: 'flying_stick', label: 'Carried Bamboo Pole', note: 'Talkative Tortoise mid-air flight', category: 'Folklore & World' },
+  { id: 'royal_palanquin', label: 'Royal Palki Palanquin', note: 'Royal processions & palanquin riddles', category: 'Vehicles & Travel' },
+  { id: 'poison_chalice', label: 'Smoking Poison Chalice', note: 'Palace intrigue & devotion trials', category: 'Mystery & Noir' },
+  { id: 'golden_egg', label: 'Glowing Golden Egg', note: 'Aesop Goose & Folk boon fables', category: 'Magic & Relics' },
+  { id: 'hand_mirror', label: 'Ornate Brass Mirror', note: 'Vanity, reflections & fairy tales', category: 'Folklore & World' },
+  { id: 'saffron_feast', label: 'Saffron Rice & Mist', note: 'Chowki, banana leaf, rising mist', category: 'Food & Feast' },
+  { id: 'seven_mattresses', label: 'Seven Mattresses', note: '7 layers + red hair marker', category: 'Folklore & World' },
+  { id: 'lotus_petal', label: 'Falling Lotus Petal', note: 'Animated drift + impact ring', category: 'Folklore & World' },
+  { id: 'diya_lamp', label: 'Brass Diya / Oil Lamp', note: 'Warm flickering flame cone (Aladdin / Diya)', category: 'Magic & Relics' },
+  { id: 'treasure_chest', label: 'Treasure Chest', note: 'Gold coins & rubies', category: 'Magic & Relics' },
+  { id: 'royal_scroll', label: 'Palm-Leaf / Parchment Scroll', note: 'Riddles, decrees, wisdom', category: 'Folklore & World' },
+  { id: 'kali_idol', label: 'Temple Shrine Idol', note: 'Glowing third-eye silhouette', category: 'Magic & Relics' },
+  { id: 'magic_chariot', label: 'Golden Chariot', note: 'Pushpaka Vimana, Helios & Epic war chariots', category: 'Vehicles & Travel' },
+  { id: 'earthen_pot', label: 'Terracotta Matka / Jar', note: 'Village, Tenali, Birbal & Folk pots', category: 'Food & Feast' },
+  { id: 'sacred_fire', label: 'Sacred Campfire / Havan', note: 'Ritual flames & storytelling fire', category: 'Folklore & World' },
+  { id: 'banyan_bough', label: 'Hanging Banyan Bough', note: 'Perch for Betaal / monkeys', category: 'Folklore & World' },
+  { id: 'peacock_throne', label: 'Royal Throne', note: 'King seat for durbar & palace scenes', category: 'Folklore & World' },
+  { id: 'gold_bangle', label: 'Golden Bangle', note: 'Hitopadesha gleaming gold trap', category: 'Magic & Relics' },
+  { id: 'hanging_khichdi_pot', label: 'Birbal Khichdi Tripod', note: 'Clay pot hung high over tiny fire', category: 'Food & Feast' },
+  { id: 'golden_statue', label: 'Singhasan Putli Statue', note: 'Glowing golden guardian maiden', category: 'Magic & Relics' },
+  { id: 'lotus_pond', label: 'Sacred Lotus Pool', note: 'Moonlit ripples & blooming lotus', category: 'Folklore & World' },
+  { id: 'measuring_stake', label: 'Earth-Measure Stake', note: 'Gopal Bhar survey peg & rope', category: 'Folklore & World' },
+  { id: 'wooden_garuda', label: 'Mechanical Garuda', note: 'Kathasaritsagara winged automaton', category: 'Vehicles & Travel' },
+  { id: 'royal_scales', label: 'Scales of Justice', note: 'Tipping brass balance beam', category: 'Office & Media' },
+  { id: 'conch_shell', label: 'Sacred Shankha Conch', note: 'Epic proclamation soundwaves', category: 'Music & Culture' },
+  { id: 'story_box', label: 'Nyame’s Golden Story Box', note: 'Anansi’s radiant African tale chest', category: 'Magic & Relics' },
+  { id: 'magic_staff', label: 'Ruyi Iron Staff / Wizard Staff', note: 'Sun Wukong’s gilded crimson staff', category: 'Weapons & Armor' },
+  { id: 'golden_fleece', label: 'Greek Amphora & Laurel', note: 'Classical Attic vessel & victory wreath', category: 'Music & Culture' },
+  { id: 'sun_orb', label: 'Radiant Stolen Sun Orb', note: 'Raven Steals the Sun & sky myths', category: 'Magic & Relics' },
+  { id: 'magic_peach', label: 'Giant Immortal Peach', note: 'Journey to the West, Momotaro & Grimm', category: 'Food & Feast' },
+  { id: 'kris_dagger', label: 'Javanese Golden Kris', note: 'Southeast Asian Wayang & archipelago blade', category: 'Weapons & Armor' },
   // Wave 3: +24 Multi-Genre Props (65 total)
-  { id: 'magnifying_glass', label: 'Detective Magnifying Glass', note: 'Noir clue lens with glint' },
-  { id: 'holo_tablet', label: 'Holographic Data Tablet', note: 'Glowing sci-fi projection slate' },
-  { id: 'energy_blade', label: 'Plasma Energy Blade', note: 'Luminous sci-fi laser saber' },
-  { id: 'neon_drone', label: 'Hovering Neon Drone', note: 'Orbiting recon drone with optic beam' },
-  { id: 'vintage_camera', label: 'Vintage Press Camera', note: 'Classic flash-bulb journalism camera' },
-  { id: 'microphone_stand', label: 'Studio Broadcast Mic', note: 'Chrome podcast & stage condenser mic' },
-  { id: 'briefcase', label: 'Executive Leather Briefcase', note: 'Noir dossier & business mystery case' },
-  { id: 'newspaper_frontpage', label: 'Breaking News Frontpage', note: 'Extra! Extra! printed headline sheet' },
-  { id: 'coffee_mug', label: 'Steaming Coffee Mug', note: 'Cozy café & late-night desk cup' },
-  { id: 'laptop_screen', label: 'Glowing Code Laptop', note: 'Modern hacker & creator workstation' },
-  { id: 'potion_flask', label: 'Bubbling Alchemy Flask', note: 'Glowing emerald/violet elixir bottle' },
-  { id: 'spellbook_tome', label: 'Arcane Spellbook Tome', note: 'Floating leather grimoire with runes' },
-  { id: 'wizard_staff', label: 'Crystal-Tipped Wizard Staff', note: 'Gnarled oak staff with pulsing orb' },
-  { id: 'crystal_amulet', label: 'Radiant Crystal Amulet', note: 'Enchanted prism pendant with halo' },
-  { id: 'brass_compass', label: 'Nautical Brass Compass', note: 'Spinning expedition needle & dial' },
-  { id: 'antique_pocketwatch', label: 'Antique Pocket Watch', note: 'Steampunk ticking timepiece & chain' },
-  { id: 'violin_bow', label: 'Concert Violin & Bow', note: 'Classical strings & noir melody' },
-  { id: 'electric_guitar', label: 'Electric Rock Guitar', note: 'Indie stage & cyber-band riff axe' },
-  { id: 'golden_trophy', label: 'Championship Golden Trophy', note: 'Gleaming victory cup & laurel base' },
-  { id: 'judge_gavel', label: 'Courtroom Judge Gavel', note: 'Mahogany verdict mallet & sound block' },
-  { id: 'microscope', label: 'Laboratory Microscope', note: 'Precision optical STEM instrument' },
-  { id: 'rocket_model', label: 'Orbital Launch Rocket', note: 'Retro-futurist spacecraft model' },
-  { id: 'pirate_map', label: 'Weathered Treasure Map', note: 'Parchment sea chart with crimson X' },
-  { id: 'key_ornate', label: 'Ornate Skeleton Key', note: 'Gilded gothic vault & mystery key' },
+  { id: 'magnifying_glass', label: 'Detective Magnifying Glass', note: 'Noir clue lens with glint', category: 'Mystery & Noir' },
+  { id: 'holo_tablet', label: 'Holographic Data Tablet', note: 'Glowing sci-fi projection slate', category: 'Sci-Fi & Tech' },
+  { id: 'energy_blade', label: 'Plasma Energy Blade', note: 'Luminous sci-fi laser saber', category: 'Weapons & Armor' },
+  { id: 'neon_drone', label: 'Hovering Neon Drone', note: 'Orbiting recon drone with optic beam', category: 'Sci-Fi & Tech' },
+  { id: 'vintage_camera', label: 'Vintage Press Camera', note: 'Classic flash-bulb journalism camera', category: 'Office & Media' },
+  { id: 'microphone_stand', label: 'Studio Broadcast Mic', note: 'Chrome podcast & stage condenser mic', category: 'Office & Media' },
+  { id: 'briefcase', label: 'Executive Leather Briefcase', note: 'Noir dossier & business mystery case', category: 'Office & Media' },
+  { id: 'newspaper_frontpage', label: 'Breaking News Frontpage', note: 'Extra! Extra! printed headline sheet', category: 'Office & Media' },
+  { id: 'coffee_mug', label: 'Steaming Coffee Mug', note: 'Cozy café & late-night desk cup', category: 'Food & Feast' },
+  { id: 'laptop_screen', label: 'Glowing Code Laptop', note: 'Modern hacker & creator workstation', category: 'Sci-Fi & Tech' },
+  { id: 'potion_flask', label: 'Bubbling Alchemy Flask', note: 'Glowing emerald/violet elixir bottle', category: 'Magic & Relics' },
+  { id: 'spellbook_tome', label: 'Arcane Spellbook Tome', note: 'Floating leather grimoire with runes', category: 'Magic & Relics' },
+  { id: 'wizard_staff', label: 'Crystal-Tipped Wizard Staff', note: 'Gnarled oak staff with pulsing orb', category: 'Magic & Relics' },
+  { id: 'crystal_amulet', label: 'Radiant Crystal Amulet', note: 'Enchanted prism pendant with halo', category: 'Magic & Relics' },
+  { id: 'brass_compass', label: 'Nautical Brass Compass', note: 'Spinning expedition needle & dial', category: 'Vehicles & Travel' },
+  { id: 'antique_pocketwatch', label: 'Antique Pocket Watch', note: 'Steampunk ticking timepiece & chain', category: 'Mystery & Noir' },
+  { id: 'violin_bow', label: 'Concert Violin & Bow', note: 'Classical strings & noir melody', category: 'Music & Culture' },
+  { id: 'electric_guitar', label: 'Electric Rock Guitar', note: 'Indie stage & cyber-band riff axe', category: 'Music & Culture' },
+  { id: 'golden_trophy', label: 'Championship Golden Trophy', note: 'Gleaming victory cup & laurel base', category: 'Sports & Kids' },
+  { id: 'judge_gavel', label: 'Courtroom Judge Gavel', note: 'Mahogany verdict mallet & sound block', category: 'Office & Media' },
+  { id: 'microscope', label: 'Laboratory Microscope', note: 'Precision optical STEM instrument', category: 'Science & Lab' },
+  { id: 'rocket_model', label: 'Orbital Launch Rocket', note: 'Retro-futurist spacecraft model', category: 'Sci-Fi & Tech' },
+  { id: 'pirate_map', label: 'Weathered Treasure Map', note: 'Parchment sea chart with crimson X', category: 'Vehicles & Travel' },
+  { id: 'key_ornate', label: 'Ornate Skeleton Key', note: 'Gilded gothic vault & mystery key', category: 'Mystery & Noir' },
+  // Wave 5: Weapons & Armor (12)
+  { id: 'katana_blade', label: 'Curved Samurai Katana', note: 'Folded steel blade with silk-wrapped hilt', category: 'Weapons & Armor' },
+  { id: 'viking_battleaxe', label: 'Nordic Runic Battleaxe', note: 'Bearded iron war axe with ash haft', category: 'Weapons & Armor' },
+  { id: 'knight_shield', label: 'Heraldic Knight Shield', note: 'Steel heater shield with golden crest', category: 'Weapons & Armor' },
+  { id: 'crossbow_bolts', label: 'Arbalest Crossbow', note: 'Heavy medieval crossbow loaded with bolt', category: 'Weapons & Armor' },
+  { id: 'spear_halberd', label: 'Royal Halberd Polearm', note: 'Long axe-spear with crimson tassel', category: 'Weapons & Armor' },
+  { id: 'flintlock_pistol', label: 'Brass Flintlock Pistol', note: 'Pirate & frontier engraved flintlock', category: 'Weapons & Armor' },
+  { id: 'laser_rifle', label: 'Tactical Laser Rifle', note: 'Sci-fi pulse carbine with cyan emitter', category: 'Weapons & Armor' },
+  { id: 'plasma_cannon', label: 'Heavy Plasma Cannon', note: 'Glowing twin-coil energy launcher', category: 'Weapons & Armor' },
+  { id: 'shuriken_star', label: 'Spinning Ninja Shuriken', note: 'Four-point razor throwing star', category: 'Weapons & Armor' },
+  { id: 'war_hammer', label: 'Runic War Hammer', note: 'Massive forged battle hammer with lightning', category: 'Weapons & Armor' },
+  { id: 'roman_gladius', label: 'Roman Legion Gladius', note: 'Short legionary sword with brass pommel', category: 'Weapons & Armor' },
+  { id: 'grappling_hook', label: 'Steel Grappling Hook', note: 'Tri-prong climbing hook & coiled rope', category: 'Weapons & Armor' },
+  // Wave 5: Magic & Mythic Relics (12)
+  { id: 'crystal_ball', label: 'Fortune Crystal Ball', note: 'Swirling nebula orb on brass claw stand', category: 'Magic & Relics' },
+  { id: 'runestone_tablet', label: 'Glowing Runestone Tablet', note: 'Ancient carved slab pulsing with runes', category: 'Magic & Relics' },
+  { id: 'phoenix_feather', label: 'Blazing Phoenix Feather', note: 'Radiant golden-crimson rebirth plume', category: 'Magic & Relics' },
+  { id: 'dragon_egg', label: 'Scaled Dragon Egg', note: 'Glowing ember-veined mythical egg', category: 'Magic & Relics' },
+  { id: 'enchanted_chalice', label: 'Enchanted Holy Chalice', note: 'Jeweled golden goblet with rising glow', category: 'Magic & Relics' },
+  { id: 'grimoire_chained', label: 'Chained Dark Grimoire', note: 'Iron-bound forbidden spellbook with lock', category: 'Magic & Relics' },
+  { id: 'hourglass_sands', label: 'Chrono Hourglass Sands', note: 'Brass timekeeper with shimmering gold sand', category: 'Magic & Relics' },
+  { id: 'astral_orrery', label: 'Brass Astral Orrery', note: 'Orbiting mechanical solar system model', category: 'Magic & Relics' },
+  { id: 'voodoo_totem', label: 'Carved Spirit Totem', note: 'Painted folklore wooden mask idol', category: 'Magic & Relics' },
+  { id: 'magic_carpet', label: 'Floating Magic Carpet', note: 'Tasseled Persian rug hovering aloft', category: 'Magic & Relics' },
+  { id: 'genie_lamp', label: 'Arabian Genie Lamp', note: 'Curved gold lamp trailing cyan smoke', category: 'Magic & Relics' },
+  { id: 'crown_jeweled', label: 'Imperial Jeweled Crown', note: 'Velvet-lined royal crown with rubies', category: 'Magic & Relics' },
+  // Wave 5: Sci-Fi & Tech Gadgets (12)
+  { id: 'smartphone_glow', label: 'Glowing Smartphone', note: 'Modern notification screen & sleek bezel', category: 'Sci-Fi & Tech' },
+  { id: 'vr_headset', label: 'VR Cyberspace Headset', note: 'Visor goggles with neon optic strip', category: 'Sci-Fi & Tech' },
+  { id: 'cyber_deck', label: 'Netrunner Cyberdeck', note: 'Tactical portable hacking console', category: 'Sci-Fi & Tech' },
+  { id: 'server_rack', label: 'Data Center Server Rack', note: 'Blinking blade tower with status LEDs', category: 'Sci-Fi & Tech' },
+  { id: 'ai_core_cube', label: 'Sentient AI Core Cube', note: 'Levitating neural lattice energy cube', category: 'Sci-Fi & Tech' },
+  { id: 'dna_helix_vial', label: 'DNA Double-Helix Vial', note: 'Glowing cyan genetic containment tube', category: 'Sci-Fi & Tech' },
+  { id: 'sat_dish_mini', label: 'Orbital Satellite Dish', note: 'Parabolic comms dish with signal arcs', category: 'Sci-Fi & Tech' },
+  { id: 'jetpack_thruster', label: 'Twin Jetpack Thruster', note: 'Rocket pack with blue ion exhaust', category: 'Sci-Fi & Tech' },
+  { id: 'teleport_pad', label: 'Quantum Teleport Pad', note: 'Glowing ring emitter with beam column', category: 'Sci-Fi & Tech' },
+  { id: 'mech_battery', label: 'Fusion Mech Battery', note: 'Heavy industrial plasma power cell', category: 'Sci-Fi & Tech' },
+  { id: 'radar_scanner', label: 'Tactical Radar Scanner', note: 'Sweeping green sonar & motion tracker', category: 'Sci-Fi & Tech' },
+  { id: 'hologram_globe', label: 'Hologram Wireframe Globe', note: 'Spinning projected planetary wireframe', category: 'Sci-Fi & Tech' },
+  // Wave 5: Modern Office, Media & Finance (12)
+  { id: 'gold_bullion_bars', label: 'Stacked Gold Bullion', note: 'Gleaming vault pyramid of gold ingots', category: 'Office & Media' },
+  { id: 'stock_chart_board', label: 'Bull & Bear Stock Chart', note: 'Glowing candlestick & upward green trend', category: 'Office & Media' },
+  { id: 'studio_camera_rig', label: 'Cinema Studio Camera', note: 'Matte box lens rig with red tally light', category: 'Office & Media' },
+  { id: 'clapperboard_slate', label: 'Director Clapperboard', note: 'Striped film production take slate', category: 'Office & Media' },
+  { id: 'podcast_mic_arm', label: 'Podcast Boom Mic Arm', note: 'Articulated studio arm & pop filter', category: 'Office & Media' },
+  { id: 'whiteboard_diagram', label: 'Strategy Whiteboard', note: 'Flowchart arrows & sticky note clusters', category: 'Office & Media' },
+  { id: 'stack_of_cash', label: 'Banded Stack of Cash', note: 'Crisp bank bundles with gold paper strap', category: 'Office & Media' },
+  { id: 'credit_card_gold', label: 'Gold Executive Card', note: 'Metallic EMV chip card with sheen', category: 'Office & Media' },
+  { id: 'contract_dossier', label: 'Signed Legal Contract', note: 'Fountain pen & official stamped dossier', category: 'Office & Media' },
+  { id: 'megaphone_bullhorn', label: 'Rally Bullhorn Megaphone', note: 'Loudspeaker with acoustic sound waves', category: 'Office & Media' },
+  { id: 'press_badge', label: 'VIP Press Lanyard Badge', note: 'Official media pass with photo ID', category: 'Office & Media' },
+  { id: 'trophy_cup_silver', label: 'Silver Championship Cup', note: 'Polished chrome award chalice on plinth', category: 'Office & Media' },
+  // Wave 5: Science, Medical & Lab (12)
+  { id: 'stethoscope_med', label: 'Clinical Stethoscope', note: 'Doctor acoustic diaphragm & coiled tube', category: 'Science & Lab' },
+  { id: 'beaker_bubbling', label: 'Bubbling Chemistry Beaker', note: 'Graduated flask with rising neon bubbles', category: 'Science & Lab' },
+  { id: 'telescope_brass', label: 'Brass Refractor Telescope', note: 'Tripod-mounted astronomical spyglass', category: 'Science & Lab' },
+  { id: 'globe_terrestrial', label: 'Classroom World Globe', note: 'Tilted meridian stand & ocean continents', category: 'Science & Lab' },
+  { id: 'skeleton_model', label: 'Anatomy Skeleton Model', note: 'Lab ribcage & skull teaching display', category: 'Science & Lab' },
+  { id: 'first_aid_kit', label: 'Emergency First Aid Kit', note: 'White medical case with bold red cross', category: 'Science & Lab' },
+  { id: 'syringe_serum', label: 'Glowing Serum Syringe', note: 'Precision glass medical injector', category: 'Science & Lab' },
+  { id: 'x_ray_lightbox', label: 'Medical X-Ray Lightbox', note: 'Backlit diagnostic scan film display', category: 'Science & Lab' },
+  { id: 'chalkboard_equations', label: 'Chalkboard Equations', note: 'Slate board with E=mc² & geometry', category: 'Science & Lab' },
+  { id: 'atom_model', label: 'Orbiting Atom Model', note: 'Glowing nucleus & spinning electron rings', category: 'Science & Lab' },
+  { id: 'geiger_counter', label: 'Yellow Geiger Counter', note: 'Radiation meter dial with wand probe', category: 'Science & Lab' },
+  { id: 'fossil_ammonite', label: 'Spiral Ammonite Fossil', note: 'Prehistoric stone spiral shell specimen', category: 'Science & Lab' },
+  // Wave 5: Music, Art & Culture (12)
+  { id: 'sitar_instrument', label: 'Classical Indian Sitar', note: 'Carved gourd resonator & fretted neck', category: 'Music & Culture' },
+  { id: 'tabla_drums', label: 'Concert Tabla Pair', note: 'Bayan copper drum & Dayan wooden treble', category: 'Music & Culture' },
+  { id: 'grand_piano_mini', label: 'Concert Grand Piano', note: 'Ebony open-lid piano with ivory keys', category: 'Music & Culture' },
+  { id: 'paintbrush_palette', label: 'Artist Paint Palette', note: 'Wooden thumb palette with vivid daubs', category: 'Music & Culture' },
+  { id: 'movie_projector', label: 'Vintage Film Projector', note: 'Spinning twin reels & flickering light cone', category: 'Music & Culture' },
+  { id: 'vinyl_turntable', label: 'Retro Vinyl Turntable', note: 'Spinning LP record & tonearm needle', category: 'Music & Culture' },
+  { id: 'dj_mixer_deck', label: 'Neon DJ Mixer Deck', note: 'Dual jog wheels & glowing EQ faders', category: 'Music & Culture' },
+  { id: 'theater_masks', label: 'Comedy & Tragedy Masks', note: 'Twin classical stage drama masks', category: 'Music & Culture' },
+  { id: 'origami_crane', label: 'Folded Origami Crane', note: 'Crisp faceted paper crane hovering softly', category: 'Music & Culture' },
+  { id: 'calligraphy_brush', label: 'Ink Calligraphy Brush', note: 'Bamboo brush over dark stone inkwell', category: 'Music & Culture' },
+  { id: 'bamboo_flute', label: 'Bansuri Bamboo Flute', note: 'Golden bamboo flute with peacock tassel', category: 'Music & Culture' },
+  { id: 'war_horn_brass', label: 'Curved Brass War Horn', note: 'Viking & epic signaling horn with rings', category: 'Music & Culture' },
+  // Wave 5: Food, Feast & Tavern (12)
+  { id: 'steaming_ramen_bowl', label: 'Steaming Ramen Bowl', note: 'Noodles, egg, chopsticks & rising steam', category: 'Food & Feast' },
+  { id: 'royal_thali_platter', label: 'Royal Brass Thali', note: 'Feast platter with bowls, flatbread & sweets', category: 'Food & Feast' },
+  { id: 'birthday_cake_lit', label: 'Lit Birthday Cake', note: 'Frosted celebration cake with glowing candles', category: 'Food & Feast' },
+  { id: 'pizza_slice_box', label: 'Hot Pizza Box & Slice', note: 'Open delivery box with cheesy pepperoni slice', category: 'Food & Feast' },
+  { id: 'teapot_porcelain', label: 'Porcelain Tea Pot', note: 'Blue-and-white ceramic teapot with steam', category: 'Food & Feast' },
+  { id: 'spice_jar_rack', label: 'Artisan Spice Jar Rack', note: 'Saffron, turmeric & chili glass jars', category: 'Food & Feast' },
+  { id: 'fruit_basket', label: 'Woven Harvest Fruit Basket', note: 'Apples, mangoes & grapes in wicker basket', category: 'Food & Feast' },
+  { id: 'campfire_kettle', label: 'Cast-Iron Camp Kettle', note: 'Boiling trail kettle over glowing coals', category: 'Food & Feast' },
+  { id: 'goblet_wine', label: 'Ruby Banquet Goblet', note: 'Ornate silver stemware for royal feasts', category: 'Food & Feast' },
+  { id: 'honey_jar', label: 'Golden Honey Jar & Dipper', note: 'Amber glass jar with wooden honey wand', category: 'Food & Feast' },
+  { id: 'bread_loaf_basket', label: 'Warm Bakery Bread Basket', note: 'Crusty sourdough & baguettes on linen', category: 'Food & Feast' },
+  { id: 'ice_cream_cone', label: 'Triple-Scoop Ice Cream', note: 'Waffle cone with pastel scoops & cherry', category: 'Food & Feast' },
+  // Wave 5: Vehicles & Travel Gear (12)
+  { id: 'vintage_suitcase', label: 'Stickered Travel Suitcase', note: 'Leather trunk with brass clasps & tags', category: 'Vehicles & Travel' },
+  { id: 'treasure_map_tube', label: 'Brass Map Scroll Tube', note: 'Explorer leather case with protruding chart', category: 'Vehicles & Travel' },
+  { id: 'ship_wheel_helm', label: 'Wooden Ship Helm Wheel', note: 'Eight-spoke captain’s steering wheel', category: 'Vehicles & Travel' },
+  { id: 'hot_air_basket', label: 'Mini Hot-Air Balloon', note: 'Striped envelope & wicker gondola basket', category: 'Vehicles & Travel' },
+  { id: 'bicycle_classic', label: 'Classic Touring Bicycle', note: 'Spoked twin wheels & front wicker basket', category: 'Vehicles & Travel' },
+  { id: 'motorcycle_helmet', label: 'Racing Motorcycle Helmet', note: 'Glossy visor shell with speed stripes', category: 'Vehicles & Travel' },
+  { id: 'astronaut_helmet', label: 'Gold-Visor EVA Helmet', note: 'Reflective orbital spacewalk helmet', category: 'Vehicles & Travel' },
+  { id: 'anchor_iron', label: 'Heavy Iron Ship Anchor', note: 'Nautical fluke anchor with coiled chain', category: 'Vehicles & Travel' },
+  { id: 'lantern_storm', label: 'Brass Storm Lantern', note: 'Caged glass kerosene lamp with warm glow', category: 'Vehicles & Travel' },
+  { id: 'boarding_pass', label: 'Flight Boarding Pass', note: 'Airport ticket stub with jet icon & barcode', category: 'Vehicles & Travel' },
+  { id: 'binoculars_field', label: 'Safari Field Binoculars', note: 'Dual-lens scout optics with teal glint', category: 'Vehicles & Travel' },
+  { id: 'tent_camping', label: 'Expedition Camp Tent', note: 'Glowing A-frame trail tent under stars', category: 'Vehicles & Travel' },
+  // Wave 5: Mystery, Crime & Noir (12)
+  { id: 'handcuffs_steel', label: 'Linked Steel Handcuffs', note: 'Polished police restraint cuffs & chain', category: 'Mystery & Noir' },
+  { id: 'evidence_bag', label: 'Tagged Evidence Bag', note: 'Clear forensic pouch with numbered tag', category: 'Mystery & Noir' },
+  { id: 'fingerprint_card', label: 'Forensic Fingerprint Card', note: 'Magnified whorl print & case file stamp', category: 'Mystery & Noir' },
+  { id: 'crime_tape_roll', label: 'Yellow Crime Scene Tape', note: 'Caution barrier ribbon roll', category: 'Mystery & Noir' },
+  { id: 'revolver_noir', label: 'Classic Noir Revolver', note: 'Snub-nose detective prop silhouette', category: 'Mystery & Noir' },
+  { id: 'safe_dial_door', label: 'Steel Combination Safe', note: 'Heavy lockbox with spinning brass dial', category: 'Mystery & Noir' },
+  { id: 'red_string_board', label: 'Conspiracy Cork Board', note: 'Pinned clue photos linked by red yarn', category: 'Mystery & Noir' },
+  { id: 'secret_envelope', label: 'Wax-Sealed Secret Letter', note: 'Top-secret dossier with crimson wax seal', category: 'Mystery & Noir' },
+  { id: 'skeleton_key_ring', label: 'Jailer Skeleton Key Ring', note: 'Iron ring jingling with antique keys', category: 'Mystery & Noir' },
+  { id: 'poison_vial_green', label: 'Emerald Poison Vial', note: 'Skull-labeled glowing green apothecary vial', category: 'Mystery & Noir' },
+  { id: 'candle_candelabra', label: 'Gothic Brass Candelabra', note: 'Three-branch manor candlestick with flames', category: 'Mystery & Noir' },
+  { id: 'skull_relic', label: 'Ancient Catacomb Skull', note: 'Dramatic gothic memento mori relic', category: 'Mystery & Noir' },
+  // Wave 5: Sports, Kids & Everyday (12)
+  { id: 'cricket_bat_ball', label: 'Willow Cricket Bat & Ball', note: 'Classic leather seam ball & cricket bat', category: 'Sports & Kids' },
+  { id: 'soccer_ball_classic', label: 'Classic Soccer Football', note: 'Pentagon-panel championship match ball', category: 'Sports & Kids' },
+  { id: 'boxing_gloves', label: 'Laced Red Boxing Gloves', note: 'Hanging pair of heavyweight ring gloves', category: 'Sports & Kids' },
+  { id: 'chess_board_set', label: 'Royal Chess Board & King', note: 'Checkered strategy board & carved pieces', category: 'Sports & Kids' },
+  { id: 'rubber_ducky', label: 'Cheerful Rubber Ducky', note: 'Bright yellow kids mascot & coder duck', category: 'Sports & Kids' },
+  { id: 'teddy_bear', label: 'Plush Storybook Teddy', note: 'Stitched brown teddy bear with ribbon', category: 'Sports & Kids' },
+  { id: 'kite_diamond', label: 'Fluttering Diamond Kite', note: 'Festival paper kite with ribbon tail', category: 'Sports & Kids' },
+  { id: 'gift_box_ribbon', label: 'Wrapped Gift Box', note: 'Festive parcel with golden satin bow', category: 'Sports & Kids' },
+  { id: 'skateboard_deck', label: 'Graphic Skateboard Deck', note: 'Street cruiser deck with colorful wheels', category: 'Sports & Kids' },
+  { id: 'watering_can', label: 'Garden Watering Can', note: 'Tin garden spout with gentle water drops', category: 'Sports & Kids' },
+  { id: 'hammer_wrench', label: 'Workshop Hammer & Wrench', note: 'Crossed builder & maker hand tools', category: 'Sports & Kids' },
+  { id: 'stopwatch_sport', label: 'Precision Sports Stopwatch', note: 'Chrome lap timer with sweeping dial hand', category: 'Sports & Kids' },
 ];
 
 export const SHOT_CATALOG: Array<{ id: ShotId; label: string }> = [
@@ -1045,20 +1864,39 @@ export const FRAME_CATALOG: Array<{ id: FrameMode; label: string }> = [
   { id: 'end_screen', label: 'YouTube End Screen' },
 ];
 
-export const CROWD_CATALOG: Array<{ id: CrowdId; label: string }> = [
-  { id: 'none', label: 'No Crowd' },
-  { id: 'courtiers', label: 'Royal Courtiers' },
-  { id: 'villagers', label: 'Village Folk' },
-  { id: 'army', label: 'Epic Army & Spears' },
-  { id: 'forest_herd', label: 'Forest Herd' },
-  { id: 'monks', label: 'Sages & Monks' },
+export const CROWD_CATALOG: Array<{ id: CrowdId; label: string; category?: string }> = [
+  { id: 'none', label: 'No Crowd', category: 'General' },
+  { id: 'courtiers', label: 'Royal Courtiers', category: 'Historical & Epic' },
+  { id: 'villagers', label: 'Village Folk', category: 'Historical & Epic' },
+  { id: 'army', label: 'Epic Army & Spears', category: 'Historical & Epic' },
+  { id: 'forest_herd', label: 'Forest Herd', category: 'Nature & Mythic' },
+  { id: 'monks', label: 'Sages & Monks', category: 'Historical & Epic' },
   // Wave 3: +6 Crowds (12 total)
-  { id: 'city_commuters', label: 'City Commuters & Umbrellas' },
-  { id: 'cyber_drones', label: 'Patrol Cyber Drones' },
-  { id: 'pirate_crew', label: 'Pirate Deck Crew' },
-  { id: 'scholars_hall', label: 'Scholars & Senate Hall' },
-  { id: 'spectral_flock', label: 'Spectral Flock & Bats' },
-  { id: 'masquerade_ball', label: 'Masquerade Ballroom Guests' },
+  { id: 'city_commuters', label: 'City Commuters & Umbrellas', category: 'Modern & Civic' },
+  { id: 'cyber_drones', label: 'Patrol Cyber Drones', category: 'Sci-Fi & Fantasy' },
+  { id: 'pirate_crew', label: 'Pirate Deck Crew', category: 'Historical & Epic' },
+  { id: 'scholars_hall', label: 'Scholars & Senate Hall', category: 'Historical & Epic' },
+  { id: 'spectral_flock', label: 'Spectral Flock & Bats', category: 'Sci-Fi & Fantasy' },
+  { id: 'masquerade_ball', label: 'Masquerade Ballroom Guests', category: 'Historical & Epic' },
+  // Wave 5: +18 Crowds (30 total)
+  { id: 'stadium_fans', label: 'Cheering Stadium Fans', category: 'Modern & Civic' },
+  { id: 'festival_dancers', label: 'Festival Lantern Dancers', category: 'Historical & Epic' },
+  { id: 'bazaar_merchants', label: 'Bustling Bazaar Merchants', category: 'Historical & Epic' },
+  { id: 'press_paparazzi', label: 'Press & Flashing Paparazzi', category: 'Modern & Civic' },
+  { id: 'protest_rally', label: 'Civic March & Placards', category: 'Modern & Civic' },
+  { id: 'mech_squadron', label: 'Armored Mech Squadron', category: 'Sci-Fi & Fantasy' },
+  { id: 'fairy_wisps', label: 'Glowing Fairy Wisps', category: 'Sci-Fi & Fantasy' },
+  { id: 'undead_horde', label: 'Rising Undead Horde', category: 'Sci-Fi & Fantasy' },
+  { id: 'safari_herd', label: 'Savanna Safari Herd', category: 'Nature & Mythic' },
+  { id: 'ballroom_waltz', label: 'Grand Ballroom Waltz', category: 'Historical & Epic' },
+  { id: 'courtroom_gallery', label: 'Courtroom Jury & Gallery', category: 'Modern & Civic' },
+  { id: 'orchestra_pit', label: 'Symphony Orchestra Pit', category: 'Modern & Civic' },
+  { id: 'space_dock_crew', label: 'Space Dock Flight Crew', category: 'Sci-Fi & Fantasy' },
+  { id: 'tavern_patrons', label: 'Rowdy Tavern Patrons', category: 'Historical & Epic' },
+  { id: 'school_hallway', label: 'Campus & School Hallway', category: 'Modern & Civic' },
+  { id: 'roman_legion', label: 'Roman Shield Legion', category: 'Historical & Epic' },
+  { id: 'ninja_clan', label: 'Rooftop Ninja Clan', category: 'Historical & Epic' },
+  { id: 'circus_audience', label: 'Big-Top Circus Audience', category: 'Modern & Civic' },
 ];
 
 export const CAMERA_MOVE_CATALOG: Array<{ id: CameraMoveId; label: string }> = [
@@ -1318,6 +2156,25 @@ export const WEATHER_LIST: WeatherId[] = [
   'starfall',
   'sakura_blossoms',
   'data_matrix',
+  // Wave 5: +18 Weathers (30 total)
+  'autumn_leaves',
+  'floating_lanterns',
+  'underwater_bubbles',
+  'confetti_shower',
+  'ash_fallout',
+  'acid_rain',
+  'aurora_ribbons',
+  'dandelion_seeds',
+  'meteor_shower',
+  'neon_sparks',
+  'golden_pollen',
+  'plasma_arcs',
+  'hailstorm',
+  'blizzard_gale',
+  'fog_bank',
+  'locust_swarm',
+  'volcanic_cinders',
+  'starlight_dust',
 ];
 export const FX_LIST: FxId[] = [
   'none',
@@ -1334,6 +2191,29 @@ export const FX_LIST: FxId[] = [
   'shatter_glass',
   'heartbeat_pulse',
   'comic_pow',
+  // Wave 5: +22 Beat FX (36 total)
+  'anime_impact_frame',
+  'chromatic_split',
+  'lens_flare_sweep',
+  'portal_vortex',
+  'time_freeze_ripple',
+  'sonic_boom_rings',
+  'ink_splatter_burst',
+  'holographic_scan',
+  'lightning_web',
+  'petal_cyclone',
+  'fire_breath_cone',
+  'frost_crystallize',
+  'shadow_tendrils',
+  'golden_halo_burst',
+  'crt_scan_flash',
+  'blood_moon_eclipse',
+  'laser_grid',
+  'starlight_nova',
+  'comic_speed_zoom',
+  'water_splash_arc',
+  'dust_shockwave',
+  'radar_ping',
 ];
 
 export const SFX_CATALOG: Array<{ id: SfxId; label: string; note: string }> = [
@@ -1876,6 +2756,117 @@ export const ARCHETYPE_DEFAULT_COLORS: Record<
   street_musician: { primary: '#4c1d95', accent: '#f472b6', skin: '#c9885b' },
   cat_mascot: { primary: '#ea580c', accent: '#fde047', skin: '#fb923c' },
   robot_companion: { primary: '#0ea5e9', accent: '#fde047', skin: '#e0f2fe' },
+  // Wave 5: +100 Universal Archetype Palettes
+  // World Mythology & Legends (10)
+  zeus_thunderer: { primary: '#f1f5f9', accent: '#facc15', skin: '#e6b894' },
+  athena_strategist: { primary: '#1d4ed8', accent: '#f5be38', skin: '#e8bc99' },
+  anubis_guardian: { primary: '#1e293b', accent: '#facc15', skin: '#18181b' },
+  valkyrie_shieldmaiden: { primary: '#cbd5e1', accent: '#38bdf8', skin: '#f1c7a5' },
+  kitsune_foxspirit: { primary: '#b91c1c', accent: '#fef08a', skin: '#f8fafc' },
+  sun_wukong_trickster: { primary: '#dc2626', accent: '#facc15', skin: '#d9986c' },
+  quetzal_priest: { primary: '#047857', accent: '#fbbf24', skin: '#c9885b' },
+  celtic_druid: { primary: '#166534', accent: '#a3e635', skin: '#e6b894' },
+  djinn_genie: { primary: '#0284c7', accent: '#facc15', skin: '#38bdf8' },
+  poseidon_tideking: { primary: '#0e7490', accent: '#67e8f9', skin: '#d49d78' },
+  // Historical & Cultural Eras (10)
+  roman_centurion: { primary: '#991b1b', accent: '#f5be38', skin: '#dfb18c' },
+  spartan_hoplite: { primary: '#b91c1c', accent: '#d97706', skin: '#d4956b' },
+  renaissance_painter: { primary: '#5b21b6', accent: '#fbbf24', skin: '#e6b894' },
+  victorian_inventor: { primary: '#78350f', accent: '#f59e0b', skin: '#ebd0b8' },
+  wild_west_sheriff: { primary: '#92400e', accent: '#facc15', skin: '#dca077' },
+  outlaw_bandit: { primary: '#27272a', accent: '#ef4444', skin: '#d4956b' },
+  feudal_shogun: { primary: '#7f1d1d', accent: '#facc15', skin: '#e8bc99' },
+  maratha_commander: { primary: '#ea580c', accent: '#ffd452', skin: '#cf8e67' },
+  silk_road_nomad: { primary: '#0f766e', accent: '#fbbf24', skin: '#d19269' },
+  caveman_hunter: { primary: '#7c2d12', accent: '#d6d3d1', skin: '#c9885b' },
+  // Modern Everyday & Civic (10)
+  doctor_surgeon: { primary: '#0ea5e9', accent: '#f8fafc', skin: '#dca077' },
+  firefighter_rescuer: { primary: '#dc2626', accent: '#facc15', skin: '#d9986c' },
+  police_officer: { primary: '#1e3a8a', accent: '#facc15', skin: '#dfb18c' },
+  judge_magistrate: { primary: '#18181b', accent: '#f8fafc', skin: '#d89b72' },
+  lawyer_advocate: { primary: '#1e293b', accent: '#dc2626', skin: '#e0a580' },
+  school_teacher: { primary: '#0f766e', accent: '#fde047', skin: '#e6b894' },
+  chef_culinary: { primary: '#f8fafc', accent: '#ef4444', skin: '#dca077' },
+  delivery_courier: { primary: '#f97316', accent: '#f8fafc', skin: '#d4956b' },
+  construction_engineer: { primary: '#eab308', accent: '#1e293b', skin: '#cf8e67' },
+  farmer_grower: { primary: '#15803d', accent: '#facc15', skin: '#d19269' },
+  // Media, Business & Explainer (10)
+  ceo_founder: { primary: '#0f172a', accent: '#38bdf8', skin: '#e0a580' },
+  podcast_host: { primary: '#4c1d95', accent: '#f472b6', skin: '#d9986c' },
+  news_anchor: { primary: '#1d4ed8', accent: '#ef4444', skin: '#e6b894' },
+  stock_trader: { primary: '#065f46', accent: '#34d399', skin: '#dfb18c' },
+  tech_developer: { primary: '#312e81', accent: '#22d3ee', skin: '#d89b72' },
+  influencer_vlogger: { primary: '#db2777', accent: '#fde047', skin: '#e8bc99' },
+  historian_professor: { primary: '#78350f', accent: '#fcd34d', skin: '#d4956b' },
+  coach_mentor: { primary: '#b91c1c', accent: '#f8fafc', skin: '#c9885b' },
+  film_director: { primary: '#18181b', accent: '#f59e0b', skin: '#dfb18c' },
+  esports_gamer: { primary: '#6d28d9', accent: '#00f0ff', skin: '#e6b894' },
+  // Sci-Fi, Cyberpunk & Space (10)
+  bounty_hunter: { primary: '#3f3f46', accent: '#f97316', skin: '#c9885b' },
+  alien_diplomat: { primary: '#4f46e5', accent: '#5eead4', skin: '#7dd3fc' },
+  cyborg_enforcer: { primary: '#334155', accent: '#ef4444', skin: '#cbd5e1' },
+  time_traveler: { primary: '#1e3a8a', accent: '#38bdf8', skin: '#e6b894' },
+  space_admiral: { primary: '#0f172a', accent: '#facc15', skin: '#d89b72' },
+  drone_operator: { primary: '#1e293b', accent: '#22c55e', skin: '#d9986c' },
+  bio_geneticist: { primary: '#f1f5f9', accent: '#10b981', skin: '#e0a580' },
+  wasteland_scavenger: { primary: '#78350f', accent: '#fb923c', skin: '#c9885b' },
+  quantum_physicist: { primary: '#312e81', accent: '#a855f7', skin: '#dfb18c' },
+  ai_hologram: { primary: '#0284c7', accent: '#67e8f9', skin: '#bae6fd' },
+  // High Fantasy & RPG Classes (10)
+  paladin_crusader: { primary: '#e2e8f0', accent: '#facc15', skin: '#e8bc99' },
+  necromancer_mage: { primary: '#1e1b4b', accent: '#4ade80', skin: '#cbd5e1' },
+  alchemist_brewer: { primary: '#065f46', accent: '#a855f7', skin: '#dfb18c' },
+  shadow_rogue: { primary: '#18181b', accent: '#a855f7', skin: '#d4956b' },
+  tavern_bard: { primary: '#be123c', accent: '#facc15', skin: '#e6b894' },
+  beast_ranger: { primary: '#14532d', accent: '#d97706', skin: '#d19269' },
+  archmage_oracle: { primary: '#4338ca', accent: '#fde047', skin: '#e8bc99' },
+  goblin_tinkerer: { primary: '#78350f', accent: '#f59e0b', skin: '#65a30d' },
+  orc_warlord: { primary: '#451a03', accent: '#ef4444', skin: '#4d7c0f' },
+  celestial_angel: { primary: '#f8fafc', accent: '#fde047', skin: '#f5d0b5' },
+  // Dark Gothic, Horror & Folklore (10)
+  werewolf_stalker: { primary: '#3f3f46', accent: '#facc15', skin: '#52525b' },
+  plague_doctor: { primary: '#18181b', accent: '#d97706', skin: '#e2e8f0' },
+  mummy_sovereign: { primary: '#d6d3d1', accent: '#facc15', skin: '#a8a29e' },
+  witch_herbalist: { primary: '#3b0764', accent: '#4ade80', skin: '#e2e8f0' },
+  grim_reaper: { primary: '#09090b', accent: '#38bdf8', skin: '#f1f5f9' },
+  gargoyle_sentinel: { primary: '#475569', accent: '#f59e0b', skin: '#64748b' },
+  banshee_wraith: { primary: '#1e293b', accent: '#67e8f9', skin: '#e0f2fe' },
+  mad_scientist: { primary: '#e2e8f0', accent: '#a3e635', skin: '#ebd0b8' },
+  occult_investigator: { primary: '#3f2e21', accent: '#a855f7', skin: '#dfb18c' },
+  pumpkin_scarecrow: { primary: '#9a3412', accent: '#facc15', skin: '#f97316' },
+  // Wildlife & Prehistoric (10)
+  trex_dinosaur: { primary: '#15803d', accent: '#facc15', skin: '#166534' },
+  triceratops_dino: { primary: '#9a3412', accent: '#fef3c7', skin: '#b45309' },
+  grizzly_bear: { primary: '#78350f', accent: '#d6b48a', skin: '#92400e' },
+  polar_penguin: { primary: '#0f172a', accent: '#f97316', skin: '#f8fafc' },
+  giant_panda: { primary: '#18181b', accent: '#22c55e', skin: '#f8fafc' },
+  bald_eagle: { primary: '#5c3317', accent: '#facc15', skin: '#f8fafc' },
+  silverback_gorilla: { primary: '#27272a', accent: '#cbd5e1', skin: '#3f3f46' },
+  desert_camel: { primary: '#b45309', accent: '#dc2626', skin: '#d97706' },
+  great_white_shark: { primary: '#475569', accent: '#f8fafc', skin: '#64748b' },
+  giant_octopus: { primary: '#9333ea', accent: '#f472b6', skin: '#a855f7' },
+  // Mythic Beasts & Companions (10)
+  fire_phoenix: { primary: '#dc2626', accent: '#fde047', skin: '#f97316' },
+  frost_unicorn: { primary: '#e0f2fe', accent: '#38bdf8', skin: '#f8fafc' },
+  winged_griffin: { primary: '#b45309', accent: '#facc15', skin: '#e5c17b' },
+  sea_mermaid: { primary: '#0d9488', accent: '#f472b6', skin: '#ebbc9e' },
+  sky_pegasus: { primary: '#f8fafc', accent: '#facc15', skin: '#e2e8f0' },
+  forest_treant: { primary: '#5c3317', accent: '#4ade80', skin: '#78350f' },
+  stone_golem: { primary: '#475569', accent: '#38bdf8', skin: '#64748b' },
+  crystal_slime: { primary: '#06b6d4', accent: '#f0abfc', skin: '#22d3ee' },
+  baby_dragon: { primary: '#dc2626', accent: '#facc15', skin: '#ef4444' },
+  clockwork_automaton: { primary: '#b45309', accent: '#38bdf8', skin: '#d97706' },
+  // Kids, Sports & Entertainment (10)
+  soccer_striker: { primary: '#2563eb', accent: '#facc15', skin: '#dca077' },
+  cricket_batter: { primary: '#1d4ed8', accent: '#f97316', skin: '#cf8e67' },
+  martial_artist: { primary: '#f8fafc', accent: '#18181b', skin: '#e0a580' },
+  circus_ringmaster: { primary: '#dc2626', accent: '#facc15', skin: '#e6b894' },
+  stage_magician: { primary: '#18181b', accent: '#a855f7', skin: '#e8bc99' },
+  orchestra_conductor: { primary: '#0f172a', accent: '#facc15', skin: '#dfb18c' },
+  ballet_dancer: { primary: '#f472b6', accent: '#fef08a', skin: '#f1c7a5' },
+  skateboard_kid: { primary: '#0ea5e9', accent: '#facc15', skin: '#dca077' },
+  explorer_scout: { primary: '#65a30d', accent: '#f59e0b', skin: '#d9986c' },
+  toy_nutcracker: { primary: '#b91c1c', accent: '#facc15', skin: '#f5d0b5' },
 };
 
 export function getEpisodeDuration(ep: EpisodeScript): number {

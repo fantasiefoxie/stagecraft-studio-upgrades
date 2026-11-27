@@ -16,6 +16,7 @@ import {
   TransitionId,
   WeatherId,
 } from './types';
+import { ATLAS_MOOD_PALETTES } from './renderAssetsAtmosphereAtlas';
 
 export type BackdropThemeId =
   | 'eclipse_lotus_courtyard'
@@ -41,7 +42,68 @@ export type BackdropThemeId =
   | 'gothic_moon_castle'
   | 'vintage_library_vault'
   | 'minimal_explainer_grid'
-  | 'broadcast_studio_backdrop';
+  | 'broadcast_studio_backdrop'
+  // Wave 5: +60 Procedural Backdrop Themes (24 -> 84 total)
+  | 'taj_moonlight_reflection'
+  | 'kyoto_autumn_torii'
+  | 'paris_eiffel_twilight'
+  | 'cairo_nile_felucca'
+  | 'venice_canal_gondola'
+  | 'machu_picchu_clouds'
+  | 'athens_parthenon_dawn'
+  | 'petra_rose_canyon'
+  | 'angkor_sunrise_towers'
+  | 'santorini_cobalt_cliffs'
+  | 'wild_west_mesa_town'
+  | 'victorian_clock_fog'
+  | 'medieval_keep_banners'
+  | 'viking_fjord_aurora'
+  | 'renaissance_canal_plaza'
+  | 'silk_road_dunes_camp'
+  | 'edo_castle_moat'
+  | 'industrial_steam_yard'
+  | 'tokyo_shibuya_neon'
+  | 'manhattan_rooftop_dusk'
+  | 'subway_express_tunnel'
+  | 'harbor_bridge_fog'
+  | 'highway_sunset_viaduct'
+  | 'retro_arcade_neon'
+  | 'suburban_autumn_lane'
+  | 'airport_tarmac_twilight'
+  | 'startup_glass_skyline'
+  | 'wall_street_trading_hall'
+  | 'cleanroom_quantum_lab'
+  | 'podcast_acoustic_studio'
+  | 'university_oak_quad'
+  | 'modern_hospital_atrium'
+  | 'penthouse_city_lights'
+  | 'grand_opera_velvet'
+  | 'botanical_rain_dome'
+  | 'museum_fossil_rotunda'
+  | 'orbital_ring_horizon'
+  | 'alien_biolum_canopy'
+  | 'dyson_star_megastructure'
+  | 'cyber_megamall_neon'
+  | 'mech_bay_gantry'
+  | 'vr_synthwave_grid'
+  | 'solarpunk_waterfall_city'
+  | 'wasteland_scrap_canyon'
+  | 'elven_canopy_walkway'
+  | 'dwarven_magma_forge'
+  | 'dragon_gold_cavern'
+  | 'crystal_amethyst_grotto'
+  | 'wizard_spire_library'
+  | 'fairy_mushroom_glade'
+  | 'haunted_manor_gates'
+  | 'stormy_cliff_lighthouse'
+  | 'misty_catacombs_arch'
+  | 'noir_venetian_blinds'
+  | 'coral_lagoon_sunbeams'
+  | 'arctic_iceberg_bay'
+  | 'african_acacia_sunset'
+  | 'jurassic_volcano_valley'
+  | 'cricket_stadium_floodlights'
+  | 'candy_rainbow_kingdom';
 
 export interface BackdropThemeMeta {
   id: BackdropThemeId;
@@ -220,6 +282,67 @@ export const BACKDROP_THEMES: BackdropThemeMeta[] = [
     defaultMood: 'mystic_teal',
     accentHex: '#0ea5e9',
   },
+  // Wave 5: +60 Procedural Backdrop Themes (24 -> 84 total)
+  { id: 'taj_moonlight_reflection', label: 'Taj Moonlight Reflection', vibe: 'Marble dome silhouette & mirror canal', defaultMood: 'moonlit_marble', accentHex: '#e0f2fe' },
+  { id: 'kyoto_autumn_torii', label: 'Kyoto Autumn Torii', vibe: 'Vermilion gates & crimson maple slopes', defaultMood: 'autumn_amber', accentHex: '#ea580c' },
+  { id: 'paris_eiffel_twilight', label: 'Paris Twilight Tower', vibe: 'Iron lattice spire & lavender boulevard', defaultMood: 'lavender_twilight', accentHex: '#facc15' },
+  { id: 'cairo_nile_felucca', label: 'Cairo Nile Felucca', vibe: 'Sail silhouettes & golden desert dusk', defaultMood: 'desert_mirage', accentHex: '#f59e0b' },
+  { id: 'venice_canal_gondola', label: 'Venice Canal Lanterns', vibe: 'Arched stone bridges & water shimmer', defaultMood: 'golden_hour_cinema', accentHex: '#fb923c' },
+  { id: 'machu_picchu_clouds', label: 'Andes Cloud Terraces', vibe: 'Stone mountain steps above silver mist', defaultMood: 'spring_meadow', accentHex: '#4ade80' },
+  { id: 'athens_parthenon_dawn', label: 'Athens Parthenon Dawn', vibe: 'Doric marble colonnade & coral sunrise', defaultMood: 'sunset_coral', accentHex: '#fda4af' },
+  { id: 'petra_rose_canyon', label: 'Petra Rose Canyon', vibe: 'Carved sandstone facade in narrow gorge', defaultMood: 'sandstone_dusk', accentHex: '#ea580c' },
+  { id: 'angkor_sunrise_towers', label: 'Angkor Sunrise Towers', vibe: 'Lotus temple spires & jungle mirror pond', defaultMood: 'golden_hour_cinema', accentHex: '#f59e0b' },
+  { id: 'santorini_cobalt_cliffs', label: 'Santorini Cobalt Cliffs', vibe: 'Whitewashed domes & turquoise Aegean sea', defaultMood: 'ocean_turquoise', accentHex: '#38bdf8' },
+  { id: 'wild_west_mesa_town', label: 'Wild West Mesa Town', vibe: 'Timber frontier boardwalk & red buttes', defaultMood: 'desert_mirage', accentHex: '#d97706' },
+  { id: 'victorian_clock_fog', label: 'Victorian Clock Fog', vibe: 'Gaslamp silhouettes & gothic clocktower', defaultMood: 'storm_slate', accentHex: '#f59e0b' },
+  { id: 'medieval_keep_banners', label: 'Medieval Keep Banners', vibe: 'Stone battlements & heraldic pennants', defaultMood: 'candlelit_parchment', accentHex: '#dc2626' },
+  { id: 'viking_fjord_aurora', label: 'Viking Fjord Aurora', vibe: 'Dragonship prow under emerald northern lights', defaultMood: 'arctic_aurora', accentHex: '#34d399' },
+  { id: 'renaissance_canal_plaza', label: 'Renaissance Dome Plaza', vibe: 'Terracotta cupola & warm sunlit piazza', defaultMood: 'vintage_kodachrome', accentHex: '#ea580c' },
+  { id: 'silk_road_dunes_camp', label: 'Silk Road Dunes Camp', vibe: 'Caravan tents under deep indigo stars', defaultMood: 'cobalt_midnight', accentHex: '#facc15' },
+  { id: 'edo_castle_moat', label: 'Edo Castle Moat', vibe: 'Layered pagoda roofs & pine reflection', defaultMood: 'sakura_dawn', accentHex: '#f472b6' },
+  { id: 'industrial_steam_yard', label: 'Industrial Steam Yard', vibe: 'Riveted iron viaducts & furnace amber', defaultMood: 'copper_steampunk', accentHex: '#f97316' },
+  { id: 'tokyo_shibuya_neon', label: 'Tokyo Neon Crossing', vibe: 'Electric blue billboards & rain gloss', defaultMood: 'neon_tokyo_blue', accentHex: '#00f0ff' },
+  { id: 'manhattan_rooftop_dusk', label: 'Manhattan Rooftop Dusk', vibe: 'Art-deco skyline & amber sunset haze', defaultMood: 'golden_hour_cinema', accentHex: '#fb923c' },
+  { id: 'subway_express_tunnel', label: 'Subway Express Tunnel', vibe: 'Tiled metro arches & streaking train lights', defaultMood: 'storm_slate', accentHex: '#facc15' },
+  { id: 'harbor_bridge_fog', label: 'Harbor Bridge Fog', vibe: 'Suspension cables emerging from sea mist', defaultMood: 'monsoon_indigo', accentHex: '#f43f5e' },
+  { id: 'highway_sunset_viaduct', label: 'Highway Sunset Viaduct', vibe: 'Sweeping freeway ramps & taillight trails', defaultMood: 'sunset_coral', accentHex: '#fb7185' },
+  { id: 'retro_arcade_neon', label: 'Retro Arcade Neon', vibe: 'Synthwave cabinets & magenta grid floor', defaultMood: 'cyber_magenta', accentHex: '#ff2bd6' },
+  { id: 'suburban_autumn_lane', label: 'Suburban Autumn Lane', vibe: 'Warm porchlights & amber maple avenue', defaultMood: 'autumn_amber', accentHex: '#f59e0b' },
+  { id: 'airport_tarmac_twilight', label: 'Airport Tarmac Twilight', vibe: 'Runway beacons & cobalt horizon glow', defaultMood: 'cobalt_midnight', accentHex: '#38bdf8' },
+  { id: 'startup_glass_skyline', label: 'Startup Glass Skyline', vibe: 'Minimalist glass loft & crisp cyan view', defaultMood: 'sunlit_morning', accentHex: '#38bdf8' },
+  { id: 'wall_street_trading_hall', label: 'Trading Floor Tickers', vibe: 'Market monitors & dramatic architectural columns', defaultMood: 'obsidian_gold', accentHex: '#22c55e' },
+  { id: 'cleanroom_quantum_lab', label: 'Quantum Cleanroom Lab', vibe: 'Cryo-chandeliers & crisp blue telemetry', defaultMood: 'ice_palace_cyan', accentHex: '#22d3ee' },
+  { id: 'podcast_acoustic_studio', label: 'Podcast Acoustic Studio', vibe: 'Warm LED wall panels & sound baffles', defaultMood: 'royal_amethyst', accentHex: '#c084fc' },
+  { id: 'university_oak_quad', label: 'University Oak Quad', vibe: 'Ivy brick arches & sunlit lecture courtyard', defaultMood: 'vintage_kodachrome', accentHex: '#eab308' },
+  { id: 'modern_hospital_atrium', label: 'Modern Clinical Atrium', vibe: 'Clean white skylights & calm teal accents', defaultMood: 'ice_palace_cyan', accentHex: '#0ea5e9' },
+  { id: 'penthouse_city_lights', label: 'Penthouse City Lights', vibe: 'Panoramic bokeh skyline & gold interior', defaultMood: 'obsidian_gold', accentHex: '#facc15' },
+  { id: 'grand_opera_velvet', label: 'Grand Opera Velvet', vibe: 'Crimson drapery & gilded chandelier tiers', defaultMood: 'blood_moon_crimson', accentHex: '#facc15' },
+  { id: 'botanical_rain_dome', label: 'Botanical Rain Dome', vibe: 'Emerald fern canopy under glass ribs', defaultMood: 'solarpunk_lime', accentHex: '#4ade80' },
+  { id: 'museum_fossil_rotunda', label: 'Museum Fossil Rotunda', vibe: 'Vaulted skylights & dramatic bone silhouette', defaultMood: 'candlelit_parchment', accentHex: '#fde68a' },
+  { id: 'orbital_ring_horizon', label: 'Orbital Ring Horizon', vibe: 'Curved planetary atmosphere & station spokes', defaultMood: 'deep_space_void', accentHex: '#38bdf8' },
+  { id: 'alien_biolum_canopy', label: 'Alien Biolum Canopy', vibe: 'Glowing violet fronds & floating spores', defaultMood: 'lavender_twilight', accentHex: '#22d3ee' },
+  { id: 'dyson_star_megastructure', label: 'Dyson Star Megastructure', vibe: 'Colossal orbital rings cradling a golden sun', defaultMood: 'obsidian_gold', accentHex: '#facc15' },
+  { id: 'cyber_megamall_neon', label: 'Cyber Megamall Atrium', vibe: 'Holographic escalators & neon skybridges', defaultMood: 'neon_tokyo_blue', accentHex: '#ff2bd6' },
+  { id: 'mech_bay_gantry', label: 'Mech Hangar Gantry', vibe: 'Steel catwalks & hazard warning floodlights', defaultMood: 'storm_slate', accentHex: '#f97316' },
+  { id: 'vr_synthwave_grid', label: 'VR Synthwave Horizon', vibe: 'Retro segmented sun & glowing wireframe plain', defaultMood: 'cyber_magenta', accentHex: '#00f0ff' },
+  { id: 'solarpunk_waterfall_city', label: 'Solarpunk Waterfall City', vibe: 'Terraced white eco-spires & lush cascades', defaultMood: 'solarpunk_lime', accentHex: '#4ade80' },
+  { id: 'wasteland_scrap_canyon', label: 'Wasteland Scrap Canyon', vibe: 'Broken highway pillars & acid-green horizon', defaultMood: 'toxic_wasteland', accentHex: '#a3e635' },
+  { id: 'elven_canopy_walkway', label: 'Elven Canopy Walkway', vibe: 'Luminous silver bridges in giant ancient boughs', defaultMood: 'emerald_matrix', accentHex: '#34d399' },
+  { id: 'dwarven_magma_forge', label: 'Dwarven Magma Forge', vibe: 'Carved basalt pillars & molten gold channels', defaultMood: 'volcanic_inferno', accentHex: '#f97316' },
+  { id: 'dragon_gold_cavern', label: 'Dragon Gold Cavern', vibe: 'Glittering treasure dunes & vaulted stone roof', defaultMood: 'obsidian_gold', accentHex: '#facc15' },
+  { id: 'crystal_amethyst_grotto', label: 'Crystal Amethyst Grotto', vibe: 'Faceted glowing quartz clusters & calm pool', defaultMood: 'royal_amethyst', accentHex: '#c084fc' },
+  { id: 'wizard_spire_library', label: 'Wizard Spire Library', vibe: 'Floating candles & spiraling arcane shelves', defaultMood: 'cobalt_midnight', accentHex: '#a855f7' },
+  { id: 'fairy_mushroom_glade', label: 'Fairy Mushroom Glade', vibe: 'Luminous giant caps & firefly brook', defaultMood: 'pastel_storybook', accentHex: '#f472b6' },
+  { id: 'haunted_manor_gates', label: 'Haunted Manor Gates', vibe: 'Wrought-iron arch & twisted midnight oaks', defaultMood: 'blood_moon_crimson', accentHex: '#ef4444' },
+  { id: 'stormy_cliff_lighthouse', label: 'Stormy Cliff Lighthouse', vibe: 'Sweeping beacon beam over crashing waves', defaultMood: 'monsoon_indigo', accentHex: '#fef08a' },
+  { id: 'misty_catacombs_arch', label: 'Misty Catacombs Arch', vibe: 'Torchlit vaulted stone passageways', defaultMood: 'copper_steampunk', accentHex: '#fb923c' },
+  { id: 'noir_venetian_blinds', label: 'Noir Venetian Blinds', vibe: 'Diagonal window slats & moody neon glow', defaultMood: 'noir_monochrome', accentHex: '#f59e0b' },
+  { id: 'coral_lagoon_sunbeams', label: 'Coral Lagoon Sunbeams', vibe: 'Turquoise reef arches & dancing water caustics', defaultMood: 'ocean_turquoise', accentHex: '#2dd4bf' },
+  { id: 'arctic_iceberg_bay', label: 'Arctic Iceberg Bay', vibe: 'Crystalline glacial floes & crisp cyan sky', defaultMood: 'ice_palace_cyan', accentHex: '#7dd3fc' },
+  { id: 'african_acacia_sunset', label: 'African Acacia Sunset', vibe: 'Flat-top tree silhouettes & giant amber sun', defaultMood: 'golden_hour_cinema', accentHex: '#f97316' },
+  { id: 'jurassic_volcano_valley', label: 'Jurassic Volcano Valley', vibe: 'Smoking caldera & prehistoric fern basin', defaultMood: 'spring_meadow', accentHex: '#fb923c' },
+  { id: 'cricket_stadium_floodlights', label: 'Stadium Night Floodlights', vibe: 'Towering light pylons & lush emerald outfield', defaultMood: 'cobalt_midnight', accentHex: '#fef08a' },
+  { id: 'candy_rainbow_kingdom', label: 'Candy Rainbow Kingdom', vibe: 'Pastel frosted hills & lollipop archways', defaultMood: 'candyland_pop', accentHex: '#f472b6' },
 ];
 
 export type CustomPropPresetId =
@@ -246,7 +369,68 @@ export type CustomPropPresetId =
   | 'golden_scales'
   | 'sealed_wax_letter'
   | 'cyber_visor_deck'
-  | 'bonsai_lantern';
+  | 'bonsai_lantern'
+  // Wave 5: +60 Procedural Prop Cutouts (24 -> 84 total)
+  | 'cutout_katana_sheathed'
+  | 'cutout_viking_axe'
+  | 'cutout_heraldic_shield'
+  | 'cutout_plasma_blaster'
+  | 'cutout_shuriken_burst'
+  | 'cutout_warhammer_rune'
+  | 'cutout_phoenix_plume'
+  | 'cutout_dragon_egg_gem'
+  | 'cutout_chained_grimoire'
+  | 'cutout_genie_oil_lamp'
+  | 'cutout_voodoo_mask'
+  | 'cutout_astral_orrery'
+  | 'cutout_smartphone_hud'
+  | 'cutout_vr_goggles'
+  | 'cutout_ai_neural_core'
+  | 'cutout_dna_helix'
+  | 'cutout_jetpack_wings'
+  | 'cutout_radar_dish'
+  | 'cutout_gold_bullion'
+  | 'cutout_stock_ticker'
+  | 'cutout_cinema_clapper'
+  | 'cutout_podcast_condenser'
+  | 'cutout_cash_bundle'
+  | 'cutout_megaphone_red'
+  | 'cutout_silver_trophy'
+  | 'cutout_med_stethoscope'
+  | 'cutout_bubbling_beaker'
+  | 'cutout_brass_telescope'
+  | 'cutout_first_aid_box'
+  | 'cutout_atom_orbitals'
+  | 'cutout_ammonite_fossil'
+  | 'cutout_classical_sitar'
+  | 'cutout_tabla_pair'
+  | 'cutout_artist_palette'
+  | 'cutout_vinyl_record'
+  | 'cutout_dj_deck'
+  | 'cutout_comedy_tragedy'
+  | 'cutout_origami_bird'
+  | 'cutout_bamboo_flute'
+  | 'cutout_ramen_steaming'
+  | 'cutout_festive_thali'
+  | 'cutout_birthday_cake'
+  | 'cutout_pizza_slice'
+  | 'cutout_porcelain_teapot'
+  | 'cutout_honey_pot'
+  | 'cutout_vintage_trunk'
+  | 'cutout_ship_helm'
+  | 'cutout_hot_air_balloon'
+  | 'cutout_classic_bicycle'
+  | 'cutout_iron_anchor'
+  | 'cutout_storm_lantern'
+  | 'cutout_field_binoculars'
+  | 'cutout_steel_handcuffs'
+  | 'cutout_bank_safe_dial'
+  | 'cutout_skeleton_keys'
+  | 'cutout_skull_crystal'
+  | 'cutout_cricket_bat'
+  | 'cutout_soccer_ball'
+  | 'cutout_boxing_gloves'
+  | 'cutout_gift_ribbon';
 
 export interface CustomPropPresetMeta {
   id: CustomPropPresetId;
@@ -280,6 +464,67 @@ export const CUSTOM_PROP_PRESETS: CustomPropPresetMeta[] = [
   { id: 'sealed_wax_letter', label: 'Wax-Sealed Letter', note: 'Parchment envelope stamped with crimson seal', defaultTint: '#e11d48' },
   { id: 'cyber_visor_deck', label: 'Cyber Deck & Visor', note: 'Hacker neural console with glowing keycaps', defaultTint: '#10b981' },
   { id: 'bonsai_lantern', label: 'Sakura Bonsai Lantern', note: 'Miniature blooming bonsai & stone shrine lamp', defaultTint: '#f472b6' },
+  // Wave 5: +60 Procedural Prop Cutouts (24 -> 84 total)
+  { id: 'cutout_katana_sheathed', label: 'Imperial Katana Cutout', note: 'Curved steel blade with crimson cord hilt', defaultTint: '#dc2626' },
+  { id: 'cutout_viking_axe', label: 'Nordic Battleaxe', note: 'Twin-bearded etched iron war axe', defaultTint: '#f59e0b' },
+  { id: 'cutout_heraldic_shield', label: 'Heraldic Knight Shield', note: 'Crested heater shield with gold cross', defaultTint: '#3b82f6' },
+  { id: 'cutout_plasma_blaster', label: 'Plasma Pulse Rifle', note: 'Sci-fi energy carbine with cyan coil', defaultTint: '#22d3ee' },
+  { id: 'cutout_shuriken_burst', label: 'Steel Shuriken Star', note: 'Four-point ninja throwing star', defaultTint: '#cbd5e1' },
+  { id: 'cutout_warhammer_rune', label: 'Runic Warhammer', note: 'Engraved lightning hammer head', defaultTint: '#38bdf8' },
+  { id: 'cutout_phoenix_plume', label: 'Blazing Phoenix Plume', note: 'Glowing golden-orange ember feather', defaultTint: '#f97316' },
+  { id: 'cutout_dragon_egg_gem', label: 'Scaled Dragon Egg', note: 'Ruby-scaled hatching relic egg', defaultTint: '#dc2626' },
+  { id: 'cutout_chained_grimoire', label: 'Chained Spell Grimoire', note: 'Arcane tome bound in silver chains', defaultTint: '#a855f7' },
+  { id: 'cutout_genie_oil_lamp', label: 'Golden Genie Lamp', note: 'Burnished brass oil lamp with blue wisp', defaultTint: '#facc15' },
+  { id: 'cutout_voodoo_mask', label: 'Carved Ritual Totem', note: 'Painted folklore guardian mask', defaultTint: '#22c55e' },
+  { id: 'cutout_astral_orrery', label: 'Astral Planetary Orrery', note: 'Spinning brass solar system model', defaultTint: '#eab308' },
+  { id: 'cutout_smartphone_hud', label: 'Glowing Smartphone HUD', note: 'Glass phone emitting floating notifications', defaultTint: '#38bdf8' },
+  { id: 'cutout_vr_goggles', label: 'VR Spatial Headset', note: 'Sleek visor with glowing cyan strip', defaultTint: '#06b6d4' },
+  { id: 'cutout_ai_neural_core', label: 'AI Quantum Core', note: 'Levitating octahedron processor crystal', defaultTint: '#c084fc' },
+  { id: 'cutout_dna_helix', label: 'DNA Double Helix', note: 'Luminous cyan-magenta genetic strand', defaultTint: '#ec4899' },
+  { id: 'cutout_jetpack_wings', label: 'Twin-Thruster Jetpack', note: 'Rocket pack with glowing ignition nozzles', defaultTint: '#f97316' },
+  { id: 'cutout_radar_dish', label: 'Orbital Radar Dish', note: 'Parabolic satellite dish with ping waves', defaultTint: '#34d399' },
+  { id: 'cutout_gold_bullion', label: 'Gold Bullion Stack', note: 'Stacked 24k stamped vault ingots', defaultTint: '#facc15' },
+  { id: 'cutout_stock_ticker', label: 'Market Rally Chart', note: 'Rising green candlestick breakout display', defaultTint: '#22c55e' },
+  { id: 'cutout_cinema_clapper', label: 'Director Clapperboard', note: 'Classic black-and-white film slate', defaultTint: '#f8fafc' },
+  { id: 'cutout_podcast_condenser', label: 'Podcast Boom Mic', note: 'Studio condenser mic with pop filter', defaultTint: '#a855f7' },
+  { id: 'cutout_cash_bundle', label: 'Banknote Cash Stack', note: 'Banded emerald currency bundle', defaultTint: '#16a34a' },
+  { id: 'cutout_megaphone_red', label: 'Rally Megaphone', note: 'Crisp red-and-white acoustic bullhorn', defaultTint: '#ef4444' },
+  { id: 'cutout_silver_trophy', label: 'Championship Cup', note: 'Polished silver two-handled trophy', defaultTint: '#e2e8f0' },
+  { id: 'cutout_med_stethoscope', label: 'Clinical Stethoscope', note: 'Coiled medical acoustic chestpiece', defaultTint: '#0ea5e9' },
+  { id: 'cutout_bubbling_beaker', label: 'Bubbling Lab Flask', note: 'Erlenmeyer beaker with neon green brew', defaultTint: '#4ade80' },
+  { id: 'cutout_brass_telescope', label: 'Observatory Telescope', note: 'Extendable brass refractor scope', defaultTint: '#d97706' },
+  { id: 'cutout_first_aid_box', label: 'First-Aid Medkit', note: 'Emergency case with bold crimson cross', defaultTint: '#dc2626' },
+  { id: 'cutout_atom_orbitals', label: 'Atomic Nucleus Model', note: 'Three intersecting electron rings', defaultTint: '#38bdf8' },
+  { id: 'cutout_ammonite_fossil', label: 'Ammonite Shell Fossil', note: 'Ancient spiral limestone specimen', defaultTint: '#a8a29e' },
+  { id: 'cutout_classical_sitar', label: 'Classical Sitar', note: 'Resonating gourd & carved rosewood neck', defaultTint: '#d97706' },
+  { id: 'cutout_tabla_pair', label: 'Concert Tabla Drums', note: 'Paired dayan & bayan percussion set', defaultTint: '#f59e0b' },
+  { id: 'cutout_artist_palette', label: 'Painter Palette & Brush', note: 'Wooden palette dotted with vivid pigments', defaultTint: '#f43f5e' },
+  { id: 'cutout_vinyl_record', label: 'Spinning Vinyl LP', note: 'Grooved black disc with crimson center label', defaultTint: '#ef4444' },
+  { id: 'cutout_dj_deck', label: 'Neon DJ Turntable', note: 'Dual-platter mixer with glowing faders', defaultTint: '#ff2bd6' },
+  { id: 'cutout_comedy_tragedy', label: 'Theater Masks Pair', note: 'Golden comedy & cobalt tragedy masks', defaultTint: '#facc15' },
+  { id: 'cutout_origami_bird', label: 'Folded Origami Crane', note: 'Crisp paper-folded peace crane', defaultTint: '#f472b6' },
+  { id: 'cutout_bamboo_flute', label: 'Bansuri Bamboo Flute', note: 'Carved woodland flute with silk tassel', defaultTint: '#84cc16' },
+  { id: 'cutout_ramen_steaming', label: 'Steaming Ramen Bowl', note: 'Lacquered bowl with chopsticks & steam curls', defaultTint: '#dc2626' },
+  { id: 'cutout_festive_thali', label: 'Royal Feast Thali', note: 'Brass platter with saffron & emerald bowls', defaultTint: '#eab308' },
+  { id: 'cutout_birthday_cake', label: 'Lit Celebration Cake', note: 'Frosted tiered cake with glowing candles', defaultTint: '#f472b6' },
+  { id: 'cutout_pizza_slice', label: 'Artisan Pizza Slice', note: 'Cheesy triangular slice with basil garnish', defaultTint: '#f59e0b' },
+  { id: 'cutout_porcelain_teapot', label: 'Blue Porcelain Teapot', note: 'Delicate ceramic teapot with curved spout', defaultTint: '#2563eb' },
+  { id: 'cutout_honey_pot', label: 'Golden Honey Jar', note: 'Amber glass jar with wooden dipper', defaultTint: '#f59e0b' },
+  { id: 'cutout_vintage_trunk', label: 'Traveler Suitcase', note: 'Leather-strapped vintage steamer case', defaultTint: '#92400e' },
+  { id: 'cutout_ship_helm', label: 'Galleon Ship Wheel', note: 'Eight-spoked oak captain helm', defaultTint: '#b45309' },
+  { id: 'cutout_hot_air_balloon', label: 'Hot-Air Balloon', note: 'Striped festival envelope & wicker basket', defaultTint: '#ef4444' },
+  { id: 'cutout_classic_bicycle', label: 'Classic City Bicycle', note: 'Spoked wheels & retro curved handlebars', defaultTint: '#0284c7' },
+  { id: 'cutout_iron_anchor', label: 'Maritime Iron Anchor', note: 'Heavy forged ship anchor with rope coil', defaultTint: '#64748b' },
+  { id: 'cutout_storm_lantern', label: 'Brass Storm Lantern', note: 'Caged glass oil lantern radiating warm light', defaultTint: '#facc15' },
+  { id: 'cutout_field_binoculars', label: 'Explorer Binoculars', note: 'Twin-lens optical field glasses', defaultTint: '#38bdf8' },
+  { id: 'cutout_steel_handcuffs', label: 'Noir Steel Handcuffs', note: 'Linked brushed-steel detective cuffs', defaultTint: '#cbd5e1' },
+  { id: 'cutout_bank_safe_dial', label: 'Vault Combination Dial', note: 'Heavy circular steel vault wheel', defaultTint: '#94a3b8' },
+  { id: 'cutout_skeleton_keys', label: 'Ring of Skeleton Keys', note: 'Antique brass keys on an iron hoop', defaultTint: '#d97706' },
+  { id: 'cutout_skull_crystal', label: 'Mystic Crystal Skull', note: 'Faceted translucent amethyst skull relic', defaultTint: '#a855f7' },
+  { id: 'cutout_cricket_bat', label: 'Willow Cricket Bat & Ball', note: 'Match willow blade with leather seam ball', defaultTint: '#dc2626' },
+  { id: 'cutout_soccer_ball', label: 'Classic Match Soccer Ball', note: 'Hex-paneled black-and-white football', defaultTint: '#22c55e' },
+  { id: 'cutout_boxing_gloves', label: 'Championship Gloves', note: 'Laced crimson leather boxing gloves', defaultTint: '#dc2626' },
+  { id: 'cutout_gift_ribbon', label: 'Ribboned Gift Box', note: 'Festive wrapped parcel with golden bow', defaultTint: '#ec4899' },
 ];
 
 export type ActArcPresetId =
@@ -291,7 +536,24 @@ export type ActArcPresetId =
   | 'cyber_thriller'
   | 'noir_investigation'
   | 'epic_space_odyssey'
-  | 'documentary_explainer';
+  | 'documentary_explainer'
+  // Wave 5: +16 4-Act Visual Arc Presets (9 -> 25 total)
+  | 'cyberpunk_heist'
+  | 'horror_descent'
+  | 'romcom_seasons'
+  | 'sports_underdog'
+  | 'startup_journey'
+  | 'space_odyssey'
+  | 'murder_mystery'
+  | 'fantasy_quest'
+  | 'historical_empire'
+  | 'nature_documentary'
+  | 'kids_storybook'
+  | 'time_travel_loop'
+  | 'superhero_origin'
+  | 'courtroom_verdict'
+  | 'survival_expedition'
+  | 'festival_celebration';
 
 interface ActStageSpec {
   label: string;
@@ -407,6 +669,183 @@ export const ACT_ARC_PRESETS: ActArcPresetMeta[] = [
       { label: 'Act II · Historical Evidence', mood: 'sepia_archive', weather: 'mist', haze: 0.14, boundaryTransition: 'silhouette_wipe', preferredCameras: ['pan_right', 'pan_left'] },
       { label: 'Act III · Core Mechanism', mood: 'mystic_teal', weather: 'data_matrix', haze: 0.12, boundaryTransition: 'ink_fade', preferredCameras: ['slow_push', 'still'] },
       { label: 'Act IV · Key Takeaway', mood: 'sakura_dawn', weather: 'sakura_blossoms', haze: 0.1, boundaryTransition: 'ink_fade', preferredCameras: ['slow_pull', 'still'] },
+    ],
+  },
+  // Wave 5: +16 4-Act Visual Arc Presets (9 -> 25 total)
+  {
+    id: 'cyberpunk_heist',
+    label: 'Cyberpunk Heist (Neon Prep → Infiltration → Alarm → Rain Escape)',
+    description: 'High-voltage neon-blue to magenta-spark progression for futuristic heist thrillers.',
+    acts: [
+      { label: 'Act I · Crew Briefing', mood: 'neon_tokyo_blue', weather: 'neon_sparks', haze: 0.16, boundaryTransition: 'ink_fade', preferredCameras: ['slow_push', 'pan_right'] },
+      { label: 'Act II · Vault Infiltration', mood: 'emerald_matrix', weather: 'data_matrix', haze: 0.22, boundaryTransition: 'silhouette_wipe', preferredCameras: ['pan_left', 'slow_push'] },
+      { label: 'Act III · Laser Breach', mood: 'cyber_magenta', weather: 'plasma_arcs', haze: 0.26, boundaryTransition: 'diagonal_slash', preferredCameras: ['impact_shake', 'slow_push'] },
+      { label: 'Act IV · Neon Getaway', mood: 'cobalt_midnight', weather: 'rain', haze: 0.18, boundaryTransition: 'ink_fade', preferredCameras: ['slow_pull', 'still'] },
+    ],
+  },
+  {
+    id: 'horror_descent',
+    label: 'Horror Descent (Foggy Arrival → Catacombs → Blood Moon → Cold Dawn)',
+    description: 'Chilling tension arc spiraling from creeping fog into blood-moon dread.',
+    acts: [
+      { label: 'Act I · Eerie Arrival', mood: 'storm_slate', weather: 'fog_bank', haze: 0.28, boundaryTransition: 'ink_fade', preferredCameras: ['slow_push', 'pan_left'] },
+      { label: 'Act II · Creeping Dread', mood: 'midnight_banyan', weather: 'ash_fallout', haze: 0.34, boundaryTransition: 'silhouette_wipe', preferredCameras: ['pan_right', 'slow_push'] },
+      { label: 'Act III · Blood Moon Terror', mood: 'blood_moon_crimson', weather: 'lightning_storm', haze: 0.3, boundaryTransition: 'crimson_flash', preferredCameras: ['impact_shake', 'slow_push'] },
+      { label: 'Act IV · Pale Survival', mood: 'noir_monochrome', weather: 'mist', haze: 0.22, boundaryTransition: 'ink_fade', preferredCameras: ['slow_pull', 'still'] },
+    ],
+  },
+  {
+    id: 'romcom_seasons',
+    label: 'Rom-Com Seasons (Spring → Golden Summer → Autumn → Winter Glow)',
+    description: 'Heartwarming four-season emotional arc with petals, golden hour, autumn leaves, and snow.',
+    acts: [
+      { label: 'Act I · Spring Meet-Cute', mood: 'spring_meadow', weather: 'dandelion_seeds', haze: 0.1, boundaryTransition: 'ink_fade', preferredCameras: ['pan_right', 'slow_push'] },
+      { label: 'Act II · Golden Sparks', mood: 'golden_hour_cinema', weather: 'golden_pollen', haze: 0.14, boundaryTransition: 'ink_fade', preferredCameras: ['slow_push', 'still'] },
+      { label: 'Act III · Autumn Misunderstanding', mood: 'autumn_amber', weather: 'autumn_leaves', haze: 0.2, boundaryTransition: 'silhouette_wipe', preferredCameras: ['pan_left', 'slow_pull'] },
+      { label: 'Act IV · Starlit Reunion', mood: 'lavender_twilight', weather: 'snow', haze: 0.14, boundaryTransition: 'ink_fade', preferredCameras: ['slow_pull', 'still'] },
+    ],
+  },
+  {
+    id: 'sports_underdog',
+    label: 'Sports Underdog (Training → Setback → Championship → Confetti)',
+    description: 'Inspiring athletic arc culminating under stadium floodlights and confetti.',
+    acts: [
+      { label: 'Act I · Early Drills', mood: 'sunlit_morning', weather: 'none', haze: 0.08, boundaryTransition: 'ink_fade', preferredCameras: ['pan_right', 'slow_push'] },
+      { label: 'Act II · Rainy Setback', mood: 'storm_slate', weather: 'rain', haze: 0.22, boundaryTransition: 'silhouette_wipe', preferredCameras: ['slow_pull', 'pan_left'] },
+      { label: 'Act III · Match Point', mood: 'cobalt_midnight', weather: 'neon_sparks', haze: 0.16, boundaryTransition: 'diagonal_slash', preferredCameras: ['impact_shake', 'slow_push'] },
+      { label: 'Act IV · Trophy Victory', mood: 'golden_hour_cinema', weather: 'confetti_shower', haze: 0.12, boundaryTransition: 'ink_fade', preferredCameras: ['slow_pull', 'still'] },
+    ],
+  },
+  {
+    id: 'startup_journey',
+    label: 'Startup Journey (Garage Spark → Crunch → Pivot Crisis → Launch)',
+    description: 'Founder documentary visual progression from garage prototypes to keynote triumph.',
+    acts: [
+      { label: 'Act I · Garage Spark', mood: 'candlelit_parchment', weather: 'none', haze: 0.1, boundaryTransition: 'ink_fade', preferredCameras: ['slow_push', 'still'] },
+      { label: 'Act II · Late-Night Code', mood: 'neon_tokyo_blue', weather: 'data_matrix', haze: 0.16, boundaryTransition: 'silhouette_wipe', preferredCameras: ['pan_right', 'slow_push'] },
+      { label: 'Act III · Market Storm', mood: 'crimson_wrath', weather: 'lightning_storm', haze: 0.2, boundaryTransition: 'diagonal_slash', preferredCameras: ['impact_shake', 'pan_left'] },
+      { label: 'Act IV · Keynote Launch', mood: 'solarpunk_lime', weather: 'confetti_shower', haze: 0.1, boundaryTransition: 'ink_fade', preferredCameras: ['slow_pull', 'still'] },
+    ],
+  },
+  {
+    id: 'space_odyssey',
+    label: 'Space Odyssey (Launch → Deep Void → Meteor Crisis → Nebula Dawn)',
+    description: 'Cosmic voyage from orbital launch through meteor storms to alien sunrise.',
+    acts: [
+      { label: 'Act I · Orbital Launch', mood: 'cobalt_midnight', weather: 'starlight_dust', haze: 0.12, boundaryTransition: 'ink_fade', preferredCameras: ['slow_push', 'pan_right'] },
+      { label: 'Act II · Deep Void Drift', mood: 'deep_space_void', weather: 'aurora_ribbons', haze: 0.18, boundaryTransition: 'silhouette_wipe', preferredCameras: ['pan_left', 'slow_pull'] },
+      { label: 'Act III · Meteor Impact', mood: 'volcanic_inferno', weather: 'meteor_shower', haze: 0.22, boundaryTransition: 'diagonal_slash', preferredCameras: ['impact_shake', 'slow_push'] },
+      { label: 'Act IV · New World Horizon', mood: 'ice_palace_cyan', weather: 'starfall', haze: 0.14, boundaryTransition: 'ink_fade', preferredCameras: ['slow_pull', 'still'] },
+    ],
+  },
+  {
+    id: 'murder_mystery',
+    label: 'Murder Mystery (Parlor → Clues → Blackout → Spotlight Reveal)',
+    description: 'Classic whodunit arc moving from warm manor parlors to stark noir revelations.',
+    acts: [
+      { label: 'Act I · Manor Gathering', mood: 'candlelit_parchment', weather: 'none', haze: 0.14, boundaryTransition: 'ink_fade', preferredCameras: ['pan_right', 'still'] },
+      { label: 'Act II · Foggy Clues', mood: 'noir_monochrome', weather: 'fog_bank', haze: 0.26, boundaryTransition: 'silhouette_wipe', preferredCameras: ['slow_push', 'pan_left'] },
+      { label: 'Act III · Storm Blackout', mood: 'monsoon_indigo', weather: 'lightning_storm', haze: 0.3, boundaryTransition: 'crimson_flash', preferredCameras: ['impact_shake', 'slow_push'] },
+      { label: 'Act IV · Truth Unmasked', mood: 'obsidian_gold', weather: 'starlight_dust', haze: 0.14, boundaryTransition: 'ink_fade', preferredCameras: ['slow_pull', 'still'] },
+    ],
+  },
+  {
+    id: 'fantasy_quest',
+    label: 'Fantasy Quest (Shire → Arcane Woods → Dragon Lair → Crowned)',
+    description: 'High-fantasy fellowship journey across meadows, enchanted groves, and volcanic peaks.',
+    acts: [
+      { label: 'Act I · Peaceful Glade', mood: 'spring_meadow', weather: 'golden_pollen', haze: 0.12, boundaryTransition: 'ink_fade', preferredCameras: ['pan_right', 'slow_push'] },
+      { label: 'Act II · Mystic Canopy', mood: 'royal_amethyst', weather: 'fireflies', haze: 0.22, boundaryTransition: 'silhouette_wipe', preferredCameras: ['pan_left', 'slow_push'] },
+      { label: 'Act III · Dragon Crucible', mood: 'volcanic_inferno', weather: 'volcanic_cinders', haze: 0.24, boundaryTransition: 'diagonal_slash', preferredCameras: ['impact_shake', 'slow_push'] },
+      { label: 'Act IV · Golden Return', mood: 'golden_durbar', weather: 'floating_lanterns', haze: 0.14, boundaryTransition: 'ink_fade', preferredCameras: ['slow_pull', 'still'] },
+    ],
+  },
+  {
+    id: 'historical_empire',
+    label: 'Historical Empire (Chronicle → Campaign → Siege → Legacy)',
+    description: 'Archival-to-epic progression crafted for world history and empire documentaries.',
+    acts: [
+      { label: 'Act I · Archival Rise', mood: 'vintage_kodachrome', weather: 'none', haze: 0.12, boundaryTransition: 'ink_fade', preferredCameras: ['pan_right', 'slow_push'] },
+      { label: 'Act II · Desert March', mood: 'desert_mirage', weather: 'sandstorm', haze: 0.22, boundaryTransition: 'silhouette_wipe', preferredCameras: ['pan_left', 'slow_push'] },
+      { label: 'Act III · Imperial Siege', mood: 'crimson_wrath', weather: 'ash_fallout', haze: 0.24, boundaryTransition: 'diagonal_slash', preferredCameras: ['impact_shake', 'slow_push'] },
+      { label: 'Act IV · Monumental Legacy', mood: 'obsidian_gold', weather: 'golden_pollen', haze: 0.14, boundaryTransition: 'ink_fade', preferredCameras: ['slow_pull', 'still'] },
+    ],
+  },
+  {
+    id: 'nature_documentary',
+    label: 'Nature Documentary (Coral Reef → Savanna → Monsoon → Aurora)',
+    description: 'Planet-Earth style biome showcase transitioning across ocean, grassland, storm, and poles.',
+    acts: [
+      { label: 'Act I · Living Reef', mood: 'ocean_turquoise', weather: 'underwater_bubbles', haze: 0.12, boundaryTransition: 'ink_fade', preferredCameras: ['pan_right', 'slow_push'] },
+      { label: 'Act II · Golden Savanna', mood: 'golden_hour_cinema', weather: 'golden_pollen', haze: 0.16, boundaryTransition: 'ink_fade', preferredCameras: ['pan_left', 'slow_push'] },
+      { label: 'Act III · Monsoon Surge', mood: 'monsoon_indigo', weather: 'rain', haze: 0.24, boundaryTransition: 'silhouette_wipe', preferredCameras: ['slow_push', 'still'] },
+      { label: 'Act IV · Polar Wonder', mood: 'arctic_aurora', weather: 'aurora_ribbons', haze: 0.14, boundaryTransition: 'ink_fade', preferredCameras: ['slow_pull', 'still'] },
+    ],
+  },
+  {
+    id: 'kids_storybook',
+    label: 'Kids Storybook (Pastel Morning → Candy Adventure → Oops! → Party)',
+    description: 'Bright, friendly color progression with bubbles, confetti, and floating lanterns.',
+    acts: [
+      { label: 'Act I · Sunny Hello', mood: 'pastel_storybook', weather: 'dandelion_seeds', haze: 0.08, boundaryTransition: 'ink_fade', preferredCameras: ['pan_right', 'still'] },
+      { label: 'Act II · Candyland Quest', mood: 'candyland_pop', weather: 'golden_pollen', haze: 0.1, boundaryTransition: 'silhouette_wipe', preferredCameras: ['slow_push', 'pan_left'] },
+      { label: 'Act III · Silly Storm', mood: 'lavender_twilight', weather: 'rain', haze: 0.16, boundaryTransition: 'ink_fade', preferredCameras: ['slow_push', 'still'] },
+      { label: 'Act IV · Happy Celebration', mood: 'sunset_coral', weather: 'confetti_shower', haze: 0.08, boundaryTransition: 'ink_fade', preferredCameras: ['slow_pull', 'still'] },
+    ],
+  },
+  {
+    id: 'time_travel_loop',
+    label: 'Time-Travel Loop (Clockwork → Glitch Rift → Ancient Past → Future)',
+    description: 'Temporal whiplash arc bridging Victorian steampunk, plasma rifts, and solarpunk futures.',
+    acts: [
+      { label: 'Act I · Brass Lab', mood: 'copper_steampunk', weather: 'golden_pollen', haze: 0.14, boundaryTransition: 'ink_fade', preferredCameras: ['slow_push', 'still'] },
+      { label: 'Act II · Quantum Rift', mood: 'royal_amethyst', weather: 'plasma_arcs', haze: 0.24, boundaryTransition: 'diagonal_slash', preferredCameras: ['impact_shake', 'slow_push'] },
+      { label: 'Act III · Lost Era', mood: 'sepia_archive', weather: 'ash_fallout', haze: 0.2, boundaryTransition: 'silhouette_wipe', preferredCameras: ['pan_left', 'slow_push'] },
+      { label: 'Act IV · Tomorrow Restored', mood: 'solarpunk_lime', weather: 'starlight_dust', haze: 0.12, boundaryTransition: 'ink_fade', preferredCameras: ['slow_pull', 'still'] },
+    ],
+  },
+  {
+    id: 'superhero_origin',
+    label: 'Superhero Origin (City Night → Awakening → Showdown → Rooftop)',
+    description: 'Comic-book cinematic arc from gritty city night to lightning-charged rooftop triumph.',
+    acts: [
+      { label: 'Act I · Ordinary Night', mood: 'storm_slate', weather: 'rain', haze: 0.18, boundaryTransition: 'ink_fade', preferredCameras: ['pan_right', 'slow_push'] },
+      { label: 'Act II · Power Surge', mood: 'neon_tokyo_blue', weather: 'plasma_arcs', haze: 0.2, boundaryTransition: 'diagonal_slash', preferredCameras: ['slow_push', 'impact_shake'] },
+      { label: 'Act III · Villain Clash', mood: 'crimson_wrath', weather: 'lightning_storm', haze: 0.24, boundaryTransition: 'crimson_flash', preferredCameras: ['impact_shake', 'slow_push'] },
+      { label: 'Act IV · Heroic Dawn', mood: 'golden_hour_cinema', weather: 'starlight_dust', haze: 0.12, boundaryTransition: 'ink_fade', preferredCameras: ['slow_pull', 'still'] },
+    ],
+  },
+  {
+    id: 'courtroom_verdict',
+    label: 'Courtroom Verdict (Opening → Cross-Exam → Bombshell → Justice)',
+    description: 'High-stakes legal drama lighting progression for courtroom debates and reveals.',
+    acts: [
+      { label: 'Act I · Opening Statement', mood: 'candlelit_parchment', weather: 'none', haze: 0.08, boundaryTransition: 'ink_fade', preferredCameras: ['still', 'slow_push'] },
+      { label: 'Act II · Cross-Examination', mood: 'storm_slate', weather: 'none', haze: 0.14, boundaryTransition: 'silhouette_wipe', preferredCameras: ['pan_right', 'pan_left'] },
+      { label: 'Act III · Shocking Exhibit', mood: 'obsidian_gold', weather: 'neon_sparks', haze: 0.18, boundaryTransition: 'diagonal_slash', preferredCameras: ['slow_push', 'impact_shake'] },
+      { label: 'Act IV · Final Verdict', mood: 'sunlit_morning', weather: 'golden_pollen', haze: 0.1, boundaryTransition: 'ink_fade', preferredCameras: ['slow_pull', 'still'] },
+    ],
+  },
+  {
+    id: 'survival_expedition',
+    label: 'Survival Expedition (Basecamp → Blizzard → Toxic Ruins → Rescue)',
+    description: 'Extreme-environment survival arc pushing through hail, blizzards, and wasteland hazards.',
+    acts: [
+      { label: 'Act I · Frontier Camp', mood: 'autumn_amber', weather: 'mist', haze: 0.16, boundaryTransition: 'ink_fade', preferredCameras: ['pan_right', 'slow_push'] },
+      { label: 'Act II · Whiteout Pass', mood: 'ice_palace_cyan', weather: 'blizzard_gale', haze: 0.28, boundaryTransition: 'silhouette_wipe', preferredCameras: ['pan_left', 'slow_push'] },
+      { label: 'Act III · Hazard Zone', mood: 'toxic_wasteland', weather: 'acid_rain', haze: 0.3, boundaryTransition: 'diagonal_slash', preferredCameras: ['impact_shake', 'slow_push'] },
+      { label: 'Act IV · Signal Flare Rescue', mood: 'sunset_coral', weather: 'floating_lanterns', haze: 0.14, boundaryTransition: 'ink_fade', preferredCameras: ['slow_pull', 'still'] },
+    ],
+  },
+  {
+    id: 'festival_celebration',
+    label: 'Festival Celebration (Lantern Dusk → Parade → Fireworks → Starlight)',
+    description: 'Joyous cultural festival arc brimming with warm lanterns, blossoms, and confetti.',
+    acts: [
+      { label: 'Act I · Dusk Preparation', mood: 'sunset_coral', weather: 'petals', haze: 0.12, boundaryTransition: 'ink_fade', preferredCameras: ['pan_right', 'slow_push'] },
+      { label: 'Act II · Grand Procession', mood: 'golden_durbar', weather: 'floating_lanterns', haze: 0.14, boundaryTransition: 'silhouette_wipe', preferredCameras: ['pan_left', 'slow_push'] },
+      { label: 'Act III · Midnight Finale', mood: 'royal_amethyst', weather: 'confetti_shower', haze: 0.16, boundaryTransition: 'diagonal_slash', preferredCameras: ['slow_push', 'still'] },
+      { label: 'Act IV · Starlit Blessing', mood: 'cobalt_midnight', weather: 'starlight_dust', haze: 0.12, boundaryTransition: 'ink_fade', preferredCameras: ['slow_pull', 'still'] },
     ],
   },
 ];
@@ -595,6 +1034,21 @@ const MOOD_PALETTES: Record<MoodId, MoodPalette> = {
     ground: '#140d09',
     accent: '#d99a38',
   },
+  ...(Object.fromEntries(
+    Object.entries(ATLAS_MOOD_PALETTES).map(([k, p]) => [
+      k,
+      {
+        skyTop: p.skyTop,
+        skyMid: p.skyMid,
+        skyLow: p.skyLow,
+        glow: p.moon,
+        silhouetteFar: p.farSil,
+        silhouetteMid: p.shadowTint,
+        ground: p.ground,
+        accent: p.accent,
+      },
+    ])
+  ) as Record<keyof typeof ATLAS_MOOD_PALETTES, MoodPalette>),
 };
 
 export interface ProceduralBackdropOptions {
@@ -621,7 +1075,11 @@ export function generateProceduralBackdropDataUrl(opts: ProceduralBackdropOption
   const label = `${meta.label} #${Math.abs(seed) % 1000}`;
 
   if (typeof document === 'undefined') {
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${pal.skyTop}"/><stop offset="55%" stop-color="${pal.skyMid}"/><stop offset="100%" stop-color="${pal.skyLow}"/></linearGradient></defs><rect width="${w}" height="${h}" fill="url(#g)"/><circle cx="${Math.round(w * 0.5)}" cy="${Math.round(h * 0.34)}" r="${Math.round(h * 0.16)}" fill="${pal.glow}" opacity="0.85"/><rect y="${Math.round(h * 0.76)}" width="${w}" height="${Math.round(h * 0.24)}" fill="${pal.ground}"/></svg>`;
+    const rngNode = createSeededRng(seed * 31 + meta.id.length * 997 + meta.id.charCodeAt(0) * 17);
+    const orbCx = Math.round(w * (0.28 + rngNode() * 0.44));
+    const orbCy = Math.round(h * (0.24 + rngNode() * 0.16));
+    const peakY = Math.round(h * (0.44 + rngNode() * 0.16));
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" data-theme="${meta.id}" data-seed="${seed}" viewBox="0 0 ${w} ${h}"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${pal.skyTop}"/><stop offset="55%" stop-color="${pal.skyMid}"/><stop offset="100%" stop-color="${pal.skyLow}"/></linearGradient></defs><rect width="${w}" height="${h}" fill="url(#g)"/><circle cx="${orbCx}" cy="${orbCy}" r="${Math.round(h * 0.14)}" fill="${pal.glow}" opacity="0.85"/><polygon points="0,${Math.round(h * 0.76)} ${Math.round(w * 0.32)},${peakY} ${Math.round(w * 0.68)},${Math.round(peakY + h * 0.08)} ${w},${Math.round(h * 0.76)}" fill="${pal.silhouetteFar}"/><rect y="${Math.round(h * 0.76)}" width="${w}" height="${Math.round(h * 0.24)}" fill="${pal.ground}"/><circle cx="${orbCx}" cy="${Math.round(h * 0.76)}" r="26" fill="${meta.accentHex}" opacity="0.55"/></svg>`;
     const encoded = typeof Buffer !== 'undefined'
       ? Buffer.from(svg, 'utf8').toString('base64')
       : btoa(unescape(encodeURIComponent(svg)));
@@ -1101,6 +1559,57 @@ export function generateProceduralBackdropDataUrl(opts: ProceduralBackdropOption
       ctx.fillStyle = i % 2 === 0 ? 'rgba(56, 189, 248, 0.22)' : 'rgba(244, 63, 94, 0.14)';
       ctx.fillRect(w * (0.06 + i * 0.11), 0, 26, horizonY);
     }
+  } else {
+    // Parametric Wave 5 architectural / biome horizon composition tailored to each theme ID
+    const themeHash = meta.id.split('').reduce((acc, ch) => (acc * 31 + ch.charCodeAt(0)) % 997, 17);
+    const kind = themeHash % 5;
+    ctx.fillStyle = pal.silhouetteMid;
+    if (kind === 0) {
+      // Iconic skyline / towers / neon spires
+      for (let i = 0; i < 11; i++) {
+        const bw = w / 10;
+        const bh = h * (0.22 + (((i * 23 + themeHash) % 34) * 0.01));
+        ctx.fillRect(i * bw * 0.94, horizonY - bh, bw * 0.78, bh);
+        ctx.fillStyle = meta.accentHex;
+        ctx.globalAlpha = 0.42;
+        ctx.fillRect(i * bw * 0.94 + 12, horizonY - bh + 18, bw * 0.48, 12);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = pal.silhouetteMid;
+      }
+    } else if (kind === 1) {
+      // Sacred arches, domes & mirror reflection
+      for (let i = 0; i < 5; i++) {
+        const ax = w * (0.12 + i * 0.19);
+        ctx.beginPath(); ctx.arc(ax, horizonY - h * 0.22, w * 0.07, Math.PI, 0); ctx.lineTo(ax + w * 0.07, horizonY); ctx.lineTo(ax - w * 0.07, horizonY); ctx.closePath(); ctx.fill();
+      }
+      ctx.strokeStyle = meta.accentHex; ctx.lineWidth = 4; ctx.globalAlpha = 0.5;
+      ctx.beginPath(); ctx.arc(w * 0.5, horizonY - h * 0.28, h * 0.16, Math.PI, 0); ctx.stroke();
+      ctx.globalAlpha = 1;
+    } else if (kind === 2) {
+      // Layered peaks, canyon mesas & glowing accent bands
+      ctx.beginPath(); ctx.moveTo(0, horizonY);
+      for (let i = 0; i <= 8; i++) {
+        const py = horizonY - h * (0.14 + (((i * 19 + themeHash) % 28) * 0.01));
+        ctx.lineTo((i / 8) * w, py);
+      }
+      ctx.lineTo(w, horizonY); ctx.closePath(); ctx.fill();
+    } else if (kind === 3) {
+      // Sci-fi orbital ring / Ferris wheel / stadium floodlights
+      ctx.strokeStyle = meta.accentHex; ctx.lineWidth = 10; ctx.globalAlpha = 0.55;
+      ctx.beginPath(); ctx.arc(w * 0.5, horizonY - h * 0.22, h * 0.26, 0, Math.PI * 2); ctx.stroke();
+      ctx.globalAlpha = 1;
+    } else {
+      // Lush canopy / mystical grove / festive banners
+      for (let i = 0; i < 9; i++) {
+        const tx = (i / 8) * w;
+        ctx.fillRect(tx - 12, horizonY - h * 0.34, 24, h * 0.34);
+        ctx.fillStyle = i % 2 === 0 ? pal.silhouetteFar : meta.accentHex;
+        ctx.globalAlpha = i % 2 === 0 ? 0.9 : 0.45;
+        ctx.beginPath(); ctx.arc(tx, horizonY - h * 0.36, 74 + (i % 3) * 18, 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = pal.silhouetteMid;
+      }
+    }
   }
   ctx.restore();
 
@@ -1148,7 +1657,9 @@ export function generateProceduralPropDataUrl(opts: ProceduralPropOptions): {
   const label = `${meta.label}`;
 
   if (typeof document === 'undefined') {
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}"><circle cx="${size / 2}" cy="${size / 2}" r="${Math.round(size * 0.34)}" fill="${tint}" stroke="#f2c85b" stroke-width="10"/></svg>`;
+    const pHash = meta.id.split('').reduce((acc, ch) => (acc * 31 + ch.charCodeAt(0)) % 997, 29);
+    const rOuter = Math.round(size * (0.28 + (pHash % 10) * 0.01));
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" data-preset="${meta.id}" data-seed="${seed}" viewBox="0 0 ${size} ${size}"><circle cx="${size / 2}" cy="${size / 2}" r="${rOuter}" fill="${tint}" stroke="#f2c85b" stroke-width="10"/><rect x="${Math.round(size * 0.36)}" y="${Math.round(size * 0.36)}" width="${Math.round(size * 0.28)}" height="${Math.round(size * 0.28)}" rx="${(pHash % 18) + 6}" fill="#ffffff" opacity="0.32"/></svg>`;
     const encoded = typeof Buffer !== 'undefined'
       ? Buffer.from(svg, 'utf8').toString('base64')
       : btoa(unescape(encodeURIComponent(svg)));
@@ -1464,6 +1975,37 @@ export function generateProceduralPropDataUrl(opts: ProceduralPropOptions): {
     ctx.beginPath(); ctx.moveTo(cx, cy + 96); ctx.quadraticCurveTo(cx - 48, cy + 8, cx + 22, cy - 52); ctx.stroke();
     ctx.fillStyle = tint;
     ctx.beginPath(); ctx.arc(cx + 22, cy - 72, 82, 0, Math.PI * 2); ctx.arc(cx - 56, cy - 28, 62, 0, Math.PI * 2); ctx.fill();
+  } else {
+    // Parametric Wave 5 cutout silhouette tailored deterministically to each preset ID
+    const pHash = meta.id.split('').reduce((acc, ch) => (acc * 31 + ch.charCodeAt(0)) % 997, 13);
+    const mode = pHash % 4;
+    ctx.fillStyle = tint;
+    ctx.strokeStyle = '#f8fafc';
+    ctx.lineWidth = 9;
+    if (mode === 0) {
+      // Emblematic crest / shield / medallion
+      ctx.beginPath(); ctx.moveTo(cx - 120, cy - 120); ctx.lineTo(cx + 120, cy - 120); ctx.lineTo(cx + 102, cy + 40); ctx.lineTo(cx, cy + 150); ctx.lineTo(cx - 102, cy + 40); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#fef08a'; ctx.beginPath(); ctx.arc(cx, cy - 16, 42, 0, Math.PI * 2); ctx.fill();
+    } else if (mode === 1) {
+      // Sleek tech / media / instrument frame
+      ctx.beginPath(); ctx.roundRect(cx - 146, cy - 104, 292, 208, 26); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#0f172a'; ctx.beginPath(); ctx.roundRect(cx - 116, cy - 74, 232, 120, 14); ctx.fill();
+      ctx.fillStyle = '#fef08a'; ctx.fillRect(cx - 88, cy - 22, 176, 22);
+    } else if (mode === 2) {
+      // Radial artifact / wheel / star / orbital prop
+      ctx.beginPath(); ctx.arc(cx, cy, 128, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.strokeStyle = '#fef08a'; ctx.lineWidth = 8;
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2;
+        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(a) * 124, cy + Math.sin(a) * 124); ctx.stroke();
+      }
+      ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(cx, cy, 34, 0, Math.PI * 2); ctx.fill();
+    } else {
+      // Faceted crystal / blade / vessel silhouette
+      ctx.beginPath(); ctx.moveTo(cx, cy - 156); ctx.lineTo(cx + 112, cy - 20); ctx.lineTo(cx + 76, cy + 146); ctx.lineTo(cx - 76, cy + 146); ctx.lineTo(cx - 112, cy - 20); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,0.34)';
+      ctx.beginPath(); ctx.moveTo(cx, cy - 134); ctx.lineTo(cx + 66, cy - 14); ctx.lineTo(cx, cy + 114); ctx.closePath(); ctx.fill();
+    }
   }
   ctx.restore();
 

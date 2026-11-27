@@ -287,6 +287,72 @@ function paintSurfacePatternClipped(
       const sy = y + ((i * 31 + 7) % 91) * 0.01 * h;
       ctx.beginPath(); ctx.arc(sx, sy, i % 4 === 0 ? 2.6 : 1.3, 0, Math.PI * 2); ctx.fill();
     }
+  } else if (pattern === 'circuit_traces') {
+    ctx.strokeStyle = tint;
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 6; i++) {
+      const lx = x + (i / 6) * w + 8;
+      const ly = y + ((i * 23) % 70) * 0.01 * h;
+      ctx.beginPath(); ctx.moveTo(lx, y); ctx.lineTo(lx, ly); ctx.lineTo(lx + 18, ly + 18); ctx.stroke();
+      ctx.fillStyle = tint; ctx.beginPath(); ctx.arc(lx + 18, ly + 18, 3.2, 0, Math.PI * 2); ctx.fill();
+    }
+  } else if (pattern === 'starfield_constellation') {
+    ctx.strokeStyle = tint; ctx.fillStyle = tint; ctx.lineWidth = 1.4;
+    let prevX = x + w * 0.2; let prevY = y + h * 0.2;
+    for (let i = 0; i < 8; i++) {
+      const sx = x + ((i * 37 + 15) % 88) * 0.01 * w;
+      const sy = y + ((i * 29 + 11) % 86) * 0.01 * h;
+      ctx.beginPath(); ctx.arc(sx, sy, 2.8, 0, Math.PI * 2); ctx.fill();
+      if (i > 0) { ctx.beginPath(); ctx.moveTo(prevX, prevY); ctx.lineTo(sx, sy); ctx.stroke(); }
+      prevX = sx; prevY = sy;
+    }
+  } else if (pattern === 'camo_tactical') {
+    ctx.fillStyle = tint;
+    for (let i = 0; i < 10; i++) {
+      const cx = x + ((i * 41 + 9) % 92) * 0.01 * w;
+      const cy = y + ((i * 33 + 13) % 88) * 0.01 * h;
+      ctx.beginPath(); ctx.ellipse(cx, cy, 14 + (i % 3) * 6, 8 + (i % 2) * 4, i * 0.6, 0, Math.PI * 2); ctx.fill();
+    }
+  } else if (pattern === 'dragon_scales' || pattern === 'wave_seigaiha') {
+    ctx.strokeStyle = tint; ctx.lineWidth = 2;
+    for (let row = 0; row < 6; row++) {
+      for (let col = 0; col < 6; col++) {
+        const cx = x + col * 20 + (row % 2) * 10;
+        const cy = y + row * 16;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 10, pattern === 'wave_seigaiha' ? Math.PI : 0, pattern === 'wave_seigaiha' ? 0 : Math.PI);
+        ctx.stroke();
+      }
+    }
+  } else if (pattern === 'plaid_tartan') {
+    ctx.strokeStyle = tint; ctx.lineWidth = 3;
+    for (let gx = x; gx < x + w; gx += 18) { ctx.beginPath(); ctx.moveTo(gx, y); ctx.lineTo(gx, y + h); ctx.stroke(); }
+    for (let gy = y; gy < y + h; gy += 18) { ctx.beginPath(); ctx.moveTo(x, gy); ctx.lineTo(x + w, gy); ctx.stroke(); }
+  } else if (pattern === 'honeycomb_hex') {
+    ctx.strokeStyle = tint; ctx.lineWidth = 1.8;
+    for (let row = 0; row < 6; row++) {
+      for (let col = 0; col < 5; col++) {
+        const cx = x + col * 24 + (row % 2) * 12;
+        const cy = y + row * 18;
+        ctx.beginPath();
+        for (let k = 0; k < 6; k++) {
+          const a = (k / 6) * Math.PI * 2;
+          const px = cx + Math.cos(a) * 9; const py = cy + Math.sin(a) * 9;
+          if (k === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.closePath(); ctx.stroke();
+      }
+    }
+  } else if (pattern === 'floral_botanical') {
+    ctx.fillStyle = tint;
+    for (let i = 0; i < 8; i++) {
+      const fx = x + ((i * 43 + 12) % 86) * 0.01 * w;
+      const fy = y + ((i * 31 + 14) % 84) * 0.01 * h;
+      for (let p = 0; p < 5; p++) {
+        const a = (p / 5) * Math.PI * 2;
+        ctx.beginPath(); ctx.arc(fx + Math.cos(a) * 6, fy + Math.sin(a) * 6, 3.6, 0, Math.PI * 2); ctx.fill();
+      }
+    }
   }
 
   ctx.restore();
@@ -1199,6 +1265,49 @@ function drawModularHeadwear(
     ctx.closePath(); ctx.fill();
     ctx.fillStyle = accent;
     ctx.beginPath(); ctx.arc(0, -76, 11, 0, Math.PI * 2); ctx.fill();
+  } else if (headwear === 'samurai_kabuto') {
+    ctx.fillStyle = primary;
+    ctx.beginPath(); ctx.arc(0, -44, 72, Math.PI, 0); ctx.fill();
+    ctx.fillRect(-86, -48, 172, 16);
+    ctx.strokeStyle = accent; ctx.lineWidth = 10;
+    ctx.beginPath(); ctx.arc(0, -98, 42, 0.2 * Math.PI, 0.8 * Math.PI); ctx.stroke();
+  } else if (headwear === 'chef_toque') {
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(-54, -92, 108, 42);
+    ctx.beginPath(); ctx.arc(-34, -102, 28, 0, Math.PI * 2); ctx.arc(0, -116, 34, 0, Math.PI * 2); ctx.arc(34, -102, 28, 0, Math.PI * 2); ctx.fill();
+  } else if (headwear === 'grad_cap') {
+    ctx.fillStyle = '#0f172a';
+    ctx.beginPath(); ctx.moveTo(-92, -74); ctx.lineTo(0, -104); ctx.lineTo(92, -74); ctx.lineTo(0, -48); ctx.closePath(); ctx.fill();
+    ctx.fillRect(-48, -62, 96, 18);
+    ctx.strokeStyle = accent; ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.moveTo(0, -76); ctx.lineTo(74, -68); ctx.lineTo(74, -26); ctx.stroke();
+  } else if (headwear === 'viking_horns') {
+    ctx.fillStyle = '#64748b';
+    ctx.beginPath(); ctx.arc(0, -44, 68, Math.PI, 0); ctx.fill();
+    ctx.fillStyle = '#fef9c3';
+    for (const sgn of [-1, 1]) {
+      ctx.beginPath(); ctx.moveTo(sgn * 54, -64); ctx.quadraticCurveTo(sgn * 116, -98, sgn * 92, -138); ctx.quadraticCurveTo(sgn * 84, -84, sgn * 48, -46); ctx.closePath(); ctx.fill();
+    }
+  } else if (headwear === 'nurse_cap') {
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.moveTo(-58, -54); ctx.lineTo(-44, -98); ctx.lineTo(44, -98); ctx.lineTo(58, -54); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#dc2626';
+    ctx.fillRect(-5, -88, 10, 26); ctx.fillRect(-13, -80, 26, 10);
+  } else if (headwear === 'cowboy_hat') {
+    ctx.fillStyle = '#78350f';
+    ctx.beginPath(); ctx.ellipse(0, -56, 104, 18, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.roundRect(-52, -110, 104, 56, 16); ctx.fill();
+    ctx.fillStyle = accent; ctx.fillRect(-52, -70, 104, 10);
+  } else if (headwear === 'diver_helmet') {
+    ctx.strokeStyle = '#b45309'; ctx.lineWidth = 14;
+    ctx.beginPath(); ctx.arc(0, -4, 86, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(-80, -4); ctx.lineTo(80, -4); ctx.moveTo(0, -84); ctx.lineTo(0, 76); ctx.stroke();
+  } else if (headwear === 'elf_circlet') {
+    ctx.strokeStyle = accent; ctx.lineWidth = 6;
+    ctx.beginPath(); ctx.arc(0, -34, 68, Math.PI * 1.15, Math.PI * 1.85); ctx.stroke();
+    ctx.fillStyle = '#38bdf8';
+    ctx.beginPath(); ctx.moveTo(0, -74); ctx.lineTo(10, -58); ctx.lineTo(0, -42); ctx.lineTo(-10, -58); ctx.closePath(); ctx.fill();
   }
   ctx.restore();
 }
@@ -2163,14 +2272,44 @@ export function drawModularEntityFullBody(
     ctx.lineTo(0, torsoTopY + 26);
     ctx.lineTo(chestW * 0.72, torsoTopY + 8);
     ctx.stroke();
-  } else if (dna.outfit.topStyle === 'space_suit') {
-    // EVA chest control pack & pressure hoses
+  } else if (dna.outfit.topStyle === 'space_suit' || dna.outfit.topStyle === 'space_exo') {
+    // EVA chest control pack & exo-frame ribs
     ctx.fillStyle = '#e2e8f0';
     ctx.fillRect(-13, torsoTopY + 12, 26, 20);
     ctx.fillStyle = pal.accent;
     ctx.fillRect(-9, torsoTopY + 16, 8, 6);
     ctx.fillStyle = '#ef4444';
     ctx.fillRect(2, torsoTopY + 16, 7, 6);
+    if (dna.outfit.topStyle === 'space_exo') {
+      ctx.strokeStyle = pal.accent; ctx.lineWidth = 3;
+      ctx.strokeRect(-chestW * 0.8, torsoTopY + 6, chestW * 1.6, 34);
+    }
+  } else if (dna.outfit.topStyle === 'business_suit') {
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.moveTo(-10, torsoTopY); ctx.lineTo(10, torsoTopY); ctx.lineTo(0, torsoTopY + 26); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = pal.accent; ctx.fillRect(-2.5, torsoTopY + 6, 5, 22);
+  } else if (dna.outfit.topStyle === 'kimono_robe') {
+    ctx.strokeStyle = pal.accent; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(-14, torsoTopY); ctx.lineTo(6, torsoTopY + 24); ctx.moveTo(14, torsoTopY); ctx.lineTo(-6, torsoTopY + 24); ctx.stroke();
+    ctx.fillStyle = pal.accent; ctx.fillRect(-waistW - 2, waistY - 14, (waistW + 2) * 2, 10);
+  } else if (dna.outfit.topStyle === 'hoodie_street') {
+    ctx.strokeStyle = '#f8fafc'; ctx.lineWidth = 2.4;
+    ctx.beginPath(); ctx.moveTo(-7, torsoTopY + 4); ctx.lineTo(-7, torsoTopY + 24); ctx.moveTo(7, torsoTopY + 4); ctx.lineTo(7, torsoTopY + 24); ctx.stroke();
+    ctx.fillStyle = pal.secondary; ctx.beginPath(); ctx.roundRect(-16, waistY - 22, 32, 16, 5); ctx.fill();
+  } else if (dna.outfit.topStyle === 'medieval_plate') {
+    ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(-chestW * 0.78, torsoTopY + 16); ctx.lineTo(0, torsoTopY + 28); ctx.lineTo(chestW * 0.78, torsoTopY + 16); ctx.stroke();
+    ctx.fillStyle = pal.accent; ctx.fillRect(-4, torsoTopY + 8, 8, 28);
+  } else if (dna.outfit.topStyle === 'pirate_coat') {
+    ctx.fillStyle = pal.accent;
+    for (let b = 0; b < 3; b++) {
+      ctx.beginPath(); ctx.arc(-9, torsoTopY + 12 + b * 11, 2.5, 0, Math.PI * 2); ctx.arc(9, torsoTopY + 12 + b * 11, 2.5, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.fillRect(-waistW - 2, waistY - 12, (waistW + 2) * 2, 7);
+  } else if (dna.outfit.topStyle === 'sports_jersey') {
+    ctx.fillStyle = pal.accent;
+    ctx.fillRect(-chestW * 0.85, torsoTopY + 6, chestW * 1.7, 6);
+    ctx.fillRect(-10, torsoTopY + 18, 20, 18);
   }
 
   // Collar Accessories on full-body torso

@@ -141,7 +141,14 @@ export type TopStyleId =
   | 'trench_coat'
   | 'lab_coat'
   | 'cyber_jacket'
-  | 'space_suit';
+  | 'space_suit'
+  | 'business_suit'
+  | 'space_exo'
+  | 'kimono_robe'
+  | 'hoodie_street'
+  | 'medieval_plate'
+  | 'pirate_coat'
+  | 'sports_jersey';
 
 export type BottomStyleId =
   | 'dhoti'
@@ -188,7 +195,15 @@ export type HeadwearStyleId =
   | 'fedora'
   | 'cyber_visor'
   | 'astronaut_helmet'
-  | 'tricorn_hat';
+  | 'tricorn_hat'
+  | 'samurai_kabuto'
+  | 'chef_toque'
+  | 'grad_cap'
+  | 'viking_horns'
+  | 'nurse_cap'
+  | 'cowboy_hat'
+  | 'diver_helmet'
+  | 'elf_circlet';
 
 export type SurfacePatternId =
   | 'solid'
@@ -204,7 +219,15 @@ export type SurfacePatternId =
   | 'circuit_trace'
   | 'pinstripe'
   | 'camo_hex'
-  | 'starfield_speckle';
+  | 'starfield_speckle'
+  | 'circuit_traces'
+  | 'starfield_constellation'
+  | 'camo_tactical'
+  | 'dragon_scales'
+  | 'plaid_tartan'
+  | 'wave_seigaiha'
+  | 'honeycomb_hex'
+  | 'floral_botanical';
 
 export type WingStyleId =
   | 'none'
@@ -453,6 +476,13 @@ export const TOP_STYLE_CATALOG: Array<{ id: TopStyleId; label: string }> = [
   { id: 'lab_coat', label: 'Research Lab Coat' },
   { id: 'cyber_jacket', label: 'Neon Cyber Jacket' },
   { id: 'space_suit', label: 'Orbital EVA Space Suit' },
+  { id: 'business_suit', label: 'Executive Business Suit' },
+  { id: 'space_exo', label: 'Exo-Frame Armor Suit' },
+  { id: 'kimono_robe', label: 'Silk Kimono & Obi' },
+  { id: 'hoodie_street', label: 'Streetwear Hoodie' },
+  { id: 'medieval_plate', label: 'Medieval Knight Plate' },
+  { id: 'pirate_coat', label: 'Captain Buccaneer Coat' },
+  { id: 'sports_jersey', label: 'Pro Athletic Jersey' },
 ];
 
 export const BOTTOM_STYLE_CATALOG: Array<{ id: BottomStyleId; label: string }> = [
@@ -504,6 +534,14 @@ export const HEADWEAR_CATALOG: Array<{ id: HeadwearStyleId; label: string }> = [
   { id: 'cyber_visor', label: 'Neon Cyber Visor' },
   { id: 'astronaut_helmet', label: 'EVA Astronaut Helmet' },
   { id: 'tricorn_hat', label: 'Corsair Tricorn Hat' },
+  { id: 'samurai_kabuto', label: 'Samurai War Kabuto' },
+  { id: 'chef_toque', label: 'Culinary Chef Toque' },
+  { id: 'grad_cap', label: 'Academic Mortarboard' },
+  { id: 'viking_horns', label: 'Nordic Horned Helm' },
+  { id: 'nurse_cap', label: 'Clinical Med Cap' },
+  { id: 'cowboy_hat', label: 'Frontier Cowboy Hat' },
+  { id: 'diver_helmet', label: 'Deep-Sea Brass Helmet' },
+  { id: 'elf_circlet', label: 'Elven Starlight Circlet' },
 ];
 
 export const SURFACE_PATTERN_CATALOG: Array<{ id: SurfacePatternId; label: string }> = [
@@ -521,6 +559,14 @@ export const SURFACE_PATTERN_CATALOG: Array<{ id: SurfacePatternId; label: strin
   { id: 'pinstripe', label: 'Tailored Pinstripe' },
   { id: 'camo_hex', label: 'Tactical Camo Hex' },
   { id: 'starfield_speckle', label: 'Nebula Starfield Speckle' },
+  { id: 'circuit_traces', label: 'Microchip Circuit Traces' },
+  { id: 'starfield_constellation', label: 'Constellation Starlines' },
+  { id: 'camo_tactical', label: 'Woodland Tactical Camo' },
+  { id: 'dragon_scales', label: 'Imperial Dragon Scales' },
+  { id: 'plaid_tartan', label: 'Heritage Tartan Plaid' },
+  { id: 'wave_seigaiha', label: 'Seigaiha Ocean Waves' },
+  { id: 'honeycomb_hex', label: 'Sci-Fi Honeycomb Mesh' },
+  { id: 'floral_botanical', label: 'Botanical Floral Motif' },
 ];
 
 export const WING_STYLE_CATALOG: Array<{ id: WingStyleId; label: string }> = [
@@ -1554,8 +1600,43 @@ export function hydrateArchetypeToDna(member: Partial<CastMember>, seedSalt = ''
         palette: basePal,
       });
       break;
-    default:
-      dna = createBaseDna('humanoid', { palette: basePal });
+    default: {
+      const aStr = String(arch);
+      const isQuad = /dino|bear|panda|camel|unicorn|griffin|pegasus|werewolf/.test(aStr);
+      const isAvian = /eagle|phoenix|penguin/.test(aStr);
+      const isFloat = /djinn|hologram|angel|reaper|banshee|slime/.test(aStr);
+      const chassis: EntityChassisId = isQuad ? 'quadruped' : isAvian ? 'avian' : isFloat ? 'ethereal' : 'humanoid';
+      const topStyle: TopStyleId =
+        /ceo|lawyer|anchor|trader|historian|judge|conductor/.test(aStr) ? 'business_suit' :
+        /bounty|cyborg|admiral|drone|wasteland/.test(aStr) ? 'space_exo' :
+        /kitsune|shogun|martial/.test(aStr) ? 'kimono_robe' :
+        /developer|vlogger|skateboard|courier|podcast|director/.test(aStr) ? 'hoodie_street' :
+        /paladin|roman|spartan|valkyrie|orc|golem|automaton/.test(aStr) ? 'medieval_plate' :
+        /doctor|geneticist|physicist|mad_scientist|teacher/.test(aStr) ? 'lab_coat' :
+        /soccer|cricket|esports|coach/.test(aStr) ? 'sports_jersey' :
+        /sheriff|outlaw|ringmaster|bard/.test(aStr) ? 'pirate_coat' :
+        isQuad || isAvian ? 'none_fur' : 'royal_angarkha';
+      const headwear: HeadwearStyleId =
+        /shogun/.test(aStr) ? 'samurai_kabuto' :
+        /chef/.test(aStr) ? 'chef_toque' :
+        /historian|teacher|judge/.test(aStr) ? 'grad_cap' :
+        /valkyrie|orc/.test(aStr) ? 'viking_horns' :
+        /doctor/.test(aStr) ? 'nurse_cap' :
+        /sheriff|outlaw|farmer|scout/.test(aStr) ? 'cowboy_hat' :
+        /bounty|cyborg/.test(aStr) ? 'cyber_visor' :
+        /athena|angel|mermaid|kitsune|zeus|poseidon/.test(aStr) ? 'elf_circlet' : 'none';
+      const surfacePattern: SurfacePatternId =
+        /cyborg|hologram|drone|developer|esports/.test(aStr) ? 'circuit_traces' :
+        /zeus|angel|oracle|physicist|alien/.test(aStr) ? 'starfield_constellation' :
+        /dragon|trex|triceratops|shark/.test(aStr) ? 'dragon_scales' :
+        /kitsune|shogun|poseidon|mermaid/.test(aStr) ? 'wave_seigaiha' :
+        /ceo|lawyer|anchor|trader/.test(aStr) ? 'pinstripe' : 'solid';
+      dna = createBaseDna(chassis, {
+        outfit: { topStyle, headwear, surfacePattern },
+        palette: basePal,
+      });
+      break;
+    }
   }
 
   // Respect explicit legacy mark/headgear overrides if present

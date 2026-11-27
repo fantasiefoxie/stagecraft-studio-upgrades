@@ -245,6 +245,25 @@ export const EntityWorkshopModal: React.FC<EntityWorkshopModalProps> = ({
   const [copiedDna, setCopiedDna] = useState(false);
   const [presetCategory, setPresetCategory] = useState<'All' | SpritePresetCategory>('All');
   const [presetQuery, setPresetQuery] = useState('');
+  const [seedQuery, setSeedQuery] = useState('');
+
+  const filteredSeedGroups = useMemo(() => {
+    const q = seedQuery.trim().toLowerCase();
+    const map = new Map<string, typeof ARCHETYPE_CATALOG>();
+    for (const a of ARCHETYPE_CATALOG) {
+      const matches =
+        !q ||
+        a.id === archetype ||
+        a.label.toLowerCase().includes(q) ||
+        a.group.toLowerCase().includes(q) ||
+        a.id.toLowerCase().includes(q);
+      if (!matches) continue;
+      const arr = map.get(a.group) || [];
+      arr.push(a);
+      map.set(a.group, arr);
+    }
+    return Array.from(map.entries());
+  }, [seedQuery, archetype]);
 
   const filteredSpritePresets = useMemo(() => {
     const q = presetQuery.trim().toLowerCase();
@@ -885,7 +904,7 @@ export const EntityWorkshopModal: React.FC<EntityWorkshopModalProps> = ({
                       type="text"
                       value={presetQuery}
                       onChange={(e) => setPresetQuery(e.target.value)}
-                      placeholder="Search detective, wizard, cyber, fox, astronaut..."
+                      placeholder={`Search ${SPRITE_WORKSHOP_PRESETS.length} presets across ${SPRITE_PRESET_CATEGORIES.length} genres (Zeus, surgeon, dino, hacker...)`}
                       className="w-full h-8 pl-8 pr-7 rounded-md bg-[#13182b] border border-white/12 text-xs text-white focus:outline-none focus:border-[#f2c85b]"
                     />
                     {presetQuery && (
@@ -993,19 +1012,43 @@ export const EntityWorkshopModal: React.FC<EntityWorkshopModalProps> = ({
                   <section className="space-y-2 pt-3 border-t border-white/10">
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-xs font-semibold text-white">
-                        Seed From Starting Template
+                        Seed From Starting Template ({ARCHETYPE_CATALOG.length})
                       </span>
                       <span className="text-[10px] text-[#8e97b0]">Optional base</span>
+                    </div>
+                    <div className="relative">
+                      <Search className="w-3.5 h-3.5 text-[#7f89a6] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      <input
+                        type="text"
+                        value={seedQuery}
+                        onChange={(e) => setSeedQuery(e.target.value)}
+                        placeholder={`Filter ${ARCHETYPE_CATALOG.length} archetypes...`}
+                        className="w-full h-8 pl-8 pr-7 rounded-md bg-[#111629] border border-white/12 text-[11px] text-white placeholder:text-[#6f7894] focus:outline-none focus:border-[#f2c85b]"
+                      />
+                      {seedQuery && (
+                        <button
+                          type="button"
+                          onClick={() => setSeedQuery('')}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-[#8e97b0] hover:text-white cursor-pointer"
+                          aria-label="Clear archetype filter"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </div>
                     <select
                       value={archetype}
                       onChange={(e) => handleSeedFromArchetype(e.target.value as ArchetypeId)}
                       className="w-full h-9 px-2.5 rounded-md bg-[#13182b] border border-white/12 text-xs text-white"
                     >
-                      {ARCHETYPE_CATALOG.map((a) => (
-                        <option key={a.id} value={a.id}>
-                          {a.label} — {a.group}
-                        </option>
+                      {filteredSeedGroups.map(([group, items]) => (
+                        <optgroup key={group} label={group}>
+                          {items.map((a) => (
+                            <option key={a.id} value={a.id}>
+                              {a.label}
+                            </option>
+                          ))}
+                        </optgroup>
                       ))}
                     </select>
                   </section>

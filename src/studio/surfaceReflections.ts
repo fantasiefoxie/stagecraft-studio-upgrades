@@ -6,6 +6,7 @@
  */
 
 import type { MoodPalette } from './renderAssets';
+import { ATLAS_INDOOR_STAGES } from './renderAssetsStagesAtlas';
 import type { StageId, StoryBeat, WeatherId } from './types';
 
 export type SurfaceReflectionKind = 'water' | 'wet_street' | 'polished_marble' | 'none';
@@ -36,12 +37,32 @@ const WATER_STAGES = new Set<StageId>([
   'tropical_archipelago',
   'nordic_fjord_hall',
   'courtyard_well',
+  // Wave 5 water & coastal stages
+  'viking_longship_fjord',
+  'harbor_container_dock',
+  'public_park_fountain',
+  'fairy_glade_bridge',
+  'lighthouse_storm_cliff',
+  'foggy_london_pier',
+  'coral_reef_lagoon',
+  'arctic_glacier_icebergs',
+  'alpine_meadow_lake',
+  'bioluminescent_sea_cave',
+  'autumn_maple_river',
+  'cruise_liner_promenade',
+  'amusement_ferris_boardwalk',
 ]);
 
 const WET_STREET_STAGES = new Set<StageId>([
   'neon_cyber_alley',
   'noir_rainy_street',
   'bazaar_lane',
+  // Wave 5 wet/neon/fog streets
+  'victorian_fog_alley',
+  'busy_crosswalk_plaza',
+  'highway_overpass_night',
+  'post_apoc_ruined_highway',
+  'misty_graveyard_gates',
 ]);
 
 const POLISHED_MARBLE_STAGES = new Set<StageId>([
@@ -61,6 +82,28 @@ const POLISHED_MARBLE_STAGES = new Set<StageId>([
   'olympus_acropolis',
   'kali_temple',
   'steampunk_clocktower',
+  // Wave 5 polished stone, glass, sci-fi & grand hall floors
+  'persian_rose_palace',
+  'medieval_castle_keep',
+  'airport_departure_gate',
+  'stock_exchange_floor',
+  'hospital_operating_room',
+  'science_cleanroom',
+  'city_library_atrium',
+  'luxury_penthouse_lounge',
+  'art_gallery_hall',
+  'grand_opera_theater',
+  'museum_dinosaur_hall',
+  'orbital_space_station',
+  'cyber_megamall_atrium',
+  'vr_cyberspace_grid',
+  'quantum_collider_chamber',
+  'floating_sky_citadel',
+  'crystal_prism_cave',
+  'haunted_manor_foyer',
+  'locked_bank_vault',
+  'subway_metro_platform',
+  'neon_arcade_hall',
 ]);
 
 const INDOOR_NO_RAIN_STAGES = new Set<StageId>([
@@ -78,6 +121,7 @@ const INDOOR_NO_RAIN_STAGES = new Set<StageId>([
   'gothic_cathedral',
   'vintage_train_car',
   'astral_observatory',
+  ...ATLAS_INDOOR_STAGES,
 ]);
 
 /**
@@ -88,10 +132,11 @@ export function getStageReflectionProfile(
   weather: WeatherId = 'none'
 ): StageReflectionProfile {
   if (WATER_STAGES.has(stage)) {
+    const isSubmerged = stage === 'underwater_atlantis' || stage === 'coral_reef_lagoon';
     return {
       kind: 'water',
-      horizonYFrac: stage === 'underwater_atlantis' ? 0.72 : 0.78,
-      opacity: stage === 'underwater_atlantis' ? 0.32 : 0.36,
+      horizonYFrac: isSubmerged ? 0.72 : 0.78,
+      opacity: isSubmerged ? 0.32 : 0.36,
       rippleAmp: 6.5,
       skewDir: 1,
     };
@@ -107,8 +152,14 @@ export function getStageReflectionProfile(
     };
   }
 
-  // Outdoor stages during rain or lightning storm turn reflective!
-  if ((weather === 'rain' || weather === 'lightning_storm') && !INDOOR_NO_RAIN_STAGES.has(stage)) {
+  // Outdoor stages during rain, acid rain, hailstorm, or lightning storm turn reflective!
+  if (
+    (weather === 'rain' ||
+      weather === 'lightning_storm' ||
+      weather === 'acid_rain' ||
+      weather === 'hailstorm') &&
+    !INDOOR_NO_RAIN_STAGES.has(stage)
+  ) {
     return {
       kind: 'wet_street',
       horizonYFrac: 0.77,

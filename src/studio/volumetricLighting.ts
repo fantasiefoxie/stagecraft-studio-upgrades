@@ -71,7 +71,17 @@ export function resolveVolumetricBeamKind(stage: StageId, mood: MoodId): Volumet
     s.includes('cathedral') ||
     s.includes('observatory') ||
     s.includes('atlantis') ||
-    mood === 'twilight_temple'
+    s.includes('pyramid') ||
+    s.includes('stonehenge') ||
+    s.includes('angkor') ||
+    s.includes('gurukul') ||
+    s.includes('citadel') ||
+    s.includes('wizard') ||
+    s.includes('opera') ||
+    s.includes('coral_reef') ||
+    mood === 'twilight_temple' ||
+    mood === 'royal_amethyst' ||
+    mood === 'obsidian_gold'
   ) {
     return 'temple_godrays';
   }
@@ -90,24 +100,58 @@ export function resolveVolumetricBeamKind(stage: StageId, mood: MoodId): Volumet
     s.includes('clocktower') ||
     s.includes('bookshop') ||
     s.includes('colosseum') ||
+    s.includes('atrium') ||
+    s.includes('hall') ||
+    s.includes('room') ||
+    s.includes('office') ||
+    s.includes('booth') ||
+    s.includes('lounge') ||
+    s.includes('gallery') ||
+    s.includes('conservatory') ||
+    s.includes('station') ||
+    s.includes('hangar') ||
+    s.includes('collider') ||
+    s.includes('stadium') ||
+    s.includes('airport') ||
+    s.includes('castle') ||
+    s.includes('dojo') ||
     mood === 'golden_durbar' ||
     mood === 'sunlit_morning' ||
-    mood === 'sepia_archive'
+    mood === 'sepia_archive' ||
+    mood === 'golden_hour_cinema' ||
+    mood === 'vintage_kodachrome' ||
+    mood === 'candlelit_parchment'
   ) {
-    return mood === 'crimson_wrath' || mood === 'sandstone_dusk' || mood === 'volcanic_inferno'
+    return mood === 'crimson_wrath' ||
+      mood === 'sandstone_dusk' ||
+      mood === 'volcanic_inferno' ||
+      mood === 'blood_moon_crimson' ||
+      mood === 'copper_steampunk'
       ? 'hearth_glow'
       : 'window_sunbeams';
   }
   if (
     s.includes('cave') ||
+    s.includes('cavern') ||
+    s.includes('catacomb') ||
     s.includes('cremation') ||
     s.includes('dungeon') ||
     s.includes('desert') ||
+    s.includes('sahara') ||
     s.includes('volcanic') ||
+    s.includes('forge') ||
+    s.includes('foundry') ||
+    s.includes('saloon') ||
+    s.includes('tavern') ||
+    s.includes('bunker') ||
     s.includes('nordic_fjord') ||
     mood === 'sandstone_dusk' ||
     mood === 'crimson_wrath' ||
-    mood === 'volcanic_inferno'
+    mood === 'volcanic_inferno' ||
+    mood === 'blood_moon_crimson' ||
+    mood === 'desert_mirage' ||
+    mood === 'autumn_amber' ||
+    mood === 'copper_steampunk'
   ) {
     return 'hearth_glow';
   }
@@ -119,11 +163,24 @@ export function resolveVolumetricBeamKind(stage: StageId, mood: MoodId): Volumet
     mood === 'noir_monochrome' ||
     mood === 'arctic_aurora' ||
     mood === 'deep_abyss' ||
+    mood === 'neon_tokyo_blue' ||
+    mood === 'cobalt_midnight' ||
+    mood === 'ice_palace_cyan' ||
+    mood === 'emerald_matrix' ||
+    mood === 'storm_slate' ||
+    mood === 'deep_space_void' ||
+    mood === 'monsoon_indigo' ||
     s.includes('moonlit') ||
     s.includes('banyan') ||
-    s.includes('neon_cyber') ||
-    s.includes('noir_rainy') ||
-    s.includes('snowy_mountain')
+    s.includes('neon') ||
+    s.includes('cyber') ||
+    s.includes('noir') ||
+    s.includes('snowy_mountain') ||
+    s.includes('arctic') ||
+    s.includes('graveyard') ||
+    s.includes('haunted') ||
+    s.includes('lighthouse') ||
+    s.includes('night')
   ) {
     return 'moonlight_shafts';
   }
@@ -134,46 +191,65 @@ function resolveBeamPalette(
   kind: VolumetricBeamKind,
   mood: MoodId
 ): { beamColorRgb: [number, number, number]; rimGlowRgb: [number, number, number] } {
-  if (mood === 'crimson_wrath' || mood === 'volcanic_inferno') {
+  if (mood === 'crimson_wrath' || mood === 'volcanic_inferno' || mood === 'blood_moon_crimson') {
     return { beamColorRgb: [255, 118, 84], rimGlowRgb: [255, 76, 98] };
   }
   if (mood === 'cyber_magenta') {
     return { beamColorRgb: [72, 232, 255], rimGlowRgb: [255, 78, 214] };
   }
-  if (mood === 'noir_monochrome') {
+  if (mood === 'neon_tokyo_blue') {
+    return { beamColorRgb: [56, 189, 248], rimGlowRgb: [244, 114, 182] };
+  }
+  if (mood === 'emerald_matrix') {
+    return { beamColorRgb: [52, 245, 154], rimGlowRgb: [134, 255, 192] };
+  }
+  if (mood === 'toxic_wasteland') {
+    return { beamColorRgb: [180, 240, 72], rimGlowRgb: [224, 255, 112] };
+  }
+  if (mood === 'noir_monochrome' || mood === 'storm_slate') {
     return { beamColorRgb: [216, 224, 238], rimGlowRgb: [244, 236, 210] };
   }
-  if (mood === 'arctic_aurora') {
+  if (mood === 'arctic_aurora' || mood === 'ice_palace_cyan') {
     return { beamColorRgb: [110, 245, 220], rimGlowRgb: [176, 148, 255] };
   }
-  if (mood === 'sunlit_morning') {
-    return { beamColorRgb: [255, 246, 214], rimGlowRgb: [255, 232, 168] };
+  if (mood === 'sunlit_morning' || mood === 'spring_meadow' || mood === 'solarpunk_lime') {
+    return { beamColorRgb: [255, 246, 214], rimGlowRgb: [224, 252, 186] };
   }
-  if (mood === 'deep_abyss') {
+  if (mood === 'deep_abyss' || mood === 'ocean_turquoise') {
     return { beamColorRgb: [74, 220, 242], rimGlowRgb: [120, 248, 255] };
   }
-  if (mood === 'sakura_dawn') {
+  if (mood === 'sakura_dawn' || mood === 'pastel_storybook' || mood === 'candyland_pop') {
     return { beamColorRgb: [255, 198, 216], rimGlowRgb: [255, 224, 184] };
   }
-  if (mood === 'sepia_archive') {
+  if (mood === 'sunset_coral') {
+    return { beamColorRgb: [255, 152, 128], rimGlowRgb: [255, 204, 148] };
+  }
+  if (mood === 'sepia_archive' || mood === 'vintage_kodachrome' || mood === 'candlelit_parchment') {
     return { beamColorRgb: [242, 204, 148], rimGlowRgb: [255, 216, 152] };
   }
-  if (mood === 'golden_durbar') {
+  if (mood === 'golden_durbar' || mood === 'golden_hour_cinema' || mood === 'obsidian_gold') {
     return { beamColorRgb: [255, 224, 132], rimGlowRgb: [255, 240, 178] };
   }
   if (mood === 'mystic_teal') {
     return { beamColorRgb: [122, 238, 248], rimGlowRgb: [168, 250, 255] };
   }
-  if (mood === 'sandstone_dusk') {
+  if (mood === 'sandstone_dusk' || mood === 'desert_mirage' || mood === 'autumn_amber' || mood === 'copper_steampunk') {
     return { beamColorRgb: [255, 176, 96], rimGlowRgb: [255, 132, 74] };
   }
   if (mood === 'emerald_jungle') {
     return { beamColorRgb: [224, 248, 186], rimGlowRgb: [255, 232, 162] };
   }
-  if (mood === 'twilight_temple') {
+  if (mood === 'twilight_temple' || mood === 'lavender_twilight' || mood === 'royal_amethyst') {
     return { beamColorRgb: [255, 212, 138], rimGlowRgb: [242, 198, 255] };
   }
-  if (kind === 'moonlight_shafts' || mood === 'midnight_banyan' || mood === 'moonlit_marble') {
+  if (
+    kind === 'moonlight_shafts' ||
+    mood === 'midnight_banyan' ||
+    mood === 'moonlit_marble' ||
+    mood === 'cobalt_midnight' ||
+    mood === 'monsoon_indigo' ||
+    mood === 'deep_space_void'
+  ) {
     return { beamColorRgb: [176, 210, 255], rimGlowRgb: [212, 232, 255] };
   }
   if (kind === 'hearth_glow') {

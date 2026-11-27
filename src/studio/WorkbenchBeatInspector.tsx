@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Columns2,
   Copy,
@@ -6,9 +6,11 @@ import {
   ImagePlus,
   Mic,
   Plus,
+  Search,
   Trash2,
   Upload,
   Volume2,
+  X,
 } from 'lucide-react';
 import {
   AMBIENCE_CATALOG,
@@ -109,6 +111,107 @@ export const WorkbenchBeatInspector: React.FC<WorkbenchBeatInspectorProps> = Rea
       activeBeatIdx === selectedBeatIdx
         ? Math.max(0, Math.min(selectedBeat.duration, currentTime - beatStart))
         : 0;
+
+    const [catalogFilter, setCatalogFilter] = useState('');
+    const qFilter = catalogFilter.trim().toLowerCase();
+
+    const groupedStages = useMemo(() => {
+      const map = new Map<string, typeof STAGE_CATALOG>();
+      for (const st of STAGE_CATALOG) {
+        const cat = st.category || 'World & Folklore';
+        const matches =
+          !qFilter ||
+          st.id === selectedBeat.stage ||
+          st.label.toLowerCase().includes(qFilter) ||
+          st.id.toLowerCase().includes(qFilter) ||
+          cat.toLowerCase().includes(qFilter);
+        if (!matches) continue;
+        const arr = map.get(cat) || [];
+        arr.push(st);
+        map.set(cat, arr);
+      }
+      return Array.from(map.entries());
+    }, [qFilter, selectedBeat.stage]);
+
+    const groupedMoods = useMemo(() => {
+      const map = new Map<string, typeof MOOD_CATALOG>();
+      for (const m of MOOD_CATALOG) {
+        const cat = m.category || 'Classic Folklore';
+        const matches =
+          !qFilter ||
+          m.id === selectedBeat.mood ||
+          m.label.toLowerCase().includes(qFilter) ||
+          m.id.toLowerCase().includes(qFilter) ||
+          cat.toLowerCase().includes(qFilter);
+        if (!matches) continue;
+        const arr = map.get(cat) || [];
+        arr.push(m);
+        map.set(cat, arr);
+      }
+      return Array.from(map.entries());
+    }, [qFilter, selectedBeat.mood]);
+
+    const groupedProps = useMemo(() => {
+      const map = new Map<string, typeof PROP_CATALOG>();
+      for (const p of PROP_CATALOG) {
+        const cat = p.category || 'Folklore & World';
+        const matches =
+          !qFilter ||
+          p.id === 'none' ||
+          p.id === selectedBeat.prop ||
+          p.label.toLowerCase().includes(qFilter) ||
+          p.id.toLowerCase().includes(qFilter) ||
+          cat.toLowerCase().includes(qFilter);
+        if (!matches) continue;
+        const arr = map.get(cat) || [];
+        arr.push(p);
+        map.set(cat, arr);
+      }
+      return Array.from(map.entries());
+    }, [qFilter, selectedBeat.prop]);
+
+    const groupedCrowds = useMemo(() => {
+      const map = new Map<string, typeof CROWD_CATALOG>();
+      for (const cr of CROWD_CATALOG) {
+        const cat = cr.category || 'General';
+        const matches =
+          !qFilter ||
+          cr.id === 'none' ||
+          cr.id === (selectedBeat.crowd || 'none') ||
+          cr.label.toLowerCase().includes(qFilter) ||
+          cr.id.toLowerCase().includes(qFilter) ||
+          cat.toLowerCase().includes(qFilter);
+        if (!matches) continue;
+        const arr = map.get(cat) || [];
+        arr.push(cr);
+        map.set(cat, arr);
+      }
+      return Array.from(map.entries());
+    }, [qFilter, selectedBeat.crowd]);
+
+    const filteredWeathers = useMemo(
+      () =>
+        WEATHER_LIST.filter(
+          (wId) =>
+            !qFilter ||
+            wId === 'none' ||
+            wId === selectedBeat.weather ||
+            wId.replace(/_/g, ' ').toLowerCase().includes(qFilter)
+        ),
+      [qFilter, selectedBeat.weather]
+    );
+
+    const filteredFx = useMemo(
+      () =>
+        FX_LIST.filter(
+          (fId) =>
+            !qFilter ||
+            fId === 'none' ||
+            fId === selectedBeat.fx ||
+            fId.replace(/_/g, ' ').toLowerCase().includes(qFilter)
+        ),
+      [qFilter, selectedBeat.fx]
+    );
 
     return (
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -339,53 +442,94 @@ export const WorkbenchBeatInspector: React.FC<WorkbenchBeatInspectorProps> = Rea
             </select>
           </label>
 
+          <div className="col-span-2 relative">
+            <Search className="w-3.5 h-3.5 text-[#7f89a6] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              value={catalogFilter}
+              onChange={(e) => setCatalogFilter(e.target.value)}
+              placeholder={`Quick-filter Stage (${STAGE_CATALOG.length}), Mood (${MOOD_CATALOG.length}), Prop (${PROP_CATALOG.length}), Weather (${WEATHER_LIST.length}), FX (${FX_LIST.length}), Crowd (${CROWD_CATALOG.length})...`}
+              className="w-full h-8 pl-8 pr-7 rounded-md bg-[#111629] border border-white/12 text-[11px] text-white placeholder:text-[#6f7894] focus:outline-none focus:border-[#f2c85b]"
+            />
+            {catalogFilter && (
+              <button
+                type="button"
+                onClick={() => setCatalogFilter('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-[#8e97b0] hover:text-white cursor-pointer"
+                aria-label="Clear scene selector filter"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
           <label className="block">
-            <span className="block text-[11px] font-medium text-[#8e97b0] mb-1">Stage Backdrop</span>
+            <span className="block text-[11px] font-medium text-[#8e97b0] mb-1">
+              Stage Backdrop ({STAGE_CATALOG.length})
+            </span>
             <select
               value={selectedBeat.stage}
               onChange={(e) => onUpdateSelectedBeat({ stage: e.target.value as StoryBeat['stage'] })}
               className="w-full h-9 px-2 rounded-md bg-[#14192b] border border-white/12 text-xs text-white"
             >
-              {STAGE_CATALOG.map((st) => (
-                <option key={st.id} value={st.id}>
-                  {st.label}
-                </option>
+              {groupedStages.map(([cat, items]) => (
+                <optgroup key={cat} label={cat}>
+                  {items.map((st) => (
+                    <option key={st.id} value={st.id}>
+                      {st.label}
+                    </option>
+                  ))}
+                </optgroup>
               ))}
             </select>
           </label>
 
           <label className="block">
-            <span className="block text-[11px] font-medium text-[#8e97b0] mb-1">Lighting Mood</span>
+            <span className="block text-[11px] font-medium text-[#8e97b0] mb-1">
+              Lighting Mood ({MOOD_CATALOG.length})
+            </span>
             <select
               value={selectedBeat.mood}
               onChange={(e) => onUpdateSelectedBeat({ mood: e.target.value as StoryBeat['mood'] })}
               className="w-full h-9 px-2 rounded-md bg-[#14192b] border border-white/12 text-xs text-white"
             >
-              {MOOD_CATALOG.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.label}
-                </option>
+              {groupedMoods.map(([cat, items]) => (
+                <optgroup key={cat} label={cat}>
+                  {items.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.label}
+                    </option>
+                  ))}
+                </optgroup>
               ))}
             </select>
           </label>
 
           <label className="block">
-            <span className="block text-[11px] font-medium text-[#8e97b0] mb-1">Story Prop</span>
+            <span className="block text-[11px] font-medium text-[#8e97b0] mb-1">
+              Story Prop ({PROP_CATALOG.length - 1})
+            </span>
             <select
               value={selectedBeat.prop}
               onChange={(e) => onUpdateSelectedBeat({ prop: e.target.value as StoryBeat['prop'] })}
               className="w-full h-9 px-2 rounded-md bg-[#14192b] border border-white/12 text-xs text-white"
             >
-              {PROP_CATALOG.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.label}
-                </option>
+              {groupedProps.map(([cat, items]) => (
+                <optgroup key={cat} label={cat}>
+                  {items.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.label}
+                    </option>
+                  ))}
+                </optgroup>
               ))}
             </select>
           </label>
 
           <label className="block">
-            <span className="block text-[11px] font-medium text-[#8e97b0] mb-1">Weather / FX</span>
+            <span className="block text-[11px] font-medium text-[#8e97b0] mb-1">
+              Weather ({WEATHER_LIST.length}) / FX ({FX_LIST.length})
+            </span>
             <div className="grid grid-cols-2 gap-1.5">
               <select
                 value={selectedBeat.weather}
@@ -394,7 +538,7 @@ export const WorkbenchBeatInspector: React.FC<WorkbenchBeatInspectorProps> = Rea
                 }
                 className="w-full h-9 px-1.5 rounded-md bg-[#14192b] border border-white/12 text-[11px] text-white"
               >
-                {WEATHER_LIST.map((wId) => (
+                {filteredWeathers.map((wId) => (
                   <option key={wId} value={wId}>
                     {wId === 'none'
                       ? 'None'
@@ -410,7 +554,7 @@ export const WorkbenchBeatInspector: React.FC<WorkbenchBeatInspectorProps> = Rea
                 onChange={(e) => onUpdateSelectedBeat({ fx: e.target.value as StoryBeat['fx'] })}
                 className="w-full h-9 px-1.5 rounded-md bg-[#14192b] border border-white/12 text-[11px] text-white"
               >
-                {FX_LIST.map((fId) => (
+                {filteredFx.map((fId) => (
                   <option key={fId} value={fId}>
                     {fId === 'none'
                       ? 'None'
@@ -539,7 +683,9 @@ export const WorkbenchBeatInspector: React.FC<WorkbenchBeatInspectorProps> = Rea
           </label>
 
           <label className="block">
-            <span className="block text-[11px] font-medium text-[#8e97b0] mb-1">Background Crowd</span>
+            <span className="block text-[11px] font-medium text-[#8e97b0] mb-1">
+              Background Crowd ({CROWD_CATALOG.length})
+            </span>
             <select
               value={selectedBeat.crowd || 'none'}
               onChange={(e) =>
@@ -547,10 +693,14 @@ export const WorkbenchBeatInspector: React.FC<WorkbenchBeatInspectorProps> = Rea
               }
               className="w-full h-9 px-2 rounded-md bg-[#14192b] border border-white/12 text-xs text-white"
             >
-              {CROWD_CATALOG.map((cr) => (
-                <option key={cr.id} value={cr.id}>
-                  {cr.label}
-                </option>
+              {groupedCrowds.map(([cat, items]) => (
+                <optgroup key={cat} label={cat}>
+                  {items.map((cr) => (
+                    <option key={cr.id} value={cr.id}>
+                      {cr.label}
+                    </option>
+                  ))}
+                </optgroup>
               ))}
             </select>
           </label>

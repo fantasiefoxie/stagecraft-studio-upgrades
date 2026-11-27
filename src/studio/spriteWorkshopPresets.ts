@@ -9,6 +9,7 @@
 
 import { CharacterDNA, createBaseDna } from './characterDna';
 import type { ArchetypeId, CastMember } from './types';
+import { SPRITE_WORKSHOP_PRESETS_ATLAS } from './spriteWorkshopPresetsAtlas';
 
 export type SpritePresetCategory =
   | 'Modern & Explainer'
@@ -16,7 +17,13 @@ export type SpritePresetCategory =
   | 'Fantasy & RPG'
   | 'Folklore & History'
   | 'Noir & Mystery'
-  | 'Creatures & Mascots';
+  | 'Creatures & Mascots'
+  | 'World Mythology'
+  | 'Historical Eras'
+  | 'Civic & Media'
+  | 'Gothic & Horror'
+  | 'Wildlife & Prehistoric'
+  | 'Sports & Kids';
 
 export const SPRITE_PRESET_CATEGORIES: SpritePresetCategory[] = [
   'Modern & Explainer',
@@ -25,6 +32,12 @@ export const SPRITE_PRESET_CATEGORIES: SpritePresetCategory[] = [
   'Folklore & History',
   'Noir & Mystery',
   'Creatures & Mascots',
+  'World Mythology',
+  'Historical Eras',
+  'Civic & Media',
+  'Gothic & Horror',
+  'Wildlife & Prehistoric',
+  'Sports & Kids',
 ];
 
 export interface SpriteWorkshopPreset {
@@ -542,6 +555,7 @@ export const SPRITE_WORKSHOP_PRESETS: SpriteWorkshopPreset[] = [
       palette: { primary: '#475569', secondary: '#1e293b', accent: '#38bdf8', skin: '#cbd5e1', hair: '#334155', eye: '#38bdf8', patternTint: '#bae6fd' },
     }),
   },
+  ...SPRITE_WORKSHOP_PRESETS_ATLAS,
 ];
 
 /**
