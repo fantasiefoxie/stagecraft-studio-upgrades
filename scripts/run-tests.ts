@@ -1,0 +1,1538 @@
+#!/usr/bin/env npx tsx
+/**
+ * Katha Studio — Automated Regression Test Suite (`npm test`)
+ *
+ * Covers:
+ *  1. LLM JSON Healer + Lite-to-Full Episode Compiler + Schema Validator
+ *  2. YouTube YPP Monetization Shield + Twin-Silhouette Cast Diversifier
+ *  3. Retention / Mid-Roll Planner + Long-Form Chapter Partitioner
+ *  4. Anthology Compiler & Voice Beat-ID Remapping
+ *  5. PKZIP 2.0 / MLA `.m4a` & `.wav` Packager + `.katha` Archive Path-Safety
+ *  6. 6-Shape Phoneme Visemes (English + Devanagari) & Expression-Driven TTS Prosody
+ *  7. Procedural Backdrop / Prop Studio & 4-Act Visual Progression
+ *  8. zipBuilder.ts Completeness Audit against real files on disk
+ */
+
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+
+import { PRESET_EPISODES } from '../src/studio/presets';
+import {
+  EpisodeScript,
+  MOTION_CADENCE_CATALOG,
+  MOTION_PROFILE_CATALOG,
+  POST_FX_PASS_CATALOG,
+  RENDER_STYLE_CATALOG,
+  RENDER_STYLE_CATEGORIES,
+  SHOT_CATALOG,
+  STUDIO_FPS,
+  frameIndexToTime,
+  getEpisodeDuration,
+  getEpisodeTotalFrames,
+  quantizeTimeToStudioFrame,
+  resolveBeatActionSfxEvents,
+  resolveBeatActionStateAtFrame,
+  resolveVisualStyle,
+  timeToFrameIndex,
+  validateEpisodeScript,
+} from '../src/studio/types';
+import { analyzeEpisodeVisualQa, autoFixEpisodeVisualQa } from '../src/studio/storyboardQa';
+import {
+  computeVoiceEnvelopeFromPcm,
+  sampleVoiceProfileAtTime,
+  trimAndNormalizePcm,
+} from '../src/studio/voiceEnvelope';
+import { computeSpeechDuckWindows } from '../src/studio/audioEngine';
+import {
+  computeActiveWordIndex,
+  computeSpeakerCameraOffset,
+  computeSpeechWindowViseme,
+  drawSafeZoneOverlay,
+} from '../src/studio/renderer';
+import { applyCinematicJCuts } from '../src/studio/timelineUtils';
+import {
+  buildShortSliceEpisode,
+  recommendTopShortSlices,
+} from '../src/studio/shortsRecommender';
+import {
+  computeDeterministicFlicker,
+  getStyleAnimationGrammar,
+  resolveEffectiveMotionFps,
+  snapStyleTime,
+} from '../src/studio/animationEngine';
+import {
+  applyAnimationPrinciplesAutoPolish,
+  auditEpisodeAnimationPrinciples,
+  buildAnimationPrinciplesPromptBlock,
+  computeCaptionLowerThirdMotion,
+  computeStageMotionArc,
+  cubicBezier,
+  dampedOvershoot,
+  resolveMotionProfileSpec,
+  volumeConservingSquash,
+} from '../src/studio/animationPrinciples';
+import {
+  compileLiteOrFullToEpisode,
+  healAndParseLlmJson,
+} from '../src/studio/llmDirectorKit';
+import {
+  applyCastVisualDiversifier,
+  applyFullYppAutoShield,
+  auditEpisodeYppCompliance,
+  buildLedgerEntryFromEpisode,
+} from '../src/studio/monetizationShield';
+import {
+  auditEpisodeRetention,
+  autoFixRetentionPacing,
+  compileEpisodesIntoAnthology,
+} from '../src/studio/growthTools';
+import { partitionEpisodeIntoChapters } from '../src/studio/longFormEngine';
+import { buildMlaLanguagePackZip } from '../src/studio/mlaPackager';
+import {
+  exportKathaArchiveBytes,
+  isSafeArchiveEntryPath,
+  parseKathaArchiveBytes,
+  readBinaryZipEntries,
+} from '../src/studio/kathaArchive';
+import {
+  buildExpressiveTtsProsody,
+  getVisemeAperture,
+  resolvePhonemeViseme,
+} from '../src/studio/facialExpressions';
+import {
+  applyActVisualProgression,
+  generateProceduralBackdropDataUrl,
+  generateProceduralPropDataUrl,
+} from '../src/studio/backdropGenerator';
+import { createBaseDna, syncMemberWithDna } from '../src/studio/characterDna';
+import {
+  measurePcmLoudness,
+  normalizePcmLufs,
+} from '../src/studio/loudnessMeter';
+import {
+  computeSpatialPanForBeat,
+  generateDeterministicImpulsePcm,
+  getStageRoomAcoustics,
+} from '../src/studio/spatialAudio';
+import {
+  computeBeatDepthOfFieldSpec,
+  getDofPoolAllocationCount,
+} from '../src/studio/depthOfField';
+import {
+  ACTING_MACRO_CATALOG,
+  applyActingMacroToBeat,
+} from '../src/studio/actingMacros';
+import {
+  auditEpisodeContinuity,
+  autoFixEpisodeContinuity,
+  measureDialogueReadingRate,
+} from '../src/studio/continuityAuditor';
+import { planBeatFoleyEvents } from '../src/studio/proceduralFoley';
+import {
+  CAMERA_KEYFRAME_PRESETS,
+  composeCameraWithKeyframes,
+  evaluateCameraKeyframes,
+  normalizeCameraKeyframes,
+} from '../src/studio/cameraKeyframes';
+import {
+  buildDubSyncPackageZipBytes,
+  buildMlaTrackManifest,
+  computeDubTimingPlan,
+  generateSyncedSrt,
+  generateSyncedWebVtt,
+  generateYouTubeChaptersText,
+} from '../src/studio/dubSyncPackager';
+import {
+  createLookRecipe,
+  duplicateLookRecipe,
+  exportLookRecipesJson,
+  importLookRecipesJson,
+} from '../src/studio/lookPresets';
+
+interface TestCase {
+  name: string;
+  run: () => void | Promise<void>;
+}
+
+const tests: TestCase[] = [];
+function test(name: string, run: () => void | Promise<void>) {
+  tests.push({ name, run });
+}
+
+function clone<T>(val: T): T {
+  return JSON.parse(JSON.stringify(val)) as T;
+}
+
+// ---------------------------------------------------------------------------
+// 1. LLM JSON Healer + Lite-to-Full Compiler
+// ---------------------------------------------------------------------------
+test('LLM JSON healer & Lite compiler turn messy fenced storyboard into valid EpisodeScript', () => {
+  const messyLlmResponse = `Sure! Here is your episode:
+\`\`\`json
+{
+  "title": "The Fox and the Midnight Drum",
+  "series": "Panchatantra Tales",
+  "region": "indian_folklore",
+  "cast": [
+    { "id": "fox", "name": "Chatur Fox", "role": "clever fox", "color": "#d97706" },
+    { "id": "lion", "name": "Raja Sher", "role": "mighty lion", "color": "#b45309" },
+  ],
+  "scenes": [
+    {
+      "speaker": "fox",
+      "line": "What booms behind the banyan roots when the wind rises?",
+      "stage": "dark forest",
+      "mood": "mysterious",
+      "emotion": "curious",
+      "prop": "lantern",
+    },
+    {
+      "speaker": "lion",
+      "line": "Only an empty drum! Fear fades the moment we inspect the truth.",
+      "stage": "banyan_clearing",
+      "emotion": "joy",
+    },
+  ],
+}
+\`\`\``;
+
+  const healed = healAndParseLlmJson(messyLlmResponse);
+  assert.equal(healed.ok, true, 'Expected JSON healer to recover markdown + trailing commas');
+  if (!healed.ok) return;
+
+  const compiled = compileLiteOrFullToEpisode(healed.data);
+  assert.equal(compiled.ok, true, 'Expected Lite compiler to produce valid EpisodeScript');
+  if (!compiled.ok) return;
+
+  const validated = validateEpisodeScript(compiled.script);
+  assert.equal(validated.ok, true, 'Compiled episode must pass strict schema validation');
+  assert.ok(compiled.script.beats.length >= 2, 'Should contain compiled story beats');
+  assert.equal(compiled.script.cast.length, 2);
+});
+
+// ---------------------------------------------------------------------------
+// 2. YouTube YPP Monetization Shield & Twin-Silhouette Diversifier
+// ---------------------------------------------------------------------------
+test('YPP Auto-Shield softens ad-safety terms, injects commentary & diversifies twin silhouettes', () => {
+  const ep = clone(PRESET_EPISODES[0]);
+  // Inject ad-safety trigger + create twin cast DNA matching ledger
+  ep.beats[0].dialogue = 'A bloody murder curse haunts the cursed palace!';
+  const baseDna = createBaseDna('humanoid');
+  ep.cast[0] = syncMemberWithDna(ep.cast[0], baseDna);
+  const priorEpisodeEntry = {
+    ...buildLedgerEntryFromEpisode(ep),
+    id: 'prior_published_ep_001',
+  };
+  const ledger = [priorEpisodeEntry];
+
+  const beforeAudit = auditEpisodeYppCompliance(ep, { ledger });
+  assert.ok(beforeAudit.score < 100, 'Expected YPP audit to flag issues before auto-shield');
+
+  const shielded = applyFullYppAutoShield(ep, ledger);
+  assert.ok(shielded.changed && shielded.summary.length > 0, 'Auto-shield should report applied remediation actions');
+  assert.ok(
+    !shielded.episode.beats[0].dialogue.toLowerCase().includes('murder'),
+    'Ad-safety softener should replace flagged violence term'
+  );
+
+  const diversified = applyCastVisualDiversifier(ep, ledger, []);
+  assert.ok(diversified.diversifiedNames.length > 0, 'Cast diversifier should mutate colliding silhouette');
+  assert.notDeepEqual(
+    diversified.episode.cast[0].dna,
+    ep.cast[0].dna,
+    'Diversified cast DNA must differ from twin ledger silhouette'
+  );
+});
+
+// ---------------------------------------------------------------------------
+// 3. Retention / Mid-Roll Planner & Long-Form Chapter Partitioner
+// ---------------------------------------------------------------------------
+test('Long-form episode partitions cleanly into chapters and triggers mid-roll retention slots', () => {
+  const base = clone(PRESET_EPISODES[0]);
+  // Expand to ~11 minutes (660s) of beats
+  const expandedBeats = [];
+  for (let rep = 0; rep < 14; rep++) {
+    for (const b of base.beats) {
+      expandedBeats.push({
+        ...clone(b),
+        id: `${b.id}_r${rep}`,
+        duration: 7.5,
+      });
+    }
+  }
+  const longEp: EpisodeScript = {
+    ...base,
+    id: 'test_long_11m',
+    beats: expandedBeats,
+  };
+
+  const totalSec = getEpisodeDuration(longEp);
+  assert.ok(totalSec >= 540, `Expected >= 9 min episode, got ${totalSec}s`);
+
+  const chapters = partitionEpisodeIntoChapters(longEp, 200);
+  assert.ok(chapters.length >= 3, `Expected >= 3 chapters for ${totalSec}s episode, got ${chapters.length}`);
+  assert.equal(chapters[0].startBeatIdx, 0);
+  assert.equal(chapters[chapters.length - 1].endBeatIdx, longEp.beats.length - 1);
+
+  const retention = auditEpisodeRetention(longEp);
+  assert.ok(retention.recommendedMidRolls.length >= 1, '8+ min episode should produce mid-roll break suggestions');
+
+  const fixed = autoFixRetentionPacing(longEp);
+  assert.ok(fixed.beats.length >= longEp.beats.length, 'Auto-fix retention should preserve or enhance beats');
+});
+
+// ---------------------------------------------------------------------------
+// 4. Anthology Compiler & Voice Remapping
+// ---------------------------------------------------------------------------
+test('Anthology compiler merges episodes and remaps beat IDs cleanly for voice preservation', () => {
+  const epA = clone(PRESET_EPISODES[0]);
+  const epB = clone(PRESET_EPISODES[1]);
+
+  const compiled = compileEpisodesIntoAnthology([epA, epB], {
+    anthologyTitle: 'Midnight Folk Anthology',
+    bedtimeMode: false,
+    includeBumpers: true,
+  });
+  assert.ok(compiled.episode.beats.length > epA.beats.length + epB.beats.length - 1);
+  assert.ok(compiled.beatOriginMap.length >= epA.beats.length + epB.beats.length);
+
+  const targetIds = new Set(compiled.episode.beats.map((b) => b.id));
+  for (const mapping of compiled.beatOriginMap) {
+    assert.ok(
+      targetIds.has(mapping.newBeatId),
+      `Mapped newBeatId ${mapping.newBeatId} must exist in compiled anthology`
+    );
+  }
+});
+
+// ---------------------------------------------------------------------------
+// 5. PKZIP 2.0, MLA .m4a/.wav Packager & .katha Archive Security
+// ---------------------------------------------------------------------------
+test('MLA packager writes valid .m4a and .wav ZIP entries and .katha rejects traversal paths', () => {
+  const ep = clone(PRESET_EPISODES[0]);
+  const fakeM4a = new Uint8Array([0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70]);
+  const fakeWav = new Uint8Array([0x52, 0x49, 0x46, 0x46, 0x24, 0x00, 0x00, 0x00]);
+
+  const zipBytes = buildMlaLanguagePackZip([
+    {
+      langCode: 'en',
+      episode: ep,
+      audioBytes: fakeM4a,
+      audioExt: 'm4a',
+    },
+    {
+      langCode: 'hi',
+      episode: ep,
+      audioBytes: fakeWav,
+      audioExt: 'wav',
+    },
+  ]);
+
+  const entries = readBinaryZipEntries(zipBytes);
+  const paths = [...entries.keys()];
+  assert.ok(paths.some((p) => p.endsWith('_en_audio_mix.m4a')), 'Expected .m4a entry in MLA ZIP');
+  assert.ok(paths.some((p) => p.endsWith('_hi_audio_mix.wav')), 'Expected .wav entry in MLA ZIP');
+  assert.ok(paths.some((p) => p.endsWith('README_YOUTUBE_MLA.txt')), 'Expected MLA guide README');
+
+  // Path traversal security check
+  assert.equal(isSafeArchiveEntryPath('../etc/passwd'), false);
+  assert.equal(isSafeArchiveEntryPath('/abs/path.json'), false);
+  assert.equal(isSafeArchiveEntryPath('voices/b1.wav'), true);
+
+  // Round-trip .katha portable archive
+  const kathaBytes = exportKathaArchiveBytes({
+    version: 1,
+    exportedAt: Date.now(),
+    episode: ep,
+    aspect: '16:9',
+    voices: [
+      {
+        slotKey: ep.beats[0].id,
+        fileName: 'v1.wav',
+        mimeType: 'audio/wav',
+        duration: 4.5,
+        bytes: fakeWav,
+      },
+    ],
+    musicStem: null,
+  });
+  const parsed = parseKathaArchiveBytes(kathaBytes);
+  assert.equal(parsed.episode.id, ep.id);
+  assert.equal(parsed.voices.length, 1);
+  assert.equal(parsed.voices[0].bytes.byteLength, fakeWav.byteLength);
+});
+
+// ---------------------------------------------------------------------------
+// 6. 6-Shape Phoneme Visemes & Expression-Driven TTS Prosody
+// ---------------------------------------------------------------------------
+test('6-shape phoneme lip-sync covers shapes 0..5 across Latin & Devanagari and prosody adapts to expression', () => {
+  const seen = new Set<number>();
+  const sampleText = 'Mama! Behold the vast, solemn ocean of victory — धर्म और सत्य!';
+  for (let i = 0; i <= 120; i++) {
+    const v = resolvePhonemeViseme(sampleText, i / 120, 0.85);
+    assert.ok(v >= 0 && v <= 5, `Viseme ${v} must stay in 0..5`);
+    const ap = getVisemeAperture(v);
+    assert.ok(ap >= 0 && ap <= 3.0, `Aperture ${ap} must stay in 0..3.0`);
+    seen.add(v);
+  }
+  assert.ok(seen.has(1), 'Should detect bilabial M/B/P viseme (1)');
+  assert.ok(seen.has(2), 'Should detect wide E/I viseme (2)');
+  assert.ok(seen.has(3), 'Should detect open A viseme (3)');
+  assert.ok(seen.has(4), 'Should detect rounded O/U viseme (4)');
+  assert.ok(seen.has(5), 'Should detect dental/fricative F/V/S viseme (5)');
+  assert.equal(resolvePhonemeViseme(sampleText, 0.5, 0.01), 0, 'Silence energy must return closed rest (0)');
+
+  const ep = clone(PRESET_EPISODES[0]);
+  const angryBeat = clone(ep.beats[0]);
+  angryBeat.dialogue = 'Halt! How dare you betray the sacred oath?!';
+  angryBeat.expressionCues = undefined;
+  angryBeat.actors[0].expression = 'angry';
+  angryBeat.actors[0].expressionTrack = undefined;
+  angryBeat.speakerId = angryBeat.actors[0].castId;
+
+  const griefBeat = clone(ep.beats[0]);
+  griefBeat.dialogue = 'Alas... the lamp has gone dark forever.';
+  griefBeat.expressionCues = undefined;
+  griefBeat.actors[0].expression = 'grief';
+  griefBeat.actors[0].expressionTrack = undefined;
+  griefBeat.speakerId = griefBeat.actors[0].castId;
+
+  const angryProsody = buildExpressiveTtsProsody(angryBeat, 'Regal storyteller', 1.0);
+  const griefProsody = buildExpressiveTtsProsody(griefBeat, 'Regal storyteller', 1.0);
+
+  assert.equal(angryProsody.expression, 'angry');
+  assert.equal(griefProsody.expression, 'grief');
+  assert.ok(angryProsody.speed > griefProsody.speed, 'Angry delivery should pace faster than grief');
+  assert.notEqual(angryProsody.style, griefProsody.style);
+});
+
+// ---------------------------------------------------------------------------
+// 7. Procedural Backdrop / Prop Studio & 4-Act Visual Progression
+// ---------------------------------------------------------------------------
+test('Procedural backdrop/prop studio & 4-Act Visual Arc produce deterministic valid outputs', () => {
+  const plate1 = generateProceduralBackdropDataUrl({ theme: 'eclipse_lotus_courtyard', seed: 42 });
+  const plate2 = generateProceduralBackdropDataUrl({ theme: 'eclipse_lotus_courtyard', seed: 42 });
+  assert.equal(plate1.dataUrl, plate2.dataUrl, 'Same seed must be 100% deterministic');
+  assert.ok(plate1.dataUrl.startsWith('data:image/'), 'Backdrop must return valid image data URL');
+
+  const prop = generateProceduralPropDataUrl({ preset: 'crystal_orb', seed: 7 });
+  assert.ok(prop.dataUrl.startsWith('data:image/'), 'Prop cutout must return valid image data URL');
+
+  const ep = clone(PRESET_EPISODES[0]);
+  const res = applyActVisualProgression(ep, 'mythic_odyssey');
+  const sumActs = res.actCounts.reduce((a, b) => a + b, 0);
+  assert.ok(sumActs >= 1, '4-Act Visual Progression should style narrative beats');
+  const moods = new Set(res.episode.beats.map((b) => b.mood));
+  assert.ok(moods.size >= 2, '4-Act Visual Progression should introduce lighting variety across acts');
+});
+
+// ---------------------------------------------------------------------------
+// 8. zipBuilder.ts Source Bundle Completeness Audit
+// ---------------------------------------------------------------------------
+test('zipBuilder.ts stays 100% synced with all src/studio and scripts source files on disk', () => {
+  const rootDir = process.cwd();
+  const zipBuilderSource = fs.readFileSync(path.join(rootDir, 'src/studio/zipBuilder.ts'), 'utf8');
+
+  const studioFiles = fs
+    .readdirSync(path.join(rootDir, 'src/studio'))
+    .filter((f) => /\.(ts|tsx)$/.test(f));
+
+  const missingStudio = studioFiles.filter((file) => !zipBuilderSource.includes(`src/studio/${file}`));
+  assert.deepEqual(
+    missingStudio,
+    [],
+    `zipBuilder.ts is missing studio files: ${missingStudio.join(', ')}`
+  );
+
+  const scriptFiles = fs
+    .readdirSync(path.join(rootDir, 'scripts'))
+    .filter((f) => /\.(ts|mjs)$/.test(f));
+
+  const missingScripts = scriptFiles.filter((file) => !zipBuilderSource.includes(`scripts/${file}`));
+  assert.deepEqual(
+    missingScripts,
+    [],
+    `zipBuilder.ts is missing script files: ${missingScripts.join(', ')}`
+  );
+});
+
+// ---------------------------------------------------------------------------
+// 9. 20 Multi-Genre Art Engines, Motion Cadence, Flicker & Fuzzy Style Aliases
+// ---------------------------------------------------------------------------
+test('All 20 art engines, 4 categories, motion cadence quantization, flicker & fuzzy style routing work cleanly', () => {
+  assert.equal(RENDER_STYLE_CATALOG.length, 20, 'Expected exactly 20 art engines in RENDER_STYLE_CATALOG');
+  assert.equal(RENDER_STYLE_CATEGORIES.length, 4, 'Expected 4 genre categories in RENDER_STYLE_CATEGORIES');
+  assert.equal(MOTION_CADENCE_CATALOG.length, 4, 'Expected 4 motion cadence options (auto/60/24/12)');
+
+  const categoryIds = new Set<string>(RENDER_STYLE_CATEGORIES);
+  const seenIds = new Set<string>();
+  for (const engine of RENDER_STYLE_CATALOG) {
+    assert.ok(!seenIds.has(engine.id), `Duplicate renderStyle id: ${engine.id}`);
+    seenIds.add(engine.id);
+    assert.ok(categoryIds.has(engine.category), `Invalid category ${engine.category} on ${engine.id}`);
+    const grammar = getStyleAnimationGrammar(engine.id);
+    assert.ok(grammar.fps > 0 && grammar.fps <= 60, `Invalid fps for ${engine.id}`);
+    const flicker = computeDeterministicFlicker(1.37, engine.id, 'twilight_temple');
+    assert.ok(flicker >= 0.85 && flicker <= 1.15, `Flicker ${flicker} out of bounds for ${engine.id}`);
+  }
+
+  // Motion cadence quantization checks
+  assert.equal(resolveEffectiveMotionFps('chiaroscuro', '60fps'), 60);
+  assert.equal(resolveEffectiveMotionFps('chiaroscuro', '24fps'), 24);
+  assert.equal(resolveEffectiveMotionFps('chiaroscuro', '12fps'), 12);
+  assert.equal(resolveEffectiveMotionFps('felt_puppet', 'auto'), 12);
+  assert.equal(snapStyleTime(1.03, 'chiaroscuro', '60fps'), 1.03);
+  assert.equal(
+    snapStyleTime(1.03, 'chiaroscuro', '12fps'),
+    Math.floor(1.03 * 12) / 12,
+    '12fps cadence should quantize time cleanly to 1/12s steps'
+  );
+
+  // Backward compatibility default for visualStyle without motionCadence
+  const resolved = resolveVisualStyle({ renderStyle: 'risograph_print' });
+  assert.equal(resolved.renderStyle, 'risograph_print');
+  assert.equal(resolved.motionCadence, 'auto');
+
+  // Verify fuzzy style matching in Lite compiler for all 10 new engines
+  const aliasPairs: Array<[string, string]> = [
+    ['anime sakuga', 'anime_cel'],
+    ['manga gpen comic', 'manga_screentone'],
+    ['technical blueprint schematic', 'blueprint_technical'],
+    ['matte gouache editorial', 'gouache_storybook'],
+    ['neon synthwave scifi', 'neon_cybernoir'],
+    ['stitched wool felt puppet', 'felt_puppet'],
+    ['risograph halftone zine', 'risograph_print'],
+    ['backlit desert sand art', 'backlit_sand'],
+    ['scratchboard noir engraving', 'scratchboard_noir'],
+    ['byzantine gold mosaic', 'byzantine_mosaic'],
+  ];
+
+  for (const [alias, expectedStyle] of aliasPairs) {
+    const compiled = compileLiteOrFullToEpisode({
+      title: `Test ${expectedStyle}`,
+      series: 'Stagecraft Test',
+      style: alias,
+      cast: [{ id: 'hero', name: 'Asha', role: 'hero' }],
+      scenes: [{ speaker: 'hero', line: 'Testing our new art engine!', stage: 'courtyard' }],
+    });
+    assert.equal(compiled.ok, true, `Expected alias "${alias}" to compile`);
+    if (compiled.ok) {
+      assert.equal(
+        compiled.script.visualStyle?.renderStyle,
+        expectedStyle,
+        `Expected "${alias}" to resolve to ${expectedStyle}`
+      );
+      assert.equal(validateEpisodeScript(compiled.script).ok, true);
+    }
+  }
+});
+
+// ---------------------------------------------------------------------------
+// 10. Multi-Genre Showcase Presets (Explainer, Sci-Fi Noir, Manga, Felt Puppet)
+// ---------------------------------------------------------------------------
+test('All 4 multi-genre showcase presets pass schema validation and cover all 4 showcase engines', () => {
+  const expected: Array<[string, string]> = [
+    ['quantum_tunneling_explainer', 'blueprint_technical'],
+    ['neon_sector_9_short', 'neon_cybernoir'],
+    ['clockwork_detective_clue', 'manga_screentone'],
+    ['pip_lantern_maker_night', 'felt_puppet'],
+  ];
+
+  for (const [id, expectedStyle] of expected) {
+    const ep = PRESET_EPISODES.find((item) => item.id === id);
+    assert.ok(ep, `Missing multi-genre showcase preset: ${id}`);
+    assert.equal(ep.shelf, 'Modern Multi-Genre Showcases');
+    assert.equal(ep.visualStyle?.renderStyle, expectedStyle);
+    const validation = validateEpisodeScript(ep);
+    assert.equal(
+      validation.ok,
+      true,
+      `Preset ${id} failed schema validation: ${validation.ok ? '' : validation.error}`
+    );
+    assert.ok(ep.beats.length >= 5, `Expected at least 5 beats in ${id}`);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// 11. Disney's 12 Principles of Animation Engine & Auto-Polish
+// ---------------------------------------------------------------------------
+test('12 Principles engine enforces constant-volume squash, bezier easing, damped overshoot, curved arcs, lower-third timing & auto-polish', () => {
+  assert.equal(MOTION_PROFILE_CATALOG.length, 5, 'Expected 5 motion profiles (auto + 4 philosophies)');
+
+  // 1. Strict constant-volume Squash & Stretch (scaleX * scaleY === 1)
+  for (const amount of [-0.3, -0.14, 0, 0.12, 0.28]) {
+    const { scaleX, scaleY } = volumeConservingSquash(amount);
+    assert.ok(
+      Math.abs(scaleX * scaleY - 1) < 1e-6,
+      `Expected constant volume scaleX*scaleY===1 for amount=${amount}, got ${scaleX * scaleY}`
+    );
+  }
+
+  // 2. Cubic-bezier Slow In / Slow Out endpoints and non-linear midpoint
+  assert.equal(cubicBezier(0.22, 1.0, 0.36, 1.0, 0), 0);
+  assert.equal(cubicBezier(0.22, 1.0, 0.36, 1.0, 1), 1);
+  const easedMid = cubicBezier(0.22, 1.0, 0.36, 1.0, 0.5);
+  assert.ok(easedMid > 0.7 && easedMid < 0.99, `Expected snappy ease-out midpoint, got ${easedMid}`);
+
+  // 3. Damped elastic overshoot starts at 0 and decays cleanly
+  assert.equal(dampedOvershoot(0, 3.0, 5.0, 0.5), 0);
+  const earlyPeak = Math.abs(dampedOvershoot(0.08, 3.0, 5.0, 0.5));
+  const lateTail = Math.abs(dampedOvershoot(1.6, 3.0, 5.0, 0.5));
+  assert.ok(earlyPeak > 0.01 && lateTail < earlyPeak * 0.1, 'Expected damped overshoot to decay cleanly');
+
+  // 4. Curved stage motion arcs & reverse anticipation wind-up
+  const cartoonSpec = resolveMotionProfileSpec('snappy_cartoon', 'anime_cel');
+  const earlyStep = computeStageMotionArc('step_forward', 0.06, cartoonSpec);
+  const midStep = computeStageMotionArc('step_forward', 0.55, cartoonSpec);
+  assert.ok(earlyStep.progress < 0, `Expected reverse anticipation on step_forward, got ${earlyStep.progress}`);
+  assert.ok(midStep.arcOffsetY < -4, `Expected upward curved arc mid-stride, got ${midStep.arcOffsetY}`);
+
+  // 5. Lower-third caption timing (smooth entry and exit)
+  const capStart = computeCaptionLowerThirdMotion(0.0, 4.0, cartoonSpec);
+  const capMid = computeCaptionLowerThirdMotion(2.0, 4.0, cartoonSpec);
+  const capEnd = computeCaptionLowerThirdMotion(3.98, 4.0, cartoonSpec);
+  assert.ok(capStart.alpha < 0.1 && capMid.alpha === 1 && capEnd.alpha < 0.25);
+
+  // 6. All 5 profiles resolve cleanly and backward-compat visualStyle defaults motionProfile to 'auto'
+  for (const prof of MOTION_PROFILE_CATALOG) {
+    const spec = resolveMotionProfileSpec(prof.id, 'chiaroscuro');
+    assert.ok(spec.followThroughFrames >= 4 && spec.followThroughFrames <= 8);
+  }
+  assert.equal(resolveVisualStyle({ renderStyle: 'chiaroscuro' }).motionProfile, 'auto');
+
+  // 7. 12-Principles Audit & 1-Click Auto-Polish upgrades a flat static episode
+  const baseEp = PRESET_EPISODES[0];
+  const flatEp: EpisodeScript = {
+    ...baseEp,
+    beats: baseEp.beats.slice(0, 5).map((b) => ({
+      ...b,
+      duration: 4.0,
+      shot: 'wide_stage',
+      cameraMove: 'still',
+      weather: 'none',
+      prop: 'none',
+      sfx: 'none',
+      actors: b.actors.map((a) => ({ ...a, motion: 'still', expression: 'calm', expressionTrack: undefined })),
+    })),
+  };
+  const beforeAudit = auditEpisodeAnimationPrinciples(flatEp);
+  const polished = applyAnimationPrinciplesAutoPolish(flatEp);
+  const afterAudit = auditEpisodeAnimationPrinciples(polished.episode);
+  assert.ok(
+    afterAudit.overallScore > beforeAudit.overallScore,
+    `Expected auto-polish to raise 12-Principles score (${beforeAudit.overallScore} -> ${afterAudit.overallScore})`
+  );
+  assert.equal(validateEpisodeScript(polished.episode).ok, true);
+  assert.ok(buildAnimationPrinciplesPromptBlock().includes('TIMING CONTRAST'));
+});
+
+// ---------------------------------------------------------------------------
+// 12. Frame-Index Lock, Sub-Beat Action Cues, Post-FX Passes & Kinetic Motion Card
+// ---------------------------------------------------------------------------
+test('Integer frame-index clock, O(1) sub-beat action cues, Post-FX passes & motion_card shot validate deterministically', () => {
+  // 1. Canonical integer frame-index clock round-trip
+  assert.equal(timeToFrameIndex(1.5, STUDIO_FPS), 90);
+  assert.equal(frameIndexToTime(90, STUDIO_FPS), 1.5);
+  assert.equal(quantizeTimeToStudioFrame(1.5002, STUDIO_FPS), 1.5);
+  const qtEp = PRESET_EPISODES.find((ep) => ep.id === 'quantum_tunneling_explainer');
+  assert.ok(qtEp, 'Missing quantum_tunneling_explainer showcase preset');
+  assert.equal(
+    getEpisodeTotalFrames(qtEp, STUDIO_FPS),
+    Math.round(getEpisodeDuration(qtEp) * STUDIO_FPS)
+  );
+
+  // 2. O(1) Sub-Beat Action Cue resolution (triggerPhrase + frame bounds)
+  const testBeat = {
+    duration: 4.0,
+    dialogue: 'Wait until the golden shield shatters right before your eyes!',
+    actionCues: [
+      { frame: 30, endFrame: 90, castId: 'hero', pose: 'attack' as const, cameraPunch: 0.8, fx: 'shock_burst' as const },
+      { triggerPhrase: 'golden shield', castId: 'hero', propPulse: 0.9 },
+    ],
+  };
+  const beforeCue = resolveBeatActionStateAtFrame(testBeat, 10);
+  assert.equal(beforeCue.actorPoseOverrides.hero, undefined);
+  assert.equal(beforeCue.cameraPunch, 0);
+  const duringCue = resolveBeatActionStateAtFrame(testBeat, 34);
+  assert.equal(duringCue.actorPoseOverrides.hero, 'attack');
+  assert.ok(duringCue.cameraPunch > 0.2, `Expected cameraPunch impulse > 0.2, got ${duringCue.cameraPunch}`);
+  assert.equal(duringCue.fxOverride, 'shock_burst');
+  const afterRange = resolveBeatActionStateAtFrame(testBeat, 150);
+  assert.equal(afterRange.actorPoseOverrides.hero, undefined);
+
+  // 3. Post-FX Pass catalog & backward-compatible default
+  assert.equal(POST_FX_PASS_CATALOG.length, 6, 'Expected 6 Post-FX pass presets');
+  assert.equal(resolveVisualStyle({ renderStyle: 'chiaroscuro' }).postFxPass, 'none');
+  assert.equal(
+    resolveVisualStyle({ renderStyle: 'chiaroscuro', postFxPass: 'bayer_dither' }).postFxPass,
+    'bayer_dither'
+  );
+
+  // 4. Kinetic Motion Card shot catalog, preset & validator support
+  assert.ok(SHOT_CATALOG.some((s) => s.id === 'motion_card'), 'Expected motion_card in SHOT_CATALOG');
+  const cardBeat = qtEp.beats.find((b) => b.shot === 'motion_card');
+  assert.ok(cardBeat && cardBeat.motionCard?.metric === '100%', 'Expected motion_card beat in explainer preset');
+  const validated = validateEpisodeScript({
+    ...qtEp,
+    visualStyle: { ...(qtEp.visualStyle || {}), postFxPass: 'pixel_grid_16bit' },
+  });
+  assert.equal(validated.ok, true);
+  if (validated.ok) {
+    assert.equal(validated.script.visualStyle?.postFxPass, 'pixel_grid_16bit');
+    assert.ok(validated.script.beats.some((b) => b.shot === 'motion_card'));
+    assert.ok(validated.script.beats.some((b) => (b.actionCues?.length || 0) > 0));
+  }
+});
+
+// ---------------------------------------------------------------------------
+// 13. Action-Cue SFX Sync, Smarter Auto-Director, Visual QA Gate & CLI Audio Mux
+// ---------------------------------------------------------------------------
+test('Action-Cue SFX sync, Auto-Director choreography, Visual QA Gate & Headless CLI audio mux work cleanly', () => {
+  // 1. Frame-locked Action-Cue SFX event extraction & ordering
+  const sfxBeat = {
+    duration: 4.0,
+    dialogue: 'Wait until the golden shield shatters right now!',
+    actionCues: [
+      { frame: 120, sfx: 'thunder_crack' as const },
+      { frame: 30, sfx: 'sword_clash' as const },
+      { frame: 60, cameraPunch: 0.6 }, // no SFX, should be skipped
+    ],
+  };
+  const sfxEvents = resolveBeatActionSfxEvents(sfxBeat);
+  assert.equal(sfxEvents.length, 2, 'Expected exactly 2 SFX events');
+  assert.equal(sfxEvents[0].sfx, 'sword_clash');
+  assert.equal(sfxEvents[0].offsetSec, 0.5);
+  assert.equal(sfxEvents[1].sfx, 'thunder_crack');
+  assert.equal(sfxEvents[1].offsetSec, 2.0);
+
+  // 2. Smarter Auto-Director: motionProfile, auto-motion_card, auto-actionCues & explicit preservation
+  const compiled = compileLiteOrFullToEpisode({
+    title: 'Quantum Shield Breakthrough',
+    series: 'Science Explainers',
+    style: 'blueprint_technical',
+    cast: [{ id: 'doc', name: 'Dr. Meera', role: 'sage' }],
+    scenes: [
+      { speaker: 'doc', line: 'Welcome to the quantum lab where light bends.', stage: 'royal_durbar' },
+      { speaker: 'doc', line: 'Nearly 99.4% of particles bounce off the classic wall.', stage: 'royal_durbar' },
+      {
+        speaker: 'doc',
+        line: 'Suddenly the barrier shatters and the wave tunnels through!',
+        stage: 'royal_durbar',
+        prop: 'lightning_bolt',
+      },
+      {
+        speaker: 'doc',
+        line: 'Explicit cue test.',
+        stage: 'royal_durbar',
+        actionCues: [{ frame: 45, castId: 'doc', pose: 'gesture', sfx: 'mystic_chime', cameraPunch: 0.7 }],
+      },
+    ],
+  });
+  assert.equal(compiled.ok, true, 'Expected Lite explainer script to compile cleanly');
+  if (compiled.ok) {
+    assert.equal(compiled.script.visualStyle?.motionProfile, 'motion_graphics');
+    assert.equal(
+      compiled.script.beats[1].shot,
+      'motion_card',
+      'Expected numeric-stat beat in blueprint_technical to auto-promote to motion_card'
+    );
+    assert.equal(compiled.script.beats[1].motionCard?.metric, '99.4%');
+    assert.ok(
+      (compiled.script.beats[2].actionCues?.length || 0) >= 1,
+      'Expected dramatic climax beat to auto-choreograph an actionCue'
+    );
+    assert.equal(compiled.script.beats[3].actionCues?.[0]?.sfx, 'mystic_chime');
+  }
+
+  // 3. Pre-Render Visual QA Gate: clean preset passes, faulty beat & pixel anomalies caught
+  const cleanEp = PRESET_EPISODES[0];
+  const cleanQa = analyzeEpisodeVisualQa(cleanEp, '16:9');
+  assert.equal(cleanQa.errorCount, 0, `Expected 0 errors on flagship preset, got ${cleanQa.errorCount}`);
+  assert.ok(cleanQa.score >= 70, `Expected QA score >= 70 on flagship preset, got ${cleanQa.score}`);
+
+  const faultyEp = clone(cleanEp);
+  faultyEp.beats[0].shot = 'motion_card';
+  faultyEp.beats[0].title = '';
+  faultyEp.beats[0].dialogue = '';
+  faultyEp.beats[0].motionCard = {};
+  faultyEp.beats[0].actionCues = [{ frame: 9999, castId: 'ghost_actor', cameraPunch: 0.8 }];
+
+  const faultyQa = analyzeEpisodeVisualQa(faultyEp, '9:16', [
+    { beatIndex: 0, meanLuma: 2, lumaStdDev: 0.5, fingerprint64: new Array(64).fill(2) },
+    { beatIndex: 1, meanLuma: 2, lumaStdDev: 24, fingerprint64: new Array(64).fill(2) },
+  ]);
+  const codes = new Set(faultyQa.issues.map((x) => x.code));
+  assert.ok(codes.has('motion_card_empty'), 'Expected QA to catch empty motion_card');
+  assert.ok(codes.has('action_cue_orphan_cast'), 'Expected QA to catch orphan castId');
+  assert.ok(codes.has('action_cue_out_of_range'), 'Expected QA to catch out-of-range cue frame');
+  assert.ok(codes.has('blank_frame'), 'Expected QA to catch blank frame pixel sample');
+  assert.equal(faultyQa.passed, false, 'Faulty episode must not pass QA gate');
+
+  // 4. Headless CLI audio muxing & contact-sheet integration audit
+  const cliSource = fs.readFileSync(path.join(process.cwd(), 'scripts/render-batch.mjs'), 'utf8');
+  assert.ok(cliSource.includes('renderAudioWavBase64'), 'Expected CLI to call renderAudioWavBase64');
+  assert.ok(cliSource.includes('loudnorm=I=-14:TP=-1.5:LRA=11'), 'Expected -14 LUFS loudnorm in CLI');
+  assert.ok(cliSource.includes('renderContactSheetPng'), 'Expected CLI --contact-sheet bridge');
+});
+
+// ---------------------------------------------------------------------------
+// 14. Voice Envelope Lip-Sync + Speech-Window Karaoke + 1-Click QA Auto-Fixer + CLI .katha Audit
+// ---------------------------------------------------------------------------
+test('14. Voice Envelope, Speech-Window Karaoke, QA Auto-Fixer & CLI .katha Ingestion', () => {
+  // 1. Deterministic 60fps RMS envelope & speech window detection on synthetic PCM
+  // 3.0s audio @ 48kHz: silence [0..0.6s], speech tone [0.6..2.2s], silence [2.2..3.0s]
+  const sr = 48000;
+  const totalSamples = sr * 3;
+  const pcm = new Float32Array(totalSamples);
+  for (let i = Math.floor(0.6 * sr); i < Math.floor(2.2 * sr); i++) {
+    pcm[i] = 0.28 * Math.sin((2 * Math.PI * 220 * i) / sr);
+  }
+  const profA = computeVoiceEnvelopeFromPcm(pcm, sr, 3.0);
+  const profB = computeVoiceEnvelopeFromPcm(pcm, sr, 3.0);
+  assert.equal(profA.rms60fps.length, 180, 'Expected 180 60fps RMS buckets for 3.0s clip');
+  assert.deepEqual(Array.from(profA.rms60fps), Array.from(profB.rms60fps), 'RMS envelope must be 100% deterministic');
+  assert.equal(sampleVoiceProfileAtTime(profA, 0.2), 0, 'Leading silence must sample 0 lip energy');
+  assert.ok((sampleVoiceProfileAtTime(profA, 1.4) ?? 0) > 0.5, 'Active speech mid-clip must sample strong RMS');
+  assert.equal(sampleVoiceProfileAtTime(profA, 2.7), 0, 'Trailing silence must sample 0 lip energy');
+  assert.ok(
+    profA.speechWindow.startSec >= 0.5 && profA.speechWindow.startSec <= 0.65,
+    `Expected speechStartSec near 0.6s, got ${profA.speechWindow.startSec}`
+  );
+  assert.ok(
+    profA.speechWindow.endSec >= 2.15 && profA.speechWindow.endSec <= 2.35,
+    `Expected speechEndSec near 2.2s, got ${profA.speechWindow.endSec}`
+  );
+
+  // 2. Speech-window karaoke alignment stays idle before speech starts & sweeps across spoken window
+  const words = ['King', 'Vikram', 'lifted', 'the', 'lamp'];
+  assert.equal(
+    computeActiveWordIndex(words, 0.25, 3.0, profA.speechWindow),
+    -1,
+    'Karaoke must stay unhighlighted during leading silence before speechStartSec'
+  );
+  assert.equal(
+    computeActiveWordIndex(words, profA.speechWindow.startSec + 0.05, 3.0, profA.speechWindow),
+    0,
+    'Karaoke must highlight word 0 right after speech starts'
+  );
+  assert.equal(
+    computeActiveWordIndex(words, profA.speechWindow.endSec - 0.02, 3.0, profA.speechWindow),
+    words.length - 1,
+    'Karaoke must reach final word by speechEndSec'
+  );
+
+  // 3. 1-Click QA Auto-Fixer repairs all safe defects deterministically
+  const broken = clone(PRESET_EPISODES[0]);
+  broken.beats[0].shot = 'motion_card';
+  broken.beats[0].title = '';
+  broken.beats[0].dialogue = '';
+  broken.beats[0].motionCard = {};
+  broken.beats[0].actionCues = [{ frame: 9999, castId: 'ghost_actor', cameraPunch: 0.5 }];
+  // Dense caption overflow on beat 1
+  broken.beats[1].dialogue =
+    'Beneath the ancient silver banyan tree where lanterns swayed in the midnight gale, the wise king paused to weigh every single word of the cunning spirit before answering the riddle with calm resolve and unwavering courage.';
+  broken.beats[1].duration = 3.2;
+  // 3 identical consecutive shots
+  if (broken.beats.length >= 5) {
+    broken.beats[2].shot = 'wide_stage';
+    broken.beats[3].shot = 'wide_stage';
+    broken.beats[4].shot = 'wide_stage';
+  }
+
+  const beforeQa = analyzeEpisodeVisualQa(broken, '9:16');
+  assert.ok(beforeQa.errorCount >= 2, 'Expected multiple QA errors before auto-fix');
+  const fixRun1 = autoFixEpisodeVisualQa(broken, '9:16');
+  const fixRun2 = autoFixEpisodeVisualQa(broken, '9:16');
+  assert.deepEqual(fixRun1.episode, fixRun2.episode, 'QA Auto-Fixer must be 100% deterministic');
+  assert.ok(fixRun1.fixedCount >= 3, `Expected >= 3 fixes applied, got ${fixRun1.fixedCount}`);
+
+  const afterQa = analyzeEpisodeVisualQa(fixRun1.episode, '9:16');
+  assert.equal(afterQa.errorCount, 0, `Expected 0 QA errors after auto-fix, got ${afterQa.errorCount}`);
+  assert.ok(afterQa.score > beforeQa.score, `Expected QA score to improve (${beforeQa.score} -> ${afterQa.score})`);
+  assert.ok(
+    fixRun1.episode.beats.length > broken.beats.length,
+    'Expected dense caption beat to split into 2 scenes'
+  );
+
+  // 4. Headless CLI .katha archive & --voices-dir integration audit
+  const cliSource = fs.readFileSync(path.join(process.cwd(), 'scripts/render-batch.mjs'), 'utf8');
+  assert.ok(cliSource.includes('readStoreZipEntries'), 'Expected hardened STORE ZIP reader in CLI');
+  assert.ok(cliSource.includes('isSafeArchiveEntryPath'), 'Expected path-traversal guard in CLI');
+  assert.ok(cliSource.includes('--voices-dir'), 'Expected --voices-dir option in CLI');
+  assert.ok(cliSource.includes('loadVoiceAssets'), 'Expected CLI to call loadVoiceAssets on headless driver');
+});
+
+// ---------------------------------------------------------------------------
+// 15. Voice Silence Auto-Trim + Speech-Window Ducking + 9:16 Auto-Track Speaker + Viral Shorts Recommender
+// ---------------------------------------------------------------------------
+test('15. Voice Auto-Trim/Normalize, Speech-Window Ducking, 9:16 Auto-Track Speaker & Viral Shorts Recommender', () => {
+  // 1. Voice Silence Auto-Trim & -1 dBFS Peak Normalization
+  const sr = 48000;
+  const raw = new Float32Array(sr * 3); // 0..0.7s dead air, 0.7..1.9s quiet speech (0.22 peak), 1.9..3.0s dead air
+  for (let i = Math.floor(0.7 * sr); i < Math.floor(1.9 * sr); i++) {
+    raw[i] = 0.22 * Math.sin((2 * Math.PI * 240 * i) / sr);
+  }
+  const trimA = trimAndNormalizePcm(raw, sr);
+  const trimB = trimAndNormalizePcm(raw, sr);
+  assert.equal(trimA.didTrim, true, 'Expected dead air to be trimmed');
+  assert.deepEqual(
+    Array.from(trimA.samples),
+    Array.from(trimB.samples),
+    'trimAndNormalizePcm must be 100% deterministic'
+  );
+  assert.ok(
+    trimA.trimmedDurationSec >= 1.3 && trimA.trimmedDurationSec <= 1.65,
+    `Expected trimmed duration near ~1.45s, got ${trimA.trimmedDurationSec}`
+  );
+  assert.ok(
+    trimA.trimmedLeadSec >= 0.5 && trimA.trimmedTailSec >= 0.8,
+    `Expected significant lead (${trimA.trimmedLeadSec}s) and tail (${trimA.trimmedTailSec}s) trim`
+  );
+  let peak = 0;
+  for (let i = 0; i < trimA.samples.length; i++) {
+    peak = Math.max(peak, Math.abs(trimA.samples[i]));
+  }
+  assert.ok(peak >= 0.85 && peak <= 0.92, `Expected normalized peak near 0.89 (-1 dBFS), got ${peak}`);
+  assert.equal(trimA.samples[0], 0, 'Head sample must be 0 after anti-click fade');
+  assert.equal(trimA.samples[trimA.samples.length - 1], 0, 'Tail sample must be 0 after anti-click fade');
+
+  // 2. Speech-Window Sidechain Music Ducking Envelope
+  const duck = computeSpeechDuckWindows(10.0, 15.0, { startSec: 0.8, endSec: 2.6 }, 4.0);
+  assert.equal(duck.hasSpeech, true);
+  assert.equal(duck.duckStart, 10.72, 'Expected duck to engage 80ms before speechStartSec');
+  assert.equal(duck.duckEnd, 12.72, 'Expected duck to release 120ms after speechEndSec');
+  const clampedDuck = computeSpeechDuckWindows(10.0, 12.0, { startSec: 0.02, endSec: 3.0 }, 2.0);
+  assert.equal(clampedDuck.duckStart, 10.0, 'Duck start must clamp cleanly to beatStart');
+  assert.equal(clampedDuck.duckEnd, 12.0, 'Duck end must clamp cleanly to beatEnd');
+
+  // 3. 9:16 Auto-Track Speaker Framing & Per-Beat Camera Focus Override
+  const baseBeat = clone(PRESET_EPISODES[0].beats[0]);
+  baseBeat.shot = 'two_shot';
+  baseBeat.cameraFocusX = undefined;
+  baseBeat.cameraFocusY = undefined;
+  baseBeat.actors = [
+    { castId: 'hero_left', slot: 'left', pose: 'stand', expression: 'calm', facing: 'right', motion: 'still' },
+    { castId: 'hero_right', slot: 'right', pose: 'stand', expression: 'calm', facing: 'left', motion: 'still' },
+  ];
+
+  baseBeat.speakerId = 'hero_left';
+  const leftTrack = computeSpeakerCameraOffset(baseBeat, '9:16', 0.5, true);
+  assert.ok(leftTrack.panXNorm > 0.1, `Expected positive panXNorm to center left speaker, got ${leftTrack.panXNorm}`);
+  assert.ok(leftTrack.zoomBoost > 0.05, 'Expected safe zoomBoost during speaker pan');
+
+  baseBeat.speakerId = 'hero_right';
+  const rightTrack = computeSpeakerCameraOffset(baseBeat, '9:16', 0.5, true);
+  assert.ok(rightTrack.panXNorm < -0.1, `Expected negative panXNorm to center right speaker, got ${rightTrack.panXNorm}`);
+
+  // Disabled autoTrackSpeaker or 16:9 returns zero offset
+  assert.equal(computeSpeakerCameraOffset(baseBeat, '9:16', 0.5, false).panXNorm, 0);
+  assert.equal(computeSpeakerCameraOffset(baseBeat, '16:9', 0.5, true).panXNorm, 0);
+
+  // Narrator stays centered
+  baseBeat.speakerId = 'narrator';
+  assert.equal(computeSpeakerCameraOffset(baseBeat, '9:16', 0.5, true).panXNorm, 0);
+
+  // Explicit manual cameraFocusX/Y works in 16:9 & overrides auto-track
+  baseBeat.cameraFocusX = 0.25;
+  baseBeat.cameraFocusY = -0.1;
+  const manualOff = computeSpeakerCameraOffset(baseBeat, '16:9', 0.5, true);
+  assert.equal(manualOff.panXNorm, -0.25);
+  assert.equal(manualOff.panYNorm, 0.1);
+  assert.ok(manualOff.zoomBoost > 0.1);
+
+  // 4. Viral Shorts Auto-Recommender & Standalone Short Slicer
+  const ep = PRESET_EPISODES[0];
+  const recsA = recommendTopShortSlices(ep, 3);
+  const recsB = recommendTopShortSlices(ep, 3);
+  assert.deepEqual(recsA, recsB, 'recommendTopShortSlices must be 100% deterministic');
+  assert.ok(recsA.length >= 1 && recsA.length <= 3, `Expected 1..3 short recommendations, got ${recsA.length}`);
+  assert.ok(recsA[0].score >= recsA[recsA.length - 1].score, 'Recommendations must be sorted by descending score');
+
+  const top = recsA[0];
+  const shortEp = buildShortSliceEpisode(ep, top.startIdx, top.endIdx, 'CAN YOU SOLVE THIS?', true);
+  assert.equal(shortEp.beats[0].frame, 'chapter_title', 'Hook title must inject 2s chapter_title slate');
+  assert.equal(shortEp.beats[0].duration, 2.0);
+  assert.equal(shortEp.beats.length, top.beatCount + 1);
+  assert.equal(shortEp.visualStyle?.captionStyle, 'shorts_bold_pop');
+  assert.equal(shortEp.visualStyle?.autoTrackSpeaker, true);
+});
+
+// ---------------------------------------------------------------------------
+// Test 16: Speech-Window Lip-Sync Lock, Safe-Zone Overlay, J-Cut/L-Cut & CLI Factory
+// ---------------------------------------------------------------------------
+test('16. Speech-Window Lip-Sync Lock, Safe-Zone Overlay, J-Cut/L-Cut & CLI Multi-Format Factory', () => {
+  // 1. Speech-Window Lip-Sync Lock closes mouth outside active speech window & holds stable visemes
+  const speechWin = { startSec: 0.4, endSec: 2.2 };
+  const dialogue = 'Open the golden gate and speak the truth!';
+  assert.equal(
+    computeSpeechWindowViseme(dialogue, 0.1, 3.0, 0.8, speechWin),
+    0,
+    'Mouth must stay closed during leading dead air before speechWindow.startSec'
+  );
+  assert.equal(
+    computeSpeechWindowViseme(dialogue, 2.6, 3.0, 0.8, speechWin),
+    0,
+    'Mouth must stay closed during trailing silence after speechWindow.endSec'
+  );
+  assert.equal(
+    computeSpeechWindowViseme(dialogue, 1.0, 3.0, 0.01, speechWin),
+    0,
+    'Mouth must stay closed when speechEnergy is below noise floor'
+  );
+  const vMidA = computeSpeechWindowViseme(dialogue, 1.001, 3.0, 0.72, speechWin);
+  const vMidB = computeSpeechWindowViseme(dialogue, 1.018, 3.0, 0.72, speechWin);
+  assert.equal(vMidA, vMidB, 'Adjacent 60fps frames within the same 18Hz viseme bucket should hold steady');
+  assert.ok(vMidA >= 1 && vMidA <= 5, `Expected active viseme 1..5 inside speechWindow, got ${vMidA}`);
+
+  // 2. Safe-Zone overlay helper is exported and callable on mock 2D context for both 9:16 and 16:9
+  let drawOps = 0;
+  const mockCtx = {
+    save() {},
+    restore() {},
+    beginPath() {},
+    moveTo() {},
+    lineTo() {},
+    stroke() { drawOps++; },
+    fillRect() { drawOps++; },
+    strokeRect() { drawOps++; },
+    setLineDash() {},
+    fillText() { drawOps++; },
+    translate() {},
+    rotate() {},
+    strokeStyle: '',
+    fillStyle: '',
+    lineWidth: 1,
+    font: '',
+    textAlign: 'left',
+    textBaseline: 'top',
+  } as unknown as CanvasRenderingContext2D;
+  drawSafeZoneOverlay(mockCtx, 1080, 1920, '9:16');
+  const ops916 = drawOps;
+  drawSafeZoneOverlay(mockCtx, 1920, 1080, '16:9');
+  assert.ok(ops916 >= 5 && drawOps > ops916 + 5, 'drawSafeZoneOverlay must render guides for both 9:16 and 16:9');
+
+  // 3. J-Cut / L-Cut audioLeadSec schema validation & clamping + applyCinematicJCuts helper
+  const baseEp = structuredClone(PRESET_EPISODES[0]);
+  const jCutRes = applyCinematicJCuts(baseEp.beats, 0.3);
+  assert.ok(jCutRes.updatedCount > 0, 'applyCinematicJCuts should tag spoken transition beats');
+  assert.equal(jCutRes.beats[0].audioLeadSec, undefined, 'Beat 0 must never receive a positive J-cut lead');
+  const firstTagged = jCutRes.beats.find((b) => typeof b.audioLeadSec === 'number' && b.audioLeadSec > 0);
+  assert.ok(firstTagged, 'Expected at least one beat with positive J-cut audioLeadSec');
+
+  const testEp = { ...baseEp, beats: jCutRes.beats.map((b, i) => (i === 1 ? { ...b, audioLeadSec: 2.5 } : i === 2 ? { ...b, audioLeadSec: -1.8 } : b)) };
+  const validated = validateEpisodeScript(testEp);
+  assert.ok(validated.ok, 'Episode with audioLeadSec must pass validateEpisodeScript');
+  if (validated.ok) {
+    assert.equal(validated.script.beats[1].audioLeadSec, 0.6, 'Positive audioLeadSec must clamp to +0.6s');
+    assert.equal(validated.script.beats[2].audioLeadSec, -0.6, 'Negative audioLeadSec must clamp to -0.6s');
+  }
+
+  // 4. CLI render-batch.mjs exposes --auto-shorts and --thumbnails factory flags
+  const cliSrc = fs.readFileSync(path.resolve('scripts/render-batch.mjs'), 'utf8');
+  assert.ok(cliSrc.includes('--auto-shorts'), 'render-batch.mjs must support --auto-shorts');
+  assert.ok(cliSrc.includes('--thumbnails'), 'render-batch.mjs must support --thumbnails');
+  assert.ok(cliSrc.includes('renderThumbnailPackPngs'), 'render-batch.mjs must call headless renderThumbnailPackPngs');
+  assert.ok(cliSrc.includes('recommendShorts'), 'render-batch.mjs must call headless recommendShorts');
+});
+
+// ---------------------------------------------------------------------------
+// Test 17 (Upgrade 1): EBU R128 / -14 LUFS Loudness Meter & True-Peak Normalizer
+// ---------------------------------------------------------------------------
+test('17. Upgrade 1: EBU R128 / -14 LUFS K-weighted loudness meter & -1.5 dBTP true-peak normalizer', () => {
+  const sr = 48000;
+  const durationSec = 2.0;
+  const n = sr * durationSec;
+  // Quiet stereo 1 kHz sine wave (~ -24 LUFS)
+  const amp = 0.08;
+  const left = new Float32Array(n);
+  const right = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const s = amp * Math.sin((2 * Math.PI * 1000 * i) / sr);
+    left[i] = s;
+    right[i] = s;
+  }
+
+  const rawMetrics = measurePcmLoudness([left, right], sr);
+  assert.ok(rawMetrics.gatedBlocks > 0, 'Expected active gated blocks on 1 kHz sine');
+  assert.ok(
+    rawMetrics.integratedLufs < -19 && rawMetrics.integratedLufs > -28,
+    `Expected quiet sine near -23..-24 LUFS, got ${rawMetrics.integratedLufs}`
+  );
+
+  const normA = normalizePcmLufs([new Float32Array(left), new Float32Array(right)], sr, {
+    targetLufs: -14.0,
+    truePeakCeilingDb: -1.5,
+  });
+  const normB = normalizePcmLufs([new Float32Array(left), new Float32Array(right)], sr, {
+    targetLufs: -14.0,
+    truePeakCeilingDb: -1.5,
+  });
+  assert.equal(normA.after.integratedLufs, normB.after.integratedLufs, 'LUFS normalization must be deterministic');
+  assert.equal(normA.normalized, true);
+  assert.ok(
+    Math.abs(normA.after.integratedLufs - -14.0) <= 0.8,
+    `Expected normalized integrated LUFS near -14.0, got ${normA.after.integratedLufs}`
+  );
+  assert.ok(
+    normA.after.truePeakDbtp <= -1.45,
+    `Expected true peak <= -1.45 dBTP, got ${normA.after.truePeakDbtp}`
+  );
+  assert.ok(normA.appliedGainDb > 4, `Expected positive gain boost, got ${normA.appliedGainDb}`);
+
+  // Silent track should stay untouched without NaN/Infinity
+  const silent = normalizePcmLufs([new Float32Array(sr), new Float32Array(sr)], sr);
+  assert.equal(silent.normalized, false);
+  assert.equal(silent.appliedGainDb, 0);
+  assert.equal(silent.before.gatedBlocks, 0);
+});
+
+// ---------------------------------------------------------------------------
+// Test 18 (Upgrade 2): Deterministic Stereo Spatial Audio & Stage Room Acoustics
+// ---------------------------------------------------------------------------
+test('18. Upgrade 2: Deterministic stereo spatial panning & stage room impulse acoustics', () => {
+  const beat = clone(PRESET_EPISODES[0].beats[0]);
+  beat.actors = [
+    { castId: 'actor_l', slot: 'left', pose: 'stand', expression: 'calm', facing: 'right', motion: 'still' },
+    { castId: 'actor_c', slot: 'center', pose: 'stand', expression: 'calm', facing: 'right', motion: 'still' },
+    { castId: 'actor_r', slot: 'right', pose: 'stand', expression: 'calm', facing: 'left', motion: 'still' },
+  ];
+
+  beat.speakerId = 'actor_l';
+  assert.equal(computeSpatialPanForBeat(beat, 'voice'), -0.28, 'Left actor must pan to -0.28');
+  beat.speakerId = 'actor_c';
+  assert.equal(computeSpatialPanForBeat(beat, 'voice'), 0, 'Center actor must pan to 0');
+  beat.speakerId = 'actor_r';
+  assert.equal(computeSpatialPanForBeat(beat, 'voice'), 0.28, 'Right actor must pan to +0.28');
+  beat.speakerId = 'narrator';
+  assert.equal(computeSpatialPanForBeat(beat, 'voice'), 0, 'Narrator must stay dead-center (0)');
+
+  // Stage acoustics mapping
+  assert.equal(getStageRoomAcoustics('kali_temple').profileId, 'temple_reverb');
+  assert.equal(getStageRoomAcoustics('cave_den').profileId, 'cave_slapback');
+  assert.equal(getStageRoomAcoustics('banyan_clearing').profileId, 'dry_outdoor');
+  assert.equal(getStageRoomAcoustics('royal_durbar').profileId, 'palace_hall');
+
+  // Bit-exact deterministic stereo impulse response generation
+  const ir1 = generateDeterministicImpulsePcm('temple_reverb', 48000);
+  const ir2 = generateDeterministicImpulsePcm('temple_reverb', 48000);
+  assert.deepEqual(Array.from(ir1.left), Array.from(ir2.left), 'Impulse IR left channel must be bit-exact');
+  assert.deepEqual(Array.from(ir1.right), Array.from(ir2.right), 'Impulse IR right channel must be bit-exact');
+  assert.ok(ir1.left.length > 10000, 'Expected substantial temple reverb tail');
+
+  // Default visualStyle enables spatialAudio
+  assert.equal(resolveVisualStyle({}).spatialAudio, true);
+});
+
+// ---------------------------------------------------------------------------
+// Test 19 (Upgrade 3): 2.5D Multi-Plane Rack Focus / Depth-of-Field Spec
+// ---------------------------------------------------------------------------
+test('19. Upgrade 3: Zero-allocation 2.5D depth-of-field spec & visualStyle validation', () => {
+  const baseBeat = clone(PRESET_EPISODES[0].beats[0]);
+  baseBeat.actors = [
+    { castId: 'hero', slot: 'left', pose: 'stand', expression: 'calm', facing: 'right', motion: 'still' },
+    { castId: 'foil', slot: 'right', pose: 'stand', expression: 'calm', facing: 'left', motion: 'still' },
+  ];
+  baseBeat.speakerId = 'hero';
+
+  // Close-up enables backdrop defocus
+  const cuSpec = computeBeatDepthOfFieldSpec(
+    { ...baseBeat, shot: 'closeup_left' },
+    resolveVisualStyle({ depthOfField: 0.35 }),
+    0.5
+  );
+  assert.equal(cuSpec.enabled, true);
+  assert.equal(cuSpec.focusMode, 'full_backdrop');
+  assert.ok(cuSpec.blurPx > 0.5);
+
+  // Prop spotlight enables backdrop defocus
+  const propSpec = computeBeatDepthOfFieldSpec(
+    { ...baseBeat, shot: 'prop_spotlight' },
+    resolveVisualStyle({ depthOfField: 0.35 }),
+    0.5
+  );
+  assert.equal(propSpec.enabled, true);
+  assert.equal(propSpec.focusMode, 'full_backdrop');
+
+  // Two-shot enables speaker rack-focus
+  const twoSpec = computeBeatDepthOfFieldSpec(
+    { ...baseBeat, shot: 'two_shot' },
+    resolveVisualStyle({ depthOfField: 0.5 }),
+    0.5
+  );
+  assert.equal(twoSpec.enabled, true);
+  assert.equal(twoSpec.focusMode, 'rack_left');
+  assert.ok(twoSpec.strength > 0);
+
+  // Disabled at depthOfField = 0 or on motion_card
+  assert.equal(
+    computeBeatDepthOfFieldSpec({ ...baseBeat, shot: 'closeup_left' }, resolveVisualStyle({ depthOfField: 0 }), 0.5)
+      .enabled,
+    false
+  );
+  assert.equal(
+    computeBeatDepthOfFieldSpec({ ...baseBeat, shot: 'motion_card' }, resolveVisualStyle({ depthOfField: 0.5 }), 0.5)
+      .enabled,
+    false
+  );
+
+  // Zero canvas allocations during spec evaluation in Node
+  assert.equal(getDofPoolAllocationCount(), 0);
+
+  // Default visualStyle depthOfField is 0.35 and clamps cleanly in validator
+  assert.equal(resolveVisualStyle({}).depthOfField, 0.35);
+  const clamped = validateEpisodeScript({
+    ...PRESET_EPISODES[0],
+    visualStyle: { ...(PRESET_EPISODES[0].visualStyle || {}), depthOfField: 9.5 },
+  });
+  assert.equal(clamped.ok, true);
+  if (clamped.ok) {
+    assert.equal(clamped.script.visualStyle?.depthOfField, 1);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Test 20 (Upgrade 4): Character Acting & Choreography Macro Library
+// ---------------------------------------------------------------------------
+test('20. Upgrade 4: 12 deterministic character acting macros scale frame-locked cues & SFX cleanly', () => {
+  assert.ok(ACTING_MACRO_CATALOG.length >= 10, `Expected >= 10 acting macros, got ${ACTING_MACRO_CATALOG.length}`);
+  const baseBeat = clone(PRESET_EPISODES[0].beats[0]);
+  baseBeat.duration = 4.2;
+
+  for (const macro of ACTING_MACRO_CATALOG) {
+    const outA = applyActingMacroToBeat(baseBeat, macro.id);
+    const outB = applyActingMacroToBeat(baseBeat, macro.id);
+    assert.deepEqual(outA, outB, `Macro ${macro.id} must be 100% deterministic`);
+    assert.ok((outA.expressionCues?.length || 0) >= 2, `Macro ${macro.id} should emit expressionCues`);
+    assert.ok((outA.actionCues?.length || 0) >= 2, `Macro ${macro.id} should emit actionCues`);
+    assert.equal(outA.sfx, macro.sfx, `Macro ${macro.id} should assign matched SFX`);
+
+    const maxFrame = Math.max(1, Math.round(baseBeat.duration * STUDIO_FPS) - 1);
+    for (const cue of outA.actionCues || []) {
+      if (typeof cue.frame === 'number') {
+        assert.ok(cue.frame >= 0 && cue.frame <= maxFrame, `Cue frame ${cue.frame} out of [0..${maxFrame}]`);
+      }
+      if (typeof cue.endFrame === 'number') {
+        assert.ok(cue.endFrame >= 0 && cue.endFrame <= maxFrame, `Cue endFrame ${cue.endFrame} out of [0..${maxFrame}]`);
+      }
+    }
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Test 21 (Upgrade 5): Director's Continuity & Pacing Auditor + Auto-Fixer
+// ---------------------------------------------------------------------------
+test('21. Upgrade 5: Continuity auditor detects 180-deg flip, flat stretch, reading speed & missing speaker, and auto-fixes all', () => {
+  const ep = clone(PRESET_EPISODES[0]);
+  const a1 = ep.cast[0].id;
+  const a2 = ep.cast[1]?.id || a1;
+
+  // Build 4 beats with every defect
+  ep.beats = [
+    {
+      ...clone(ep.beats[0]),
+      id: 'c_b1',
+      stage: 'royal_durbar',
+      shot: 'wide_stage',
+      cameraMove: 'still',
+      duration: 6.0,
+      sfx: 'none',
+      fx: 'none',
+      weather: 'none',
+      actionCues: [],
+      expressionCues: [],
+      speakerId: a1,
+      dialogue: 'The royal court awaits the truth.',
+      actors: [
+        { castId: a1, slot: 'left', pose: 'stand', expression: 'calm', facing: 'right', motion: 'still' },
+        { castId: a2, slot: 'right', pose: 'stand', expression: 'calm', facing: 'left', motion: 'still' },
+      ],
+    },
+    {
+      ...clone(ep.beats[0]),
+      id: 'c_b2',
+      stage: 'royal_durbar',
+      shot: 'wide_stage',
+      cameraMove: 'still',
+      duration: 6.0,
+      sfx: 'none',
+      fx: 'none',
+      weather: 'none',
+      actionCues: [],
+      expressionCues: [],
+      speakerId: a1,
+      // 180-degree flip: a1 jumped from left->right with flipped facing
+      dialogue: 'Now I stand reversed across the axis.',
+      actors: [
+        { castId: a1, slot: 'right', pose: 'stand', expression: 'calm', facing: 'left', motion: 'still' },
+        { castId: a2, slot: 'left', pose: 'stand', expression: 'calm', facing: 'right', motion: 'still' },
+      ],
+    },
+    {
+      ...clone(ep.beats[0]),
+      id: 'c_b3',
+      stage: 'royal_durbar',
+      shot: 'wide_stage',
+      cameraMove: 'still',
+      duration: 6.0,
+      sfx: 'none',
+      fx: 'none',
+      weather: 'none',
+      actionCues: [],
+      expressionCues: [],
+      // Speaker missing from stage!
+      speakerId: a2,
+      dialogue: 'Where am I speaking from?',
+      actors: [
+        { castId: a1, slot: 'left', pose: 'stand', expression: 'calm', facing: 'right', motion: 'still' },
+      ],
+    },
+    {
+      ...clone(ep.beats[0]),
+      id: 'c_b4',
+      stage: 'royal_durbar',
+      shot: 'wide_stage',
+      cameraMove: 'still',
+      duration: 2.0,
+      sfx: 'none',
+      fx: 'none',
+      weather: 'none',
+      actionCues: [],
+      expressionCues: [],
+      speakerId: a1,
+      // Way too fast reading speed
+      dialogue:
+        'Listen carefully every single scholar in this grand assembly because twenty-eight spoken words packed into two seconds are impossible to read or narrate cleanly!',
+      actors: [
+        { castId: a1, slot: 'left', pose: 'stand', expression: 'calm', facing: 'right', motion: 'still' },
+      ],
+    },
+  ];
+
+  // Script-aware reading rate check (Latin, Devanagari, CJK)
+  assert.equal(measureDialogueReadingRate('Hello world from the stage.', 2.0).family, 'latin');
+  assert.equal(measureDialogueReadingRate('सत्य और धर्म की विजय सदैव होती है।', 2.0).family, 'indic');
+  assert.equal(measureDialogueReadingRate('月光下的古寺钟声悠扬回荡在山谷之中。', 2.0).family, 'cjk');
+
+  const before = auditEpisodeContinuity(ep);
+  const kinds = new Set(before.issues.map((i) => i.kind));
+  assert.ok(kinds.has('eyeline_flip'), 'Should detect 180-degree eye-line flip');
+  assert.ok(kinds.has('identical_shot_streak'), 'Should detect 3+ consecutive identical shots');
+  assert.ok(kinds.has('flat_pacing_stretch'), 'Should detect >16s flat pacing stretch');
+  assert.ok(kinds.has('missing_speaker_on_stage'), 'Should detect missing speaker on stage');
+  assert.ok(kinds.has('reading_speed_fast'), 'Should detect fast reading speed mismatch');
+
+  const fixed = autoFixEpisodeContinuity(ep);
+  assert.ok(fixed.fixedCount >= 4, `Expected >= 4 fixes applied, got ${fixed.fixedCount}`);
+  const after = auditEpisodeContinuity(fixed.episode);
+  assert.ok(after.score > before.score, `Expected continuity score to improve (${before.score} -> ${after.score})`);
+  assert.equal(
+    after.issues.filter((i) => i.kind === 'missing_speaker_on_stage').length,
+    0,
+    'Auto-fix must resolve missing speaker on stage'
+  );
+  assert.equal(validateEpisodeScript(fixed.episode).ok, true);
+});
+
+// ---------------------------------------------------------------------------
+// Test 22 (Upgrade 6): Procedural Stride & Weather Foley Synthesizer Planner
+// ---------------------------------------------------------------------------
+test('22. Upgrade 6: Procedural foley planner generates deterministic footsteps, whooshes, thunder & ember crackles', () => {
+  const walkRainBeat = clone(PRESET_EPISODES[0].beats[0]);
+  walkRainBeat.duration = 4.0;
+  walkRainBeat.weather = 'rain';
+  walkRainBeat.actors = [
+    { castId: 'hero', slot: 'left', pose: 'attack', expression: 'angry', facing: 'right', motion: 'cross_stage' },
+  ];
+  walkRainBeat.actionCues = [{ frame: 90, castId: 'hero', motion: 'leap_arc' }];
+
+  const eventsA = planBeatFoleyEvents(walkRainBeat);
+  const eventsB = planBeatFoleyEvents(walkRainBeat);
+  assert.deepEqual(eventsA, eventsB, 'Foley event planning must be 100% deterministic');
+  assert.ok(eventsA.some((e) => e.kind === 'footstep'), 'Expected stride footsteps for cross_stage');
+  assert.ok(eventsA.some((e) => e.kind === 'whoosh'), 'Expected cloth/air whoosh for attack/leap_arc');
+  assert.ok(eventsA.some((e) => e.kind === 'thunder_rumble'), 'Expected distant thunder rumble in rain');
+
+  const emberBeat = clone(PRESET_EPISODES[0].beats[0]);
+  emberBeat.duration = 4.0;
+  emberBeat.weather = 'embers';
+  emberBeat.actors = [{ castId: 'hero', slot: 'center', pose: 'stand', expression: 'calm', facing: 'right', motion: 'still' }];
+  emberBeat.actionCues = [];
+  const emberEvents = planBeatFoleyEvents(emberBeat);
+  assert.ok(emberEvents.some((e) => e.kind === 'ember_crackle'), 'Expected ember crackles in embers weather');
+});
+
+// ---------------------------------------------------------------------------
+// Test 23 (Upgrade 7): Per-Beat Camera Keyframe Splines & Validator
+// ---------------------------------------------------------------------------
+test('23. Upgrade 7: Camera keyframe splines evaluate linear/ease_in_out/overshoot deterministically & validate cleanly', () => {
+  assert.ok(CAMERA_KEYFRAME_PRESETS.length >= 4, 'Expected built-in camera keyframe presets');
+  const unsorted = [
+    { atFrac: 1.4, zoom: 1.5, panX: 0.2, panY: -0.1, ease: 'linear' as const },
+    { atFrac: -0.2, zoom: 0.9, panX: -0.1, panY: 0.05, ease: 'linear' as const },
+    { atFrac: 0.5, zoom: 1.15, panX: 0.05, panY: 0, ease: 'overshoot' as const },
+  ];
+  const norm = normalizeCameraKeyframes(unsorted);
+  assert.equal(norm.length, 3);
+  assert.equal(norm[0].atFrac, 0, 'Clamped start atFrac should be 0');
+  assert.equal(norm[2].atFrac, 1, 'Clamped end atFrac should be 1');
+
+  const midA = evaluateCameraKeyframes(norm, 0.5);
+  const midB = evaluateCameraKeyframes(norm, 0.5);
+  assert.deepEqual(midA, midB, 'Spline evaluation must be deterministic');
+  assert.ok(midA.active && Math.abs(midA.zoom - 1.15) < 1e-4);
+
+  // Overshoot segment around atFrac=0.85 should smoothly approach/exceed target
+  const late = evaluateCameraKeyframes(norm, 0.85);
+  assert.ok(late.zoom > 1.35, `Expected overshoot zoom > 1.35 near late segment, got ${late.zoom}`);
+
+  const composed = composeCameraWithKeyframes({ zoom: 1.0, panX: 0, panY: 0 }, norm, 0.5, 1920, 1080);
+  assert.ok(Math.abs(composed.zoom - 1.15) < 1e-4);
+  assert.ok(composed.panX < 0, 'Positive panX keyframe shifts stage transform left');
+
+  // Validator preserves and clamps cameraKeyframes on beats
+  const ep = clone(PRESET_EPISODES[0]);
+  ep.beats[0].cameraKeyframes = unsorted;
+  const validated = validateEpisodeScript(ep);
+  assert.equal(validated.ok, true);
+  if (validated.ok) {
+    assert.equal(validated.script.beats[0].cameraKeyframes?.length, 3);
+    assert.equal(validated.script.beats[0].cameraKeyframes?.[0].atFrac, 0);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Test 24 (Upgrade 8): Multi-Language Dub Timing Lock & Synced Track Packager
+// ---------------------------------------------------------------------------
+test('24. Upgrade 8: Dub timing lock clamps speechRate to 0.85..1.25 and packages SRT, WebVTT, Chapters & MLA Manifest', () => {
+  const baseEp = clone(PRESET_EPISODES[0]);
+  const localizedEp = clone(baseEp);
+  // Make beat 0 very long (requires speedup clamped <= 1.25) and beat 1 very short (requires slowdown >= 0.85)
+  localizedEp.beats[0].dialogue =
+    'This is an extraordinarily long translated line designed to test upper speech rate clamping across multiple dramatic clauses without drifting past the video beat duration.';
+  localizedEp.beats[1].dialogue = 'Yes.';
+
+  const plan = computeDubTimingPlan(baseEp, localizedEp, 'es');
+  assert.equal(plan.beats.length, baseEp.beats.length);
+  for (const target of plan.beats) {
+    assert.ok(
+      target.speechRate >= 0.85 && target.speechRate <= 1.25,
+      `speechRate ${target.speechRate} must stay clamped in [0.85, 1.25]`
+    );
+  }
+  assert.equal(plan.beats[0].speechRate, 1.25, 'Long translation should clamp to max 1.25x');
+  assert.equal(plan.beats[1].speechRate, 0.85, 'Short translation should clamp to min 0.85x');
+
+  const srt = generateSyncedSrt(localizedEp);
+  assert.ok(srt.includes('-->') && srt.includes('00:00:00,080'), 'Expected valid SRT cues with 80ms cut-safe pad');
+
+  const vtt = generateSyncedWebVtt(localizedEp);
+  assert.ok(vtt.startsWith('WEBVTT') && vtt.includes('<v '), 'Expected valid WebVTT with speaker voice tags');
+
+  const chapters = generateYouTubeChaptersText(localizedEp);
+  assert.ok(chapters.includes('0:00'), 'Expected YouTube 0:00 chapter start');
+
+  const manifest = buildMlaTrackManifest(baseEp, [{ langCode: 'es', episode: localizedEp }]);
+  assert.equal(manifest.schemaVersion, 1);
+  assert.equal(manifest.tracks.length, 2, 'Expected master + es tracks in manifest');
+  assert.equal(manifest.tracks[0].isMaster, true);
+  assert.equal(manifest.tracks[1].langCode, 'es');
+
+  const zipBytes = buildDubSyncPackageZipBytes(baseEp, [{ langCode: 'es', episode: localizedEp }]);
+  const entries = readBinaryZipEntries(zipBytes);
+  const paths = [...entries.keys()];
+  assert.ok(paths.includes('mla_track_manifest.json'), 'Expected mla_track_manifest.json in ZIP');
+  assert.ok(paths.includes('subtitles_es.vtt'), 'Expected WebVTT track in ZIP');
+  assert.ok(paths.includes('subtitles_es.srt'), 'Expected SRT track in ZIP');
+  assert.ok(paths.includes('youtube_chapters.txt'), 'Expected chapters file in ZIP');
+});
+
+// ---------------------------------------------------------------------------
+// Test 25 (Upgrade 9): Custom Look Lab Series Recipe Presets & .katha Bundle Preservation
+// ---------------------------------------------------------------------------
+test('25. Upgrade 9: Look Lab recipes round-trip JSON and persist inside .katha archives with backward compat', () => {
+  const ep = clone(PRESET_EPISODES[0]);
+  const recipe = createLookRecipe('Midnight Risograph Look', {
+    renderStyle: 'risograph_print',
+    motionCadence: '24fps',
+    motionProfile: 'snappy_cartoon',
+    postFxPass: 'bayer_dither',
+    depthOfField: 0.45,
+    spatialAudio: true,
+    inkWeight: 1.25,
+    autoTrackSpeaker: true,
+  });
+  const dup = duplicateLookRecipe(recipe);
+  assert.notEqual(dup.id, recipe.id);
+  assert.ok(dup.name.endsWith(' Copy'));
+
+  const json = exportLookRecipesJson([recipe, dup]);
+  const imported = importLookRecipesJson(json);
+  assert.equal(imported.ok, true);
+  if (imported.ok) {
+    assert.equal(imported.recipes.length, 2);
+    assert.equal(imported.recipes[0].style.renderStyle, 'risograph_print');
+    assert.equal(imported.recipes[0].style.depthOfField, 0.45);
+  }
+
+  // Round-trip inside .katha archive
+  const kathaBytes = exportKathaArchiveBytes({
+    version: 1,
+    exportedAt: Date.now(),
+    episode: ep,
+    aspect: '16:9',
+    voices: [],
+    musicStem: null,
+    lookRecipes: [recipe],
+  });
+  const parsed = parseKathaArchiveBytes(kathaBytes);
+  assert.equal(parsed.lookRecipes?.length, 1);
+  assert.equal(parsed.lookRecipes?.[0].name, 'Midnight Risograph Look');
+  assert.equal(parsed.lookRecipes?.[0].style.postFxPass, 'bayer_dither');
+});
+
+// ---------------------------------------------------------------------------
+// Test 26 (Upgrade 10): Headless Determinism & Render Benchmark CLI Audit
+// ---------------------------------------------------------------------------
+test('26. Upgrade 10: scripts/determinism-audit.mjs covers all 20 art engines with SHA-256 hash checks & safe spawn', () => {
+  const auditPath = path.join(process.cwd(), 'scripts/determinism-audit.mjs');
+  assert.equal(fs.existsSync(auditPath), true, 'Expected scripts/determinism-audit.mjs to exist');
+  const src = fs.readFileSync(auditPath, 'utf8');
+  assert.ok(src.includes('__STAGECRAFT_HEADLESS__'), 'Audit CLI must drive window.__STAGECRAFT_HEADLESS__');
+  assert.ok(src.includes('sha256'), 'Audit CLI must compute SHA-256 pixel buffer hashes');
+  assert.ok(src.includes('spawn('), 'Audit CLI must use safe spawn with argument arrays');
+  assert.equal(/\bexec\s*\(/.test(src), false, 'Audit CLI must never use shell string exec()');
+  for (const engine of RENDER_STYLE_CATALOG) {
+    assert.ok(src.includes(`'${engine.id}'`), `Audit CLI must include art engine ${engine.id}`);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Runner
+// ---------------------------------------------------------------------------
+async function main() {
+  let passed = 0;
+  let failed = 0;
+  const startedAt = Date.now();
+
+  console.log(`\nRunning Stagecraft Studio regression suite (${tests.length} tests)...\n`);
+  for (const t of tests) {
+    try {
+      await t.run();
+      passed += 1;
+      console.log(`  PASS  ${t.name}`);
+    } catch (err) {
+      failed += 1;
+      console.error(`  FAIL  ${t.name}`);
+      console.error(`        ${err instanceof Error ? err.stack || err.message : String(err)}`);
+    }
+  }
+
+  const elapsed = Date.now() - startedAt;
+  console.log(`\nSummary: ${passed}/${tests.length} passed, ${failed} failed (${elapsed}ms)\n`);
+  if (failed > 0) {
+    process.exit(1);
+  }
+}
+
+void main();

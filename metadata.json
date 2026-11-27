@@ -1,0 +1,6 @@
+{
+  "name": "Vikram & Betaal: The Three Sensitive Brothers",
+  "description": "A 36-second 16-bit Stardew Valley-inspired 3/4 top-down pixel RPG animated short at 1080p60 with horizontal-slice sprite stacking, thought-cloud vignettes, procedural Raag Bhairavi WebAudio score, and 60fps WebM recording.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

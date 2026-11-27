@@ -1,0 +1,3405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vikram &amp; Betaal: The Three Sensitive Brothers — 16-Bit Pixel RPG Short</title>
+<style>
+  :root {
+    --bg-obsidian: #070913;
+    --surface-bar: #101426;
+    --surface-btn: #19203a;
+    --surface-btn-hover: #242e52;
+    --border-hairline: rgba(236, 206, 134, 0.22);
+    --gold-accent: #f0c24b;
+    --gold-dim: #bfa166;
+    --crimson-rec: #e6394c;
+    --text-main: #f4ecd8;
+    --text-muted: #9ca4be;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    background: var(--bg-obsidian);
+    color: var(--text-main);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    overflow: hidden;
+    user-select: none;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .app-shell {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 16px 14px;
+    gap: 10px;
+    transition: padding 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  body.theatre-mode .app-shell {
+    padding: 0;
+    gap: 0;
+  }
+
+  .stage-wrap {
+    position: relative;
+    width: 100%;
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .canvas-frame {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.72), 0 0 0 1px rgba(240, 194, 75, 0.22);
+    border-radius: 6px;
+    overflow: hidden;
+    background: #0b0e1f;
+  }
+
+  body.theatre-mode .canvas-frame {
+    width: 100vw;
+    height: 100vh;
+    max-width: 100vw;
+    max-height: 100vh;
+    aspect-ratio: auto;
+    border-radius: 0;
+    box-shadow: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #04060d;
+  }
+
+  #stageCanvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    cursor: pointer;
+  }
+
+  /* Subtle unobtrusive click-to-unmute hint inside corner until audio is unlocked */
+  .audio-prompt {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: rgba(11, 14, 31, 0.86);
+    border: 1px solid rgba(240, 194, 75, 0.48);
+    color: var(--text-main);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: opacity 180ms ease, transform 180ms ease, background 150ms ease;
+    z-index: 12;
+  }
+  .audio-prompt:hover {
+    background: rgba(25, 32, 58, 0.96);
+    transform: translateY(-1px);
+  }
+  .audio-prompt.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-4px);
+  }
+
+  .theatre-toast {
+    position: absolute;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-8px);
+    background: rgba(11, 14, 31, 0.88);
+    border: 1px solid rgba(240, 194, 75, 0.4);
+    color: var(--text-main);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 6px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 220ms ease, transform 220ms ease;
+    z-index: 20;
+    white-space: nowrap;
+  }
+  .theatre-toast.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .controls-bar {
+    width: 100%;
+    max-width: 1280px;
+    background: var(--surface-bar);
+    border: 1px solid var(--border-hairline);
+    border-radius: 8px;
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+    transition: opacity 200ms ease, transform 200ms ease;
+  }
+
+  body.theatre-mode .controls-bar {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(920px, calc(100vw - 32px));
+    background: rgba(16, 20, 38, 0.9);
+    backdrop-filter: blur(8px);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 30;
+  }
+
+  body.theatre-mode.show-hud .controls-bar,
+  body.theatre-mode .controls-bar:hover,
+  body.theatre-mode .controls-bar:focus-within {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .btn-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .ctrl-btn {
+    appearance: none;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: var(--surface-btn);
+    color: var(--text-main);
+    height: 38px;
+    padding: 0 13px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: background 140ms ease, border-color 140ms ease, transform 100ms ease;
+  }
+
+  .ctrl-btn:hover {
+    background: var(--surface-btn-hover);
+    border-color: rgba(240, 194, 75, 0.45);
+  }
+
+  .ctrl-btn:active {
+    transform: translateY(1px);
+  }
+
+  .ctrl-btn:focus-visible {
+    outline: 2px solid var(--gold-accent);
+    outline-offset: 2px;
+  }
+
+  .ctrl-btn.primary {
+    background: #8a2033;
+    border-color: rgba(240, 194, 75, 0.5);
+    color: #fff8e7;
+  }
+  .ctrl-btn.primary:hover {
+    background: #a5283f;
+  }
+
+  .ctrl-btn.recording {
+    background: var(--crimson-rec);
+    border-color: #ff8e9b;
+    color: #ffffff;
+  }
+  .ctrl-btn.recording:hover {
+    background: #cc2b3d;
+  }
+
+  .ctrl-btn svg {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+  }
+
+  .timeline-zone {
+    flex: 1 1 auto;
+    min-width: 120px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .timeline-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--text-muted);
+    gap: 10px;
+  }
+
+  .beat-label {
+    color: var(--gold-dim);
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .time-readout {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-main);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .scrubber {
+    position: relative;
+    height: 12px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+  }
+
+  .scrubber-track {
+    position: relative;
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .scrubber-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #d99326, #f5cd62);
+    border-radius: 3px;
+  }
+
+  .scrubber-ticks {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .scrubber-tick {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: rgba(7, 9, 19, 0.65);
+  }
+
+  @media (max-width: 820px) {
+    .controls-bar {
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 8px 10px;
+    }
+    .timeline-zone {
+      order: -1;
+      width: 100%;
+    }
+    .ctrl-btn {
+      height: 36px;
+      padding: 0 10px;
+      font-size: 12px;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <div class="stage-wrap">
+    <div class="canvas-frame">
+      <canvas id="stageCanvas" width="1920" height="1080" aria-label="Vikram and Betaal: The Three Sensitive Brothers 16-bit Pixel RPG Animated Short"></canvas>
+      <button id="audioUnlockPrompt" class="audio-prompt" type="button" title="Enable Raag Bhairavi score">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
+        <span>Click for Raag Bhairavi Score</span>
+      </button>
+      <div id="theatreToast" class="theatre-toast">Theatre Mode — Press ESC to exit</div>
+    </div>
+  </div>
+
+  <div class="controls-bar" role="toolbar" aria-label="Playback and recording controls">
+    <div class="btn-group">
+      <button id="btnPlayPause" class="ctrl-btn primary" type="button" title="Pause or Play (Space)">
+        <span id="playPauseIcon"></span>
+        <span id="playPauseLabel">Pause</span>
+      </button>
+      <button id="btnReplay" class="ctrl-btn" type="button" title="Replay from start (R)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+        <span>Replay</span>
+      </button>
+      <button id="btnMute" class="ctrl-btn" type="button" title="Toggle Raag Bhairavi audio (M)">
+        <span id="muteIcon"></span>
+        <span id="muteLabel">Sound On</span>
+      </button>
+    </div>
+
+    <div class="timeline-zone">
+      <div class="timeline-meta">
+        <span id="beatLabel" class="beat-label">Act I · Banyan &amp; Leap</span>
+        <span id="timeReadout" class="time-readout">00:00 / 00:36</span>
+      </div>
+      <div id="scrubber" class="scrubber" role="slider" aria-label="Animation timeline" aria-valuemin="0" aria-valuemax="36" aria-valuenow="0" tabindex="0">
+        <div class="scrubber-track">
+          <div id="scrubberFill" class="scrubber-fill"></div>
+          <div class="scrubber-ticks">
+            <span class="scrubber-tick" style="left: 19.44%"></span>
+            <span class="scrubber-tick" style="left: 41.66%"></span>
+            <span class="scrubber-tick" style="left: 63.88%"></span>
+            <span class="scrubber-tick" style="left: 83.33%"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-group">
+      <button id="btnTheatre" class="ctrl-btn" type="button" title="Toggle Theatre Mode (T / ESC)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"></path><path d="M21 8V5a2 2 0 0 0-2-2h-3"></path><path d="M3 16v3a2 2 0 0 0 2 2h3"></path><path d="M16 21h3a2 2 0 0 0 2-2v-3"></path></svg>
+        <span id="theatreLabel">Theatre</span>
+      </button>
+      <button id="btnRecord" class="ctrl-btn" type="button" title="Record full 1080p60 WebM video">
+        <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="6"></circle></svg>
+        <span id="recordLabel">Record (.webm)</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  // =========================================================================
+  // 1. CONSTANTS & DISPLAY SETUP (1080p60 = 4x Exact Integer Scale of 480x270)
+  // =========================================================================
+  const OUT_W = 1920;
+  const OUT_H = 1080;
+  const LOG_W = 480;
+  const LOG_H = 270;
+  const SCALE = 4; // 480 * 4 = 1920, 270 * 4 = 1080
+  const FPS = 60;
+  const TOTAL_SECONDS = 36;
+  const TOTAL_FRAMES = TOTAL_SECONDS * FPS; // 2160 frames
+
+  const WORLD_W = 600;
+  const WORLD_H = 310;
+
+  const canvas = document.getElementById('stageCanvas');
+  const ctx = canvas.getContext('2d', { alpha: false });
+  ctx.imageSmoothingEnabled = false;
+
+  // Logical 480x270 pixel-art render buffer
+  const lowCanvas = document.createElement('canvas');
+  lowCanvas.width = LOG_W;
+  lowCanvas.height = LOG_H;
+  const lowCtx = lowCanvas.getContext('2d', { alpha: false });
+  lowCtx.imageSmoothingEnabled = false;
+
+  // Deterministic PRNG for clean pre-baked nocturnal textures
+  function makeRng(seed) {
+    let s = seed >>> 0;
+    return () => {
+      s = (Math.imul(1664525, s) + 1013904223) >>> 0;
+      return s / 4294967296;
+    };
+  }
+
+  function clamp(v, lo, hi) { return v < lo ? lo : (v > hi ? hi : v); }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function smoothstep(t) {
+    const x = clamp(t, 0, 1);
+    return x * x * (3 - 2 * x);
+  }
+  function easeOutBack(t) {
+    const x = clamp(t, 0, 1);
+    const c1 = 1.70158;
+    const c3 = c1 + 1;
+    return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
+  }
+  function hexToRgb(hex) {
+    const n = parseInt(hex.slice(1), 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+
+  // =========================================================================
+  // 2. UNIFIED COLOR PALETTE (16-Bit Nocturnal Stardew RPG Ramp: [shadow, mid, top])
+  // =========================================================================
+  const OUTLINE_RGB = hexToRgb('#110f22');
+
+  const PALETTE = {
+    // 1: Bark (Banyan trunk & boughs)
+    1:  { s: '#2b1c19', m: '#463028', t: '#614539' },
+    // 2: Mossy root accent
+    2:  { s: '#1c382c', m: '#2c5741', t: '#457a57' },
+    // 3: Banyan foliage deep
+    3:  { s: '#112c2a', m: '#1a4239', t: '#2b614d' },
+    // 4: Banyan foliage lush moonlit
+    4:  { s: '#1c463c', m: '#2e6952', t: '#579c73' },
+    // 5: Banyan moon-kissed leaf highlight
+    5:  { s: '#347359', m: '#569c74', t: '#88cc99' },
+    // 6: Vikram skin
+    6:  { s: '#8f5538', m: '#bd7a55', t: '#de9d74' },
+    // 7: Vikram crimson tunic / cape
+    7:  { s: '#5c0e1d', m: '#991a2e', t: '#cf2b42' },
+    // 8: Vikram gold (mukut, sash, dhoti)
+    8:  { s: '#8a5610', m: '#cc8a1b', t: '#f7c948' },
+    // 9: Vikram bright gold highlight (flat-ish top gleam)
+    9:  { s: '#d99e26', m: '#f7cb4d', t: '#fff1a8' },
+    // 10: Vikram dark hair / boots / mustache
+    10: { s: '#151221', m: '#252038', t: '#3b3457' },
+    // 11: Ruby gem (emissive / clean)
+    11: { s: '#b01231', m: '#ff1f4b', t: '#ff708d', flat: true },
+    // 12: Khanda steel blade
+    12: { s: '#5c6e87', m: '#9cb0c9', t: '#e8f2ff', flat: true },
+    // 13: Vikram dhoti warm cream-gold
+    13: { s: '#9e7028', m: '#d4a348', t: '#f2ce74' },
+    // 14: Vikram leather mojri boots
+    14: { s: '#382019', m: '#5c3629', t: '#804f3d' },
+    // 15: Betaal pale spirit skin
+    15: { s: '#6e839e', m: '#9eb7d4', t: '#d4e6f7' },
+    // 16: Betaal wild spirit hair
+    16: { s: '#181429', m: '#2f274d', t: '#4b3f73' },
+    // 17: Betaal tattered ash-slate drape
+    17: { s: '#252a40', m: '#3c4566', t: '#5b678f' },
+    // 18: Betaal glowing crimson eyes (emissive)
+    18: { s: '#ff1a40', m: '#ff294d', t: '#ff8ca1', flat: true },
+    // 19: Stone plinth / forest boulder
+    19: { s: '#2b3247', m: '#45506e', t: '#6f7e9e' },
+    // 20: Clay Diya bowl
+    20: { s: '#6e311d', m: '#a65032', t: '#d4744e' },
+    // 21: Diya oil pool
+    21: { s: '#4a2912', m: '#804a1c', t: '#bf7928' },
+    // 22: Bush flower bud
+    22: { s: '#9c7d96', m: '#d9b8cc', t: '#fff0f7' },
+    // 23: Dark ink accent (eyes / detail)
+    23: { s: '#141021', m: '#141021', t: '#141021', flat: true },
+    // 24: Vine / aerial root
+    24: { s: '#33221c', m: '#4f372d', t: '#6b4d3f' }
+  };
+
+  // Pre-convert palette hexes to RGB tuples
+  const PAL_RGB = {};
+  for (const k in PALETTE) {
+    PAL_RGB[k] = {
+      s: hexToRgb(PALETTE[k].s),
+      m: hexToRgb(PALETTE[k].m),
+      t: hexToRgb(PALETTE[k].t),
+      flat: !!PALETTE[k].flat
+    };
+  }
+
+  // =========================================================================
+  // 3. TRUE HORIZONTAL-SLICE SPRITE STACKING ENGINE (Zero Stray Pixels)
+  // =========================================================================
+  class SpriteStack {
+    constructor(w, d, h) {
+      this.w = w;
+      this.d = d;
+      this.h = h;
+      this.voxels = new Uint8Array(w * d * h);
+    }
+
+    idx(x, y, z) {
+      return (z * this.d + y) * this.w + x;
+    }
+
+    set(x, y, z, col) {
+      const ix = Math.round(x), iy = Math.round(y), iz = Math.round(z);
+      if (ix < 0 || ix >= this.w || iy < 0 || iy >= this.d || iz < 0 || iz >= this.h) return;
+      this.voxels[this.idx(ix, iy, iz)] = col;
+    }
+
+    get(x, y, z) {
+      if (x < 0 || x >= this.w || y < 0 || y >= this.d || z < 0 || z >= this.h) return 0;
+      return this.voxels[this.idx(x, y, z)];
+    }
+
+    fillBox(x0, y0, z0, x1, y1, z1, col) {
+      const xa = Math.max(0, Math.floor(Math.min(x0, x1)));
+      const xb = Math.min(this.w - 1, Math.floor(Math.max(x0, x1)));
+      const ya = Math.max(0, Math.floor(Math.min(y0, y1)));
+      const yb = Math.min(this.d - 1, Math.floor(Math.max(y0, y1)));
+      const za = Math.max(0, Math.floor(Math.min(z0, z1)));
+      const zb = Math.min(this.h - 1, Math.floor(Math.max(z0, z1)));
+      for (let z = za; z <= zb; z++) {
+        for (let y = ya; y <= yb; y++) {
+          for (let x = xa; x <= xb; x++) {
+            this.voxels[this.idx(x, y, z)] = col;
+          }
+        }
+      }
+    }
+
+    fillEllipsoid(cx, cy, cz, rx, ry, rz, col, noiseFn) {
+      const xa = Math.max(0, Math.floor(cx - rx));
+      const xb = Math.min(this.w - 1, Math.ceil(cx + rx));
+      const ya = Math.max(0, Math.floor(cy - ry));
+      const yb = Math.min(this.d - 1, Math.ceil(cy + ry));
+      const za = Math.max(0, Math.floor(cz - rz));
+      const zb = Math.min(this.h - 1, Math.ceil(cz + rz));
+      for (let z = za; z <= zb; z++) {
+        const dz = (z - cz) / rz;
+        for (let y = ya; y <= yb; y++) {
+          const dy = (y - cy) / ry;
+          for (let x = xa; x <= xb; x++) {
+            const dx = (x - cx) / rx;
+            const dist = dx * dx + dy * dy + dz * dz;
+            if (dist <= 1.0) {
+              const c = noiseFn ? noiseFn(x, y, z, dist, col) : col;
+              if (c) this.voxels[this.idx(x, y, z)] = c;
+            }
+          }
+        }
+      }
+    }
+
+    fillCylinder(cx, cy, z0, z1, rx, ry, col) {
+      const za = Math.max(0, Math.floor(Math.min(z0, z1)));
+      const zb = Math.min(this.h - 1, Math.floor(Math.max(z0, z1)));
+      for (let z = za; z <= zb; z++) {
+        for (let y = Math.floor(cy - ry); y <= Math.ceil(cy + ry); y++) {
+          for (let x = Math.floor(cx - rx); x <= Math.ceil(cx + rx); x++) {
+            const dx = (x - cx) / rx;
+            const dy = (y - cy) / ry;
+            if (dx * dx + dy * dy <= 1.0) {
+              this.set(x, y, z, col);
+            }
+          }
+        }
+      }
+    }
+
+    /**
+     * Bakes true horizontal voxel slices z = 0..h-1 into a clean 3/4 oblique 2D sprite.
+     * Enforces single clean outer silhouette outline pass => ZERO stray specks or junk pixels.
+     */
+    bake(opts = {}) {
+      const pad = 2;
+      const yStep = opts.yStep !== undefined ? opts.yStep : 0.5; // 3/4 oblique foreshortening
+      const outW = this.w + pad * 2;
+      const projD = Math.ceil(this.d * yStep);
+      const outH = this.h + projD + pad * 2;
+
+      const occ = new Uint8Array(outW * outH);
+      const colBuf = new Uint8Array(outW * outH * 4);
+
+      // Composite bottom-to-top (z = 0..h-1), back-to-front (y = 0..d-1)
+      for (let z = 0; z < this.h; z++) {
+        for (let y = 0; y < this.d; y++) {
+          const py = pad + (this.h - 1 - z) + Math.floor(y * yStep);
+          for (let x = 0; x < this.w; x++) {
+            const cId = this.get(x, y, z);
+            if (!cId) continue;
+
+            const px = pad + x;
+            const pIdx = py * outW + px;
+            const pal = PAL_RGB[cId];
+            if (!pal) continue;
+
+            // Clean top/front cel shading
+            const aboveEmpty = this.get(x, y, z + 1) === 0;
+            const frontEmpty = this.get(x, y + 1, z) === 0;
+            const leftEmpty = this.get(x - 1, y, z) === 0;
+
+            let rgb;
+            if (pal.flat) {
+              rgb = aboveEmpty ? pal.t : pal.m;
+            } else if (aboveEmpty && (leftEmpty || z >= this.h - 2 || this.get(x, y - 1, z + 1) === 0)) {
+              rgb = pal.t; // Moonlit / top face
+            } else if (aboveEmpty) {
+              rgb = pal.t;
+            } else if (frontEmpty && z > 0) {
+              rgb = pal.m; // Front-facing cel midtone
+            } else {
+              rgb = pal.s; // Ground AO / lower shade
+            }
+
+            occ[pIdx] = 1;
+            const o4 = pIdx * 4;
+            colBuf[o4]     = rgb[0];
+            colBuf[o4 + 1] = rgb[1];
+            colBuf[o4 + 2] = rgb[2];
+            colBuf[o4 + 3] = 255;
+          }
+        }
+      }
+
+      // Single clean 4-neighbor outer silhouette pass (strictly on final 2D mask)
+      if (opts.outline !== false) {
+        const outRgb = opts.outlineRgb || OUTLINE_RGB;
+        for (let py = 1; py < outH - 1; py++) {
+          for (let px = 1; px < outW - 1; px++) {
+            const pIdx = py * outW + px;
+            if (occ[pIdx] !== 0) continue;
+            if (
+              occ[pIdx - 1] === 1 ||
+              occ[pIdx + 1] === 1 ||
+              occ[pIdx - outW] === 1 ||
+              occ[pIdx + outW] === 1
+            ) {
+              const o4 = pIdx * 4;
+              colBuf[o4]     = outRgb[0];
+              colBuf[o4 + 1] = outRgb[1];
+              colBuf[o4 + 2] = outRgb[2];
+              colBuf[o4 + 3] = 255;
+            }
+          }
+        }
+      }
+
+      const c = document.createElement('canvas');
+      c.width = outW;
+      c.height = outH;
+      const g = c.getContext('2d');
+      const img = g.createImageData(outW, outH);
+      img.data.set(colBuf);
+      g.putImageData(img, 0, 0);
+
+      // Anchor point at horizontal center, ground contact (z=0, mid-y)
+      const anchorX = Math.floor(pad + this.w / 2);
+      const anchorY = Math.floor(pad + (this.h - 1) + Math.floor((this.d * 0.65) * yStep));
+      return { canvas: c, w: outW, h: outH, ax: anchorX, ay: anchorY };
+    }
+  }
+
+  // =========================================================================
+  // 4. SCULPTING ALL CHARACTERS & PROPS UNDER UNIFIED VOXEL SCALE
+  // =========================================================================
+
+  // --- KING VIKRAMADITYA (Proportional 16x28 logical px RPG Hero) ---
+  function buildVikramSprite(opts = {}) {
+    // opts: { phase: 0..3, pose: 'walk'|'idle'|'crouch'|'leap'|'carry'|'verdict', capeSway: -1..1 }
+    const pose = opts.pose || 'idle';
+    const phase = opts.phase || 0;
+    const sway = opts.capeSway || 0;
+    const s = new SpriteStack(24, 14, 29);
+
+    const cx = 11;
+    const cy = 7;
+
+    // Stride offsets for 4-frame walk cycle
+    const stride = (pose === 'walk' || pose === 'carry') ? [0, 1, 0, -1][phase % 4] : 0;
+    const bob = (pose === 'walk' || pose === 'carry') ? [0, 1, 0, 1][phase % 4] : (pose === 'crouch' ? -2 : 0);
+    const lLegY = cy + stride;
+    const rLegY = cy - stride;
+
+    // 1. Boots / Mojris & Legs (z = 0..4)
+    if (pose === 'leap') {
+      // Tucked parabolic leap legs
+      s.fillBox(cx - 3, cy - 1, 2, cx - 1, cy + 2, 4, 14);
+      s.fillBox(cx + 1, cy - 2, 4, cx + 3, cy + 1, 6, 14);
+      s.fillBox(cx - 3, cy - 1, 5, cx + 3, cy + 2, 10, 13);
+    } else {
+      // Left foot
+      s.fillBox(cx - 3, lLegY - 1, 0, cx - 1, lLegY + 2, 2, 14);
+      // Right foot
+      s.fillBox(cx + 1, rLegY - 1, 0, cx + 3, rLegY + 2, 2, 14);
+      // Pleated golden dhoti (z = 3..9 + bob)
+      s.fillBox(cx - 4, cy - 2, 3, cx + 4, cy + 2, 8 + bob, 13);
+      // Gold pleat folds down front
+      s.fillBox(cx - 1, cy + 2, 3, cx + 1, cy + 2, 8 + bob, 8);
+      s.fillBox(cx - 3, cy + 2, 4, cx - 3, cy + 2, 7 + bob, 8);
+      s.fillBox(cx + 3, cy + 2, 4, cx + 3, cy + 2, 7 + bob, 8);
+    }
+
+    const zBase = (pose === 'leap' ? 2 : 0) + bob;
+
+    // 2. Flowing Crimson Royal Cape (behind torso, billowing smoothly)
+    const capeLift = pose === 'leap' ? 2 : 0;
+    for (let z = 3 + capeLift; z <= 15 + zBase; z++) {
+      const t = (15 + zBase - z) / 13;
+      const backShift = Math.round(t * (pose === 'leap' ? 3.5 : 2.2));
+      const xDrift = Math.round(t * sway * 2);
+      const halfW = Math.round(3.5 + t * 2.2);
+      s.fillBox(cx - halfW + xDrift, Math.max(0, cy - 3 - backShift), z, cx + halfW + xDrift, Math.max(1, cy - 2 - backShift), z, 7);
+    }
+    // Gold cape hem trim
+    s.fillBox(cx - 5 + Math.round(sway * 2), 1, 3 + capeLift, cx + 5 + Math.round(sway * 2), 2, 3 + capeLift, 8);
+
+    // 3. Crimson Brocade Tunic & Gold Waistband (z = 9..16 + zBase)
+    s.fillBox(cx - 4, cy - 2, 9 + zBase, cx + 4, cy + 2, 15 + zBase, 7);
+    // Gold waist belt
+    s.fillBox(cx - 4, cy - 2, 9 + zBase, cx + 4, cy + 3, 9 + zBase, 8);
+    // Diagonal golden royal sash across chest
+    for (let k = 0; k <= 5; k++) {
+      s.set(cx - 3 + k, cy + 2, 15 + zBase - k, 9);
+      s.set(cx - 2 + k, cy + 2, 15 + zBase - k, 8);
+    }
+
+    // 4. Arms & Gleaming Steel Khanda Sword
+    if (pose === 'leap') {
+      // Both arms reaching upward toward Betaal, right hand gripping khanda
+      s.fillBox(cx - 6, cy - 1, 14 + zBase, cx - 5, cy + 1, 20 + zBase, 6);
+      s.fillBox(cx + 5, cy - 1, 14 + zBase, cx + 6, cy + 1, 19 + zBase, 6);
+      // Khanda sword held high
+      s.fillBox(cx + 6, cy, 19 + zBase, cx + 8, cy + 1, 20 + zBase, 8);
+      for (let b = 0; b < 7; b++) {
+        s.fillBox(cx + 7 + Math.floor(b * 0.6), cy, 20 + zBase + b, cx + 8 + Math.floor(b * 0.6), cy + 1, 20 + zBase + b, 12);
+      }
+    } else if (pose === 'carry') {
+      // Arms angled back supporting Betaal, khanda slung heroically in right hand
+      s.fillBox(cx - 6, cy - 2, 11 + zBase, cx - 5, cy + 1, 15 + zBase, 7);
+      s.fillBox(cx - 6, cy - 2, 10 + zBase, cx - 5, cy, 11 + zBase, 6);
+      s.fillBox(cx + 5, cy - 1, 11 + zBase, cx + 6, cy + 2, 15 + zBase, 7);
+      s.fillBox(cx + 5, cy + 1, 10 + zBase, cx + 6, cy + 2, 11 + zBase, 6);
+      // Gleaming Khanda held diagonally at right side
+      s.fillBox(cx + 6, cy + 1, 10 + zBase, cx + 7, cy + 2, 11 + zBase, 8); // gold hilt
+      for (let b = 0; b < 8; b++) {
+        const bx = cx + 7 + Math.floor(b * 0.7);
+        const bz = 11 + zBase + Math.floor(b * 0.85);
+        s.fillBox(bx, cy + 1, bz, bx + (b > 5 ? 1 : 0), cy + 2, bz, 12);
+      }
+    } else if (pose === 'verdict') {
+      // Left arm extended decisively, right hand raising khanda slightly
+      s.fillBox(cx - 6, cy, 12 + zBase, cx - 5, cy + 2, 15 + zBase, 7);
+      s.fillBox(cx - 8, cy + 1, 14 + zBase, cx - 6, cy + 2, 15 + zBase, 6);
+      s.fillBox(cx + 5, cy - 1, 12 + zBase, cx + 6, cy + 2, 15 + zBase, 7);
+      s.fillBox(cx + 6, cy + 1, 13 + zBase, cx + 7, cy + 2, 14 + zBase, 6);
+      // Khanda upright gleam
+      s.fillBox(cx + 7, cy + 1, 13 + zBase, cx + 8, cy + 2, 14 + zBase, 8);
+      for (let b = 0; b < 9; b++) {
+        const bx = cx + 8 + Math.floor(b * 0.45);
+        const bz = 14 + zBase + b;
+        s.fillBox(bx, cy + 1, bz, bx + (b > 6 ? 1 : 0), cy + 2, bz, 12);
+      }
+    } else {
+      // Standard heroic stride arms
+      const armSwing = stride;
+      s.fillBox(cx - 6, cy - 1 - armSwing, 11 + zBase, cx - 5, cy + 1 - armSwing, 15 + zBase, 7);
+      s.fillBox(cx - 6, cy - armSwing, 9 + zBase, cx - 5, cy + 1 - armSwing, 11 + zBase, 6);
+      s.fillBox(cx + 5, cy - 1 + armSwing, 11 + zBase, cx + 6, cy + 1 + armSwing, 15 + zBase, 7);
+      s.fillBox(cx + 5, cy + armSwing, 9 + zBase, cx + 6, cy + 1 + armSwing, 11 + zBase, 6);
+      // Gleaming Khanda sword in right hand
+      s.fillBox(cx + 6, cy + armSwing, 9 + zBase, cx + 7, cy + 1 + armSwing, 10 + zBase, 8);
+      for (let b = 0; b < 8; b++) {
+        const bx = cx + 7 + Math.floor(b * 0.72);
+        const bz = 10 + zBase + Math.floor(b * 0.75);
+        s.fillBox(bx, cy + armSwing, bz, bx + (b > 5 ? 1 : 0), cy + 1 + armSwing, bz, 12);
+      }
+    }
+
+    // 5. Head, Flowing Dark Hair, Face & Mustache (z = 16..21 + zBase)
+    s.fillBox(cx - 3, cy - 2, 16 + zBase, cx + 3, cy + 2, 21 + zBase, 6);
+    // Flowing dark hair at back & sides
+    s.fillBox(cx - 4, cy - 3, 15 + zBase, cx + 4, cy - 1, 21 + zBase, 10);
+    s.fillBox(cx - 4, cy - 2, 16 + zBase, cx - 4, cy + 1, 20 + zBase, 10);
+    s.fillBox(cx + 4, cy - 2, 16 + zBase, cx + 4, cy + 1, 20 + zBase, 10);
+    // Eyes (dark crisp pixels)
+    s.set(cx - 2, cy + 2, 19 + zBase, 23);
+    s.set(cx + 2, cy + 2, 19 + zBase, 23);
+    // Noble mustache
+    s.fillBox(cx - 2, cy + 2, 17 + zBase, cx + 2, cy + 2, 17 + zBase, 10);
+
+    // 6. Tiered Golden Mukut Crown with Ruby Gem (z = 21..27 + zBase)
+    // Base gold diadem
+    s.fillBox(cx - 4, cy - 2, 21 + zBase, cx + 4, cy + 2, 22 + zBase, 8);
+    // Second tier
+    s.fillBox(cx - 3, cy - 2, 23 + zBase, cx + 3, cy + 2, 24 + zBase, 9);
+    // Third spire tier
+    s.fillBox(cx - 2, cy - 1, 25 + zBase, cx + 2, cy + 1, 25 + zBase, 8);
+    s.fillBox(cx - 1, cy, 26 + zBase, cx + 1, cy + 1, 26 + zBase, 9);
+    s.set(cx, cy, 27 + zBase, 9);
+    // Glowing center Ruby Gem on Mukut front!
+    s.fillBox(cx, cy + 2, 22 + zBase, cx, cy + 2, 23 + zBase, 11);
+
+    // 7. If carrying Betaal, sculpt Betaal clinging directly onto Vikram's back!
+    if (pose === 'carry') {
+      // Betaal's pale hands clasping over Vikram's shoulders
+      s.fillBox(cx - 4, cy + 1, 15 + zBase, cx - 3, cy + 2, 16 + zBase, 15);
+      s.fillBox(cx + 3, cy + 1, 15 + zBase, cx + 4, cy + 2, 16 + zBase, 15);
+      // Betaal's torso behind Vikram's back
+      s.fillBox(cx - 3, cy - 4, 10 + zBase, cx + 3, cy - 2, 16 + zBase, 15);
+      s.fillBox(cx - 3, cy - 4, 8 + zBase, cx + 3, cy - 2, 10 + zBase, 17);
+      // Betaal's head peeking mischievously above Vikram's left shoulder!
+      const bx = cx - 4;
+      const bz = 17 + zBase;
+      s.fillBox(bx - 2, cy - 4, bz, bx + 2, cy - 1, bz + 4, 15);
+      // Wild billowing hair
+      s.fillBox(bx - 3, cy - 5, bz + 1, bx + 2, cy - 3, bz + 6, 16);
+      s.fillBox(bx - 4, cy - 4, bz + 3, bx - 2, cy - 2, bz + 5, 16);
+      // Glowing crimson eyes peeking forward!
+      s.set(bx - 1, cy - 1, bz + 2, 18);
+      s.set(bx + 1, cy - 1, bz + 2, 18);
+    }
+
+    return s.bake();
+  }
+
+  // --- BETAAL (Upside-down hanging, floating/hovering, darting) ---
+  function buildBetaalSprite(pose = 'hang', frame = 0) {
+    const s = new SpriteStack(20, 12, 26);
+    const cx = 10;
+    const cy = 6;
+    const sway = frame % 2 === 0 ? 0 : 1;
+
+    if (pose === 'hang') {
+      // Upside-down hanging from banyan bough!
+      // Hooked feet/ankles at top (z = 21..24)
+      s.fillBox(cx - 3, cy - 1, 21, cx - 1, cy + 1, 24, 15);
+      s.fillBox(cx + 1, cy - 1, 21, cx + 3, cy + 1, 24, 15);
+      // Knees / legs (z = 17..21)
+      s.fillBox(cx - 3, cy - 1, 17, cx + 3, cy + 2, 21, 15);
+      // Tattered dark drape around waist (z = 13..17)
+      s.fillBox(cx - 4, cy - 2, 13, cx + 4, cy + 2, 17, 17);
+      // Pale ribcage/torso hanging down (z = 8..13)
+      s.fillBox(cx - 3, cy - 1, 8, cx + 3, cy + 2, 13, 15);
+      // Folded/dangling mischievous arms
+      s.fillBox(cx - 5, cy, 9, cx - 3, cy + 2, 12, 15);
+      s.fillBox(cx + 3, cy, 9, cx + 5, cy + 2, 12, 15);
+      // Upside-down pale head (z = 3..8)
+      s.fillBox(cx - 3 + sway, cy - 1, 4, cx + 3 + sway, cy + 2, 8, 15);
+      // Glowing crimson eyes (upside-down lower half of head)
+      s.set(cx - 1 + sway, cy + 2, 5, 18);
+      s.set(cx + 1 + sway, cy + 2, 5, 18);
+      // Wild hanging dark hair streaming downward (z = 0..5)
+      s.fillBox(cx - 4 + sway, cy - 2, 1, cx + 4 + sway, cy + 1, 4, 16);
+      s.fillBox(cx - 3 + sway, cy - 1, 0, cx + 2 + sway, cy + 1, 1, 16);
+    } else if (pose === 'hover' || pose === 'dart') {
+      const lean = pose === 'dart' ? 2 : 0;
+      const lift = frame % 2 === 0 ? 0 : 1;
+      // Curled/trailing spectral legs
+      s.fillBox(cx - 4 - lean, cy - 1, 2 + lift, cx - 1, cy + 1, 5 + lift, 15);
+      s.fillBox(cx - 2 - lean, cy, 4 + lift, cx + 2, cy + 2, 7 + lift, 15);
+      // Tattered fluttering drape
+      s.fillBox(cx - 4 - lean, cy - 2, 6 + lift, cx + 3, cy + 2, 10 + lift, 17);
+      // Slender pale torso
+      s.fillBox(cx - 3, cy - 1, 10 + lift, cx + 3, cy + 2, 15 + lift, 15);
+      // Outstretched spooky arms
+      s.fillBox(cx - 6, cy, 12 + lift + (frame % 2), cx - 3, cy + 2, 15 + lift, 15);
+      s.fillBox(cx + 3, cy, 13 + lift - (frame % 2), cx + 6 + lean, cy + 2, 16 + lift, 15);
+      // Pale spirit head
+      s.fillBox(cx - 3 + lean, cy - 1, 16 + lift, cx + 3 + lean, cy + 2, 21 + lift, 15);
+      // Wild billowing hair streaming backward
+      s.fillBox(cx - 6 - lean, cy - 3, 17 + lift, cx + 2 + lean, cy, 23 + lift, 16);
+      s.fillBox(cx - 8 - lean, cy - 2, 18 + lift, cx - 4, cy, 22 + lift, 16);
+      // Glowing crimson eyes!
+      s.set(cx - 1 + lean, cy + 2, 19 + lift, 18);
+      s.set(cx + 2 + lean, cy + 2, 19 + lift, 18);
+    }
+
+    return s.bake();
+  }
+
+  // --- GIANT ANCIENT BANYAN TREE (Y-Sorted Multi-Part SpriteStack) ---
+  function buildBanyanTrunk() {
+    const s = new SpriteStack(64, 28, 46);
+    const cx = 34;
+    const cy = 14;
+    const rng = makeRng(4201);
+
+    // Wide spreading gnarled buttress roots
+    s.fillEllipsoid(cx, cy, 3, 17, 10, 5, 1);
+    s.fillEllipsoid(cx - 12, cy + 4, 2, 8, 5, 4, 1);
+    s.fillEllipsoid(cx + 12, cy + 3, 2, 9, 5, 4, 1);
+    s.fillEllipsoid(cx, cy + 6, 2, 7, 5, 4, 1);
+
+    // Main twisted trunk column
+    for (let z = 3; z <= 34; z++) {
+      const t = z / 34;
+      const rx = 10 - t * 2.5 + Math.sin(z * 0.25) * 1.1;
+      const ry = 6.5 - t * 1.2;
+      const sx = cx + Math.sin(z * 0.16) * 2;
+      s.fillCylinder(sx, cy, z, z, rx, ry, 1);
+    }
+
+    // Upper branching forks
+    for (let i = 0; i < 14; i++) {
+      s.fillCylinder(cx - i * 1.2, cy - 1, 28 + i * 0.8, 32 + i * 0.8, 4.5 - i * 0.15, 3.5, 1);
+      s.fillCylinder(cx + i * 1.1, cy - 1, 27 + i * 0.8, 31 + i * 0.8, 4.5 - i * 0.15, 3.5, 1);
+    }
+
+    // Hanging aerial prop roots (classic banyan silhouette!)
+    const propXs = [cx - 19, cx - 14, cx - 9, cx + 11, cx + 17, cx + 22];
+    for (const px of propXs) {
+      const py = cy + Math.round((rng() - 0.5) * 6);
+      const topZ = 34 + Math.floor(rng() * 8);
+      for (let z = 1; z <= topZ; z++) {
+        const wob = Math.round(Math.sin(z * 0.25 + px) * 0.8);
+        s.fillBox(px + wob, py, z, px + wob + 1, py + 1, z, 24);
+      }
+    }
+
+    // Subtle moss patches on roots
+    s.fillEllipsoid(cx - 10, cy + 5, 3, 4, 3, 2, 2);
+    s.fillEllipsoid(cx + 9, cy + 5, 3, 4, 2, 2, 2);
+    s.fillEllipsoid(cx - 2, cy + 6, 4, 3, 2, 2, 2);
+
+    return s.bake({ yStep: 0.5 });
+  }
+
+  function buildBanyanBough() {
+    // Sturdy left-extending lower hanging bough where Betaal hangs upside down!
+    const s = new SpriteStack(64, 14, 22);
+    for (let x = 8; x <= 56; x++) {
+      const t = (x - 8) / 48; // 0 = left tip, 1 = trunk join
+      const zMid = Math.round(9 + Math.sin(t * Math.PI * 0.85) * 3.5 + t * 2);
+      const r = 2.0 + t * 2.2;
+      s.fillEllipsoid(x, 7, zMid, 1.5, r * 0.8, r, 1);
+    }
+    // Small hanging rootlets & leaf cluster on the far-left bough tip
+    for (let z = 2; z <= 10; z++) {
+      s.set(11, 7, z, 24);
+      if (z > 4) s.set(17, 6, z, 24);
+    }
+    s.fillEllipsoid(9, 7, 13, 7, 5, 5, 4);
+    s.fillEllipsoid(14, 6, 15, 6, 4, 4, 5);
+    return s.bake({ yStep: 0.5 });
+  }
+
+  function buildBanyanCanopy(isFront) {
+    const s = new SpriteStack(126, 36, 46);
+    const rng = makeRng(isFront ? 9012 : 7011);
+
+    const domes = isFront
+      ? [
+          [63, 18, 22, 30, 14, 18, 4],
+          [34, 17, 18, 24, 12, 14, 3],
+          [92, 18, 19, 25, 12, 15, 3],
+          [48, 19, 29, 22, 11, 13, 4],
+          [78, 19, 28, 22, 11, 13, 4],
+          [63, 18, 34, 20, 10, 10, 5],
+          [22, 16, 14, 15, 9, 10, 3],
+          [104, 17, 14, 15, 9, 10, 3]
+        ]
+      : [
+          [63, 14, 18, 36, 12, 16, 3],
+          [28, 15, 14, 22, 10, 13, 3],
+          [98, 15, 14, 22, 10, 13, 3]
+        ];
+
+    for (const [cx, cy, cz, rx, ry, rz, baseCol] of domes) {
+      s.fillEllipsoid(cx, cy, cz, rx, ry, rz, baseCol, (x, y, z, dist, col) => {
+        // Organic leafy edge clusters (no stray isolated specks)
+        if (dist > 0.86 && ((x + y * 3 + z * 5) % 3 === 0)) return 0;
+        if (isFront && z > cz + rz * 0.42 && x < 78) return 5; // Moonlit left-top rim
+        if (z < cz - rz * 0.35) return 3;
+        return col;
+      });
+    }
+
+    // Hanging leafy tendrils along bottom rim
+    if (isFront) {
+      for (let i = 0; i < 8; i++) {
+        const tx = 20 + i * 12 + Math.floor(rng() * 4);
+        const len = 5 + Math.floor(rng() * 4);
+        for (let z = 3; z < 3 + len; z++) {
+          s.fillBox(tx, 18, z, tx + 1, 19, z, 3);
+        }
+      }
+    }
+
+    return s.bake({ yStep: 0.45 });
+  }
+
+  function buildBgTree(seed) {
+    const s = new SpriteStack(42, 20, 44);
+    const rng = makeRng(seed);
+    s.fillCylinder(21, 10, 0, 20, 4.5, 3.5, 1);
+    s.fillEllipsoid(21, 10, 2, 7, 4, 2.5, 1);
+    s.fillEllipsoid(21, 10, 27, 16, 8, 12, 3);
+    s.fillEllipsoid(14, 10, 24, 11, 7, 9, 3);
+    s.fillEllipsoid(28, 10, 25, 11, 7, 9, 4);
+    s.fillEllipsoid(19, 10, 34, 11, 6, 8, 4, (x, y, z, d, c) => (z > 37 && x < 23 ? 5 : c));
+    if (rng() > 0.5) s.fillEllipsoid(24, 11, 33, 8, 5, 6, 4);
+    return s.bake({ yStep: 0.48 });
+  }
+
+  function buildDiyaPlinth() {
+    const s = new SpriteStack(12, 12, 13);
+    // Carved mossy stone plinth
+    s.fillBox(2, 2, 0, 9, 9, 1, 19);
+    s.fillBox(3, 3, 2, 8, 8, 6, 19);
+    s.fillBox(2, 2, 7, 9, 9, 8, 19);
+    // Terracotta clay Diya lamp sitting on top
+    s.fillEllipsoid(5.5, 5.5, 10, 3.3, 3.3, 1.8, 20);
+    s.fillBox(4, 4, 11, 7, 7, 11, 21);
+    // Pointed spout
+    s.fillBox(5, 8, 10, 6, 9, 11, 20);
+    return s.bake({ yStep: 0.5 });
+  }
+
+  function buildBoulder(variant) {
+    const s = new SpriteStack(18, 14, 11);
+    if (variant === 0) {
+      s.fillEllipsoid(9, 7, 4, 7, 5, 4.5, 19);
+      s.fillEllipsoid(6, 8, 6, 4, 3, 2.5, 2);
+    } else {
+      s.fillEllipsoid(8, 7, 3, 6, 4.5, 3.5, 19);
+      s.fillEllipsoid(12, 6, 2.5, 4, 3.5, 2.8, 19);
+      s.fillEllipsoid(10, 8, 4.5, 3, 2, 2, 2);
+    }
+    return s.bake({ yStep: 0.5 });
+  }
+
+  function buildBush(hasFlowers) {
+    const s = new SpriteStack(20, 14, 13);
+    s.fillEllipsoid(10, 7, 5, 8, 5.5, 5, 3);
+    s.fillEllipsoid(7, 7, 7, 5, 4, 4, 4);
+    s.fillEllipsoid(13, 7, 6, 5, 4, 4, 4);
+    if (hasFlowers) {
+      s.set(6, 9, 8, 22);
+      s.set(12, 9, 7, 22);
+      s.set(9, 8, 10, 22);
+    }
+    return s.bake({ yStep: 0.5 });
+  }
+
+  // Bake all sprite stacks once at startup (instant, crisp, 60fps ready)
+  const SPRITES = {
+    vikramIdle: buildVikramSprite({ pose: 'idle', capeSway: 0 }),
+    vikramCrouch: buildVikramSprite({ pose: 'crouch', capeSway: -0.4 }),
+    vikramLeap: buildVikramSprite({ pose: 'leap', capeSway: -1 }),
+    vikramVerdict: buildVikramSprite({ pose: 'verdict', capeSway: 0.4 }),
+    vikramWalk: [0, 1, 2, 3].map(p => buildVikramSprite({ pose: 'walk', phase: p, capeSway: (p % 2 ? 0.6 : -0.4) })),
+    vikramCarry: [0, 1, 2, 3].map(p => buildVikramSprite({ pose: 'carry', phase: p, capeSway: (p % 2 ? 0.5 : -0.3) })),
+    vikramCarryIdle: buildVikramSprite({ pose: 'carry', phase: 0, capeSway: 0.2 }),
+    betaalHang: [0, 1].map(f => buildBetaalSprite('hang', f)),
+    betaalHover: [0, 1].map(f => buildBetaalSprite('hover', f)),
+    betaalDart: [0, 1].map(f => buildBetaalSprite('dart', f)),
+    banyanTrunk: buildBanyanTrunk(),
+    banyanBough: buildBanyanBough(),
+    banyanCanopyBack: buildBanyanCanopy(false),
+    banyanCanopyFront: buildBanyanCanopy(true),
+    bgTreeA: buildBgTree(101),
+    bgTreeB: buildBgTree(202),
+    diyaPlinth: buildDiyaPlinth(),
+    boulderA: buildBoulder(0),
+    boulderB: buildBoulder(1),
+    bushA: buildBush(true),
+    bushB: buildBush(false)
+  };
+
+  // =========================================================================
+  // 5. PRE-BAKED NOCTURNAL BANYAN FOREST CLEARING (600x310 World Canvas)
+  // =========================================================================
+  const worldBg = document.createElement('canvas');
+  worldBg.width = WORLD_W;
+  worldBg.height = WORLD_H;
+  const wCtx = worldBg.getContext('2d', { alpha: false });
+  wCtx.imageSmoothingEnabled = false;
+
+  // Dirt path centerline curve across the clearing
+  function getPathY(x) {
+    return 188 + Math.sin((x - 140) * 0.011) * 14 - Math.exp(-Math.pow((x - 365) / 85, 2)) * 18;
+  }
+
+  function bakeNocturnalForest() {
+    const rng = makeRng(2026);
+
+    // 1. Deep midnight-indigo stepped sky bands (pixel-art sky gradient)
+    const skyBands = [
+      [0, 16, '#090c1c'],
+      [16, 32, '#0e132b'],
+      [32, 48, '#141c3d'],
+      [48, 66, '#1b264f'],
+      [66, 84, '#22315c']
+    ];
+    for (const [y0, y1, col] of skyBands) {
+      wCtx.fillStyle = col;
+      wCtx.fillRect(0, y0, WORLD_W, y1 - y0);
+    }
+
+    // Subtle crisp pixel stars
+    for (let i = 0; i < 65; i++) {
+      const sx = Math.floor(rng() * WORLD_W);
+      const sy = Math.floor(rng() * 58);
+      wCtx.fillStyle = rng() > 0.35 ? '#d9e3ff' : '#96a9d6';
+      wCtx.fillRect(sx, sy, 1, 1);
+      if (rng() > 0.85) {
+        wCtx.fillStyle = 'rgba(220,232,255,0.45)';
+        wCtx.fillRect(sx - 1, sy, 3, 1);
+        wCtx.fillRect(sx, sy - 1, 1, 3);
+      }
+    }
+
+    // 2. Large Cratered Full Moon (upper-left sky, never blocked by thought cloud!)
+    const moonX = 148;
+    const moonY = 37;
+    const moonR = 23;
+    // Soft stepped pixel lunar halo
+    const halos = [
+      [moonR + 18, 'rgba(148, 174, 232, 0.07)'],
+      [moonR + 11, 'rgba(184, 204, 245, 0.11)'],
+      [moonR + 5, 'rgba(224, 228, 210, 0.16)']
+    ];
+    for (const [hr, hcol] of halos) {
+      wCtx.fillStyle = hcol;
+      for (let dy = -hr; dy <= hr; dy++) {
+        const span = Math.floor(Math.sqrt(hr * hr - dy * dy));
+        wCtx.fillRect(moonX - span, moonY + dy, span * 2, 1);
+      }
+    }
+    // Moon disc with crisp pixel shading & craters
+    for (let dy = -moonR; dy <= moonR; dy++) {
+      for (let dx = -moonR; dx <= moonR; dx++) {
+        const d2 = dx * dx + dy * dy;
+        if (d2 > moonR * moonR) continue;
+        let col = '#f2eccb';
+        if (dx + dy * 0.4 > 11) col = '#dcd4ac';
+        if (dx + dy * 0.4 > 17) col = '#bfb58a';
+        if (dx < -9 && dy < -6) col = '#fffbe0';
+        wCtx.fillStyle = col;
+        wCtx.fillRect(moonX + dx, moonY + dy, 1, 1);
+      }
+    }
+    // Sculpted moon craters
+    const craters = [
+      [-8, -5, 4], [6, -7, 3], [8, 6, 5], [-5, 9, 3.5], [1, 1, 2.5], [-12, 4, 2.2]
+    ];
+    for (const [cx, cy, cr] of craters) {
+      for (let dy = -Math.ceil(cr); dy <= Math.ceil(cr); dy++) {
+        for (let dx = -Math.ceil(cr); dx <= Math.ceil(cr); dx++) {
+          if (dx * dx + dy * dy <= cr * cr) {
+            const rim = dx < 0 && dy < 0;
+            wCtx.fillStyle = rim ? '#b3a87f' : '#cfc59b';
+            wCtx.fillRect(moonX + cx + dx, moonY + cy + dy, 1, 1);
+          }
+        }
+      }
+    }
+
+    // Wispy midnight cloud ribbons drifting past the horizon
+    wCtx.fillStyle = 'rgba(22, 31, 64, 0.65)';
+    wCtx.fillRect(36, 48, 72, 4);
+    wCtx.fillRect(50, 45, 44, 3);
+    wCtx.fillRect(210, 36, 86, 4);
+    wCtx.fillRect(226, 33, 52, 3);
+    wCtx.fillRect(420, 44, 98, 5);
+
+    // 3. Distant Forest Treeline Silhouette
+    for (let x = 0; x < WORLD_W; x += 6) {
+      const canopyH = 14 + Math.floor(Math.sin(x * 0.05) * 6 + Math.cos(x * 0.13) * 4);
+      // Leave subtle valley gap around moon
+      const moonGap = Math.exp(-Math.pow((x - moonX) / 55, 2)) * 9;
+      const topY = Math.round(74 - canopyH + moonGap);
+      wCtx.fillStyle = '#0f1c2e';
+      wCtx.fillRect(x, topY, 8, 92 - topY);
+      wCtx.fillStyle = '#172c3c';
+      wCtx.fillRect(x + 1, topY, 5, 3);
+    }
+
+    // 4. Stardew-Inspired 16x16 Nocturnal Grass Tilemap (y = 80..WORLD_H)
+    const grassBase = ['#142e2d', '#163331', '#183834', '#15312f'];
+    for (let ty = 5; ty < Math.ceil(WORLD_H / 16); ty++) {
+      for (let tx = 0; tx < Math.ceil(WORLD_W / 16); tx++) {
+        const px = tx * 16;
+        const py = ty * 16;
+        const tileShade = grassBase[(tx * 7 + ty * 13) % grassBase.length];
+        wCtx.fillStyle = tileShade;
+        wCtx.fillRect(px, py, 16, 16);
+
+        // Subtle organic emerald grass patches & blades
+        const r = rng();
+        if (r < 0.72) {
+          const bx = px + 2 + Math.floor(rng() * 11);
+          const by = py + 3 + Math.floor(rng() * 10);
+          wCtx.fillStyle = '#1f4a3f';
+          wCtx.fillRect(bx, by, 3, 2);
+          wCtx.fillStyle = '#2e6951';
+          wCtx.fillRect(bx, by - 1, 1, 2);
+          wCtx.fillRect(bx + 2, by - 1, 1, 2);
+        }
+        if (r > 0.78) {
+          // Tiny nocturnal clover / dew flower
+          const fx = px + 3 + Math.floor(rng() * 10);
+          const fy = py + 3 + Math.floor(rng() * 10);
+          wCtx.fillStyle = '#245244';
+          wCtx.fillRect(fx - 1, fy, 3, 2);
+          wCtx.fillStyle = rng() > 0.5 ? '#88c499' : '#c9d9f0';
+          wCtx.fillRect(fx, fy - 1, 1, 1);
+        }
+      }
+    }
+
+    // Soft moonlit clearing glow on central grass
+    const clearingGrad = wCtx.createRadialGradient(255, 175, 16, 255, 175, 175);
+    clearingGrad.addColorStop(0, 'rgba(92, 168, 128, 0.16)');
+    clearingGrad.addColorStop(0.6, 'rgba(46, 102, 86, 0.08)');
+    clearingGrad.addColorStop(1, 'rgba(10, 18, 28, 0.22)');
+    wCtx.fillStyle = clearingGrad;
+    wCtx.fillRect(0, 80, WORLD_W, WORLD_H - 80);
+
+    // 5. Trodden Warm-Ochre Dirt Path winding past the Banyan Clearing
+    for (let x = 0; x < WORLD_W; x++) {
+      const cy = Math.round(getPathY(x));
+      const halfW = Math.round(14 + Math.sin(x * 0.03) * 2.5);
+      for (let dy = -halfW - 2; dy <= halfW + 2; dy++) {
+        const y = cy + dy;
+        if (y < 82 || y >= WORLD_H) continue;
+        const absD = Math.abs(dy);
+        const edgeJitter = ((x * 19 + y * 7) % 5) === 0 ? 1 : 0;
+        if (absD > halfW + edgeJitter) continue;
+
+        let col;
+        if (absD >= halfW - 1) {
+          col = '#382a24'; // Crisp dark earthy rim
+        } else if (absD >= halfW - 4) {
+          col = '#573e30'; // Outer trodden umber
+        } else if (absD >= halfW - 8) {
+          col = '#6e4f3c'; // Mid warm dirt
+        } else {
+          col = '#825f48'; // Brighter center footpath
+        }
+        // Subtle pixel pebble variation
+        const h = (x * 37 + y * 53) & 31;
+        if (absD < halfW - 2) {
+          if (h === 0) col = '#9c7659';
+          else if (h === 1) col = '#4a3428';
+        }
+        wCtx.fillStyle = col;
+        wCtx.fillRect(x, y, 1, 1);
+      }
+    }
+
+    // Small clearing apron right around the Banyan tree base
+    const treeX = 376, treeY = 152;
+    for (let dy = -16; dy <= 18; dy++) {
+      for (let dx = -38; dx <= 38; dx++) {
+        const d = (dx * dx) / (38 * 38) + (dy * dy) / (16 * 16);
+        if (d <= 1.0) {
+          const px = treeX + dx;
+          const py = treeY + dy;
+          if (d > 0.85 && ((px + py) % 2 === 0)) continue;
+          wCtx.fillStyle = d > 0.72 ? '#4d372b' : '#664938';
+          wCtx.fillRect(px, py, 1, 1);
+        }
+      }
+    }
+
+    // Soft ground shadow under the Banyan Canopy
+    wCtx.fillStyle = 'rgba(7, 11, 22, 0.42)';
+    for (let dy = -18; dy <= 18; dy++) {
+      const span = Math.floor(54 * Math.sqrt(Math.max(0, 1 - (dy * dy) / (18 * 18))));
+      wCtx.fillRect(treeX - span, treeY + 2 + dy, span * 2, 1);
+    }
+  }
+  bakeNocturnalForest();
+
+  // =========================================================================
+  // 6. WORLD STATIC PROPS & AMBIENT FIREFLIES
+  // =========================================================================
+  const BANYAN_X = 376;
+  const BANYAN_Y = 152;
+  const BOUGH_HANG_X = 326;
+  const BOUGH_HANG_Y = 154;
+  const BOUGH_HANG_Z = 15; // Exact height so Betaal's hooked feet grip the bough wood cleanly
+
+  const DIYAS = [
+    { x: 112, y: 168 },
+    { x: 214, y: 216 },
+    { x: 288, y: 158 },
+    { x: 446, y: 196 }
+  ];
+
+  const STATIC_PROPS = [
+    { sprite: SPRITES.bgTreeA, x: 52,  y: 126, sortY: 126 },
+    { sprite: SPRITES.bgTreeB, x: 196, y: 118, sortY: 118 },
+    { sprite: SPRITES.bgTreeA, x: 492, y: 124, sortY: 124 },
+    { sprite: SPRITES.bgTreeB, x: 548, y: 146, sortY: 146 },
+    { sprite: SPRITES.bushA,   x: 82,  y: 152, sortY: 152 },
+    { sprite: SPRITES.boulderA,x: 156, y: 156, sortY: 156 },
+    { sprite: SPRITES.bushB,   x: 244, y: 146, sortY: 146 },
+    { sprite: SPRITES.boulderB,x: 438, y: 156, sortY: 156 },
+    { sprite: SPRITES.bushA,   x: 486, y: 174, sortY: 174 },
+    { sprite: SPRITES.bushB,   x: 142, y: 222, sortY: 222 },
+    { sprite: SPRITES.boulderA,x: 344, y: 216, sortY: 216 },
+    { sprite: SPRITES.bushA,   x: 416, y: 218, sortY: 218 },
+    // Banyan Y-sorted multi-slice stack components
+    { sprite: SPRITES.banyanCanopyBack,  x: BANYAN_X,      y: BANYAN_Y - 26, sortY: BANYAN_Y - 14 },
+    { sprite: SPRITES.banyanTrunk,       x: BANYAN_X,      y: BANYAN_Y,      sortY: BANYAN_Y },
+    { sprite: SPRITES.banyanBough,       x: BANYAN_X - 38, y: BANYAN_Y - 24, sortY: BANYAN_Y + 2 },
+    { sprite: SPRITES.banyanCanopyFront, x: BANYAN_X,      y: BANYAN_Y - 32, sortY: BANYAN_Y + 28 }
+  ];
+
+  for (const d of DIYAS) {
+    STATIC_PROPS.push({ sprite: SPRITES.diyaPlinth, x: d.x, y: d.y, sortY: d.y, isDiya: true });
+  }
+
+  // Drifting Fireflies
+  const fireflies = [];
+  {
+    const rng = makeRng(8844);
+    for (let i = 0; i < 28; i++) {
+      fireflies.push({
+        bx: 50 + rng() * (WORLD_W - 100),
+        by: 100 + rng() * 140,
+        ampX: 8 + rng() * 18,
+        ampY: 5 + rng() * 11,
+        spdX: 0.4 + rng() * 0.8,
+        spdY: 0.6 + rng() * 1.1,
+        ph: rng() * Math.PI * 2,
+        blinkSpd: 1.5 + rng() * 2.4
+      });
+    }
+  }
+
+  // Leaf burst & sparkle particles (deterministic from timeline events!)
+  function drawEventParticles(g, t) {
+    // 1. Leaf burst when Vikram pulls Betaal off the bough (t = 3.65..4.85)
+    if (t >= 3.65 && t <= 4.95) {
+      const dt = t - 3.65;
+      for (let i = 0; i < 14; i++) {
+        const ang = (i / 14) * Math.PI * 2 + 0.3;
+        const spd = 14 + (i % 4) * 8;
+        const px = BOUGH_HANG_X + Math.cos(ang) * spd * dt + Math.sin(dt * 7 + i) * 3;
+        const py = (BOUGH_HANG_Y - 36) + Math.sin(ang) * spd * dt * 0.55 + dt * dt * 22;
+        const alpha = clamp(1 - dt / 1.25, 0, 1);
+        g.globalAlpha = alpha;
+        g.fillStyle = i % 2 === 0 ? '#498f66' : '#88cc99';
+        g.fillRect(Math.round(px), Math.round(py), 2, 2);
+      }
+      g.globalAlpha = 1;
+    }
+
+    // 2. Dust puff on Vikram's landing (t = 4.25..4.95)
+    if (t >= 4.25 && t <= 4.95) {
+      const dt = t - 4.25;
+      const alpha = clamp(1 - dt / 0.7, 0, 1);
+      g.globalAlpha = alpha * 0.8;
+      g.fillStyle = '#c4a684';
+      for (let i = 0; i < 8; i++) {
+        const dir = i < 4 ? -1 : 1;
+        const ox = dir * (4 + (i % 4) * 4 + dt * 22);
+        const oy = -Math.sin(dt * 4.5) * 4 + (i % 2);
+        g.fillRect(Math.round(310 + ox), Math.round(174 + oy), 2, 2);
+      }
+      g.globalAlpha = 1;
+    }
+
+    // 3. Spectral trail sparkles as Betaal darts back to the banyan (t = 33.4..36.0)
+    if (t >= 33.4) {
+      const u = clamp((t - 33.4) / 2.2, 0, 1);
+      for (let i = 0; i < 16; i++) {
+        const tu = u - i * 0.032;
+        if (tu < 0 || tu > 1) continue;
+        const pos = getBetaalEscapePos(tu);
+        const life = 1 - i / 16;
+        g.globalAlpha = life * 0.85;
+        g.fillStyle = i % 2 === 0 ? '#bed4eb' : '#ff4d6d';
+        const jx = Math.sin(i * 4.1 + t * 12) * 3;
+        const jy = Math.cos(i * 3.3 + t * 10) * 3;
+        g.fillRect(Math.round(pos.x + jx), Math.round(pos.y - pos.z - 10 + jy), 2, 2);
+      }
+      g.globalAlpha = 1;
+    }
+  }
+
+  // =========================================================================
+  // 7. PIXEL-ART 3x5 BITMAP FONT & EMOTE BUBBLES
+  // =========================================================================
+  const FONT_3X5 = {
+    'A': [2,5,7,5,5], 'B': [6,5,6,5,6], 'C': [3,4,4,4,3], 'D': [6,5,5,5,6],
+    'E': [7,4,6,4,7], 'F': [7,4,6,4,4], 'G': [3,4,5,5,3], 'H': [5,5,7,5,5],
+    'I': [7,2,2,2,7], 'J': [1,1,1,5,2], 'K': [5,5,6,5,5], 'L': [4,4,4,4,7],
+    'M': [5,7,7,5,5], 'N': [6,5,5,5,5], 'O': [2,5,5,5,2], 'P': [6,5,6,4,4],
+    'Q': [2,5,5,7,3], 'R': [6,5,6,5,5], 'S': [3,4,2,1,6], 'T': [7,2,2,2,2],
+    'U': [5,5,5,5,7], 'V': [5,5,5,5,2], 'W': [5,5,7,7,5], 'X': [5,5,2,5,5],
+    'Y': [5,5,2,2,2], 'Z': [7,1,2,4,7], '0': [2,5,5,5,2], '1': [2,6,2,2,7],
+    '2': [6,1,2,4,7], '3': [6,1,2,1,6], '4': [5,5,7,1,1], '5': [7,4,6,1,6],
+    '6': [3,4,6,5,2], '7': [7,1,2,2,2], '8': [2,5,2,5,2], '9': [2,5,3,1,6],
+    ' ': [0,0,0,0,0], '-': [0,0,7,0,0], '.': [0,0,0,0,2], ':': [0,2,0,2,0],
+    '!': [2,2,2,0,2], '?': [6,1,2,0,2], '·': [0,0,2,0,0]
+  };
+
+  function drawPixelText(g, str, x, y, color, scale = 1, align = 'left') {
+    const up = str.toUpperCase();
+    const charW = 4 * scale;
+    const totalW = up.length * charW - scale;
+    let cx = align === 'center' ? Math.round(x - totalW / 2) : (align === 'right' ? Math.round(x - totalW) : Math.round(x));
+    const cy = Math.round(y);
+    g.fillStyle = color;
+    for (let i = 0; i < up.length; i++) {
+      const glyph = FONT_3X5[up[i]] || FONT_3X5[' '];
+      for (let r = 0; r < 5; r++) {
+        const bits = glyph[r];
+        if (bits & 4) g.fillRect(cx, cy + r * scale, scale, scale);
+        if (bits & 2) g.fillRect(cx + scale, cy + r * scale, scale, scale);
+        if (bits & 1) g.fillRect(cx + 2 * scale, cy + r * scale, scale, scale);
+      }
+      cx += charW;
+    }
+  }
+
+  function drawEmoteBubble(g, x, y, symbol, progress, accentCol = '#e6394c') {
+    if (progress <= 0 || progress >= 1) return;
+    const pop = progress < 0.18 ? easeOutBack(progress / 0.18) : (progress > 0.85 ? clamp((1 - progress) / 0.15, 0, 1) : 1);
+    const bounce = Math.round(Math.sin(progress * Math.PI * 4) * 1.5);
+    const bx = Math.round(x);
+    const by = Math.round(y - 8 * pop + bounce);
+
+    if (pop < 0.25) return;
+    // Crisp 16-bit speech/emote bubble
+    g.fillStyle = '#110f22';
+    g.fillRect(bx - 7, by - 12, 14, 12);
+    g.fillRect(bx - 6, by - 13, 12, 14);
+    g.fillRect(bx - 2, by + 1, 4, 2);
+    g.fillRect(bx - 1, by + 3, 2, 1);
+
+    g.fillStyle = '#faf4e1';
+    g.fillRect(bx - 6, by - 12, 12, 12);
+    g.fillRect(bx - 5, by - 11, 10, 10);
+    g.fillRect(bx - 1, by, 2, 2);
+
+    if (symbol === '!') {
+      g.fillStyle = accentCol;
+      g.fillRect(bx - 1, by - 10, 2, 5);
+      g.fillRect(bx - 1, by - 4, 2, 2);
+    } else if (symbol === '?') {
+      g.fillStyle = accentCol;
+      g.fillRect(bx - 2, by - 10, 4, 1);
+      g.fillRect(bx + 1, by - 9, 2, 2);
+      g.fillRect(bx - 1, by - 7, 2, 2);
+      g.fillRect(bx - 1, by - 4, 2, 2);
+    }
+  }
+
+  // =========================================================================
+  // 8. SCALLOPED 16-BIT THOUGHT CLOUDS & ANIMATED PIXEL-ART VIGNETTES
+  // =========================================================================
+  function fillPixelCircle(g, cx, cy, r, col) {
+    g.fillStyle = col;
+    const ri = Math.round(r);
+    const x0 = Math.round(cx);
+    const y0 = Math.round(cy);
+    for (let dy = -ri; dy <= ri; dy++) {
+      const span = Math.floor(Math.sqrt(ri * ri - dy * dy));
+      g.fillRect(x0 - span, y0 + dy, span * 2, 1);
+    }
+  }
+
+  function drawScallopedCloud(g, originX, originY, clueIdx, localT, totalDur) {
+    // Smooth pop-in and gentle exit
+    const inT = clamp(localT / 0.36, 0, 1);
+    const outT = clamp((totalDur - localT) / 0.28, 0, 1);
+    const s = Math.min(easeOutBack(inT), outT);
+    if (s <= 0.05) return;
+
+    const cloudX = 342;
+    const cloudY = 66;
+    const bob = Math.round(Math.sin(localT * 2.4) * 1.5);
+
+    // 1. Rising scalloped thought puffs from Betaal to the cloud
+    const puffs = [
+      { t: 0.22, r: 4, delay: 0.0 },
+      { t: 0.50, r: 6, delay: 0.08 },
+      { t: 0.78, r: 9, delay: 0.16 }
+    ];
+    for (let i = 0; i < puffs.length; i++) {
+      const p = puffs[i];
+      const ps = clamp((localT - p.delay) / 0.24, 0, 1) * outT;
+      if (ps <= 0.1) continue;
+      const px = lerp(originX, cloudX - 88, p.t);
+      const py = lerp(originY, cloudY + 34, p.t) - Math.sin(p.t * Math.PI) * 10 + Math.sin(localT * 3.5 + i) * 1.2;
+      const pr = Math.max(2, Math.round(p.r * ps));
+      fillPixelCircle(g, px, py, pr + 1, '#110f22');
+      fillPixelCircle(g, px, py, pr, '#d6cfb9');
+      fillPixelCircle(g, px - 0.5, py - 0.5, Math.max(1, pr - 1), '#faf5e4');
+    }
+
+    // 2. Main Scalloped Cloud Body (208 x 106 logical px)
+    g.save();
+    g.translate(cloudX, cloudY + bob);
+    const sc = clamp(s, 0.1, 1.04);
+    g.scale(sc, sc);
+
+    // Scallop lobe layout around a clean rectangular interior
+    const lobes = [
+      [-86, -24, 24], [-58, -38, 26], [-22, -42, 28], [18, -42, 28], [56, -38, 26], [86, -24, 24],
+      [96, 2, 24], [86, 28, 24], [56, 38, 26], [18, 42, 27], [-22, 42, 27], [-58, 38, 26],
+      [-86, 28, 24], [-96, 2, 24]
+    ];
+
+    // Outer dark ink silhouette
+    for (const [lx, ly, lr] of lobes) fillPixelCircle(g, lx, ly, lr + 2, '#110f22');
+    g.fillStyle = '#110f22';
+    g.fillRect(-94, -40, 188, 80);
+
+    // Soft pearl shadow rim
+    for (const [lx, ly, lr] of lobes) fillPixelCircle(g, lx, ly, lr, '#d6cfb9');
+    g.fillStyle = '#d6cfb9';
+    g.fillRect(-92, -38, 184, 76);
+
+    // Bright cloud cream highlights
+    for (const [lx, ly, lr] of lobes) fillPixelCircle(g, lx - 1, ly - 1, lr - 2, '#faf5e4');
+    g.fillStyle = '#faf5e4';
+    g.fillRect(-90, -37, 180, 74);
+
+    // Crisp recessed vignette frame inside cloud (168 x 78 logical px)
+    const vx = -84, vy = -35, vw = 168, vh = 74;
+    g.fillStyle = '#221c33';
+    g.fillRect(vx - 1, vy - 1, vw + 2, vh + 2);
+
+    g.save();
+    g.beginPath();
+    g.rect(vx, vy, vw, vh);
+    g.clip();
+
+    if (clueIdx === 1) {
+      drawVignetteSaffronRice(g, vx, vy, vw, vh, localT);
+    } else if (clueIdx === 2) {
+      drawVignetteSevenMattresses(g, vx, vy, vw, vh, localT);
+    } else if (clueIdx === 3) {
+      drawVignetteLotusPetal(g, vx, vy, vw, vh, localT);
+    }
+
+    g.restore();
+
+    // Subtle crisp top caption tag embedded cleanly on the cloud rim
+    const labels = ['', 'CLUE I · SAFFRON RICE', 'CLUE II · SEVEN MATTRESSES', 'CLUE III · LOTUS PETAL'];
+    drawPixelText(g, labels[clueIdx], 0, -45, '#3b2416', 1, 'center');
+
+    g.restore();
+  }
+
+  // Helper: Draw seated / standing crisp pixel nobleman inside thought vignettes
+  function drawPixelNobleman(g, x, y, opts) {
+    const kurta = opts.kurta || '#2e6b9e';
+    const kurtaDark = opts.kurtaDark || '#1e496e';
+    const turban = opts.turban || '#f0e2c4';
+    const turbanGem = opts.turbanGem || '#e6394c';
+    const skin = '#d4956a';
+    const skinDark = '#a36945';
+    const pose = opts.pose || 'sit'; // 'sit', 'recoil', 'lie', 'jolt', 'calm', 'wince'
+
+    const ix = Math.round(x);
+    const iy = Math.round(y);
+
+    if (pose === 'lie') {
+      // Lying flat on top of mattresses
+      g.fillStyle = '#110f22';
+      g.fillRect(ix - 17, iy - 6, 34, 8);
+      // Legs & body
+      g.fillStyle = kurtaDark;
+      g.fillRect(ix - 15, iy - 4, 21, 5);
+      g.fillStyle = kurta;
+      g.fillRect(ix - 14, iy - 5, 19, 4);
+      // Head on pillow
+      g.fillStyle = '#faf2dc';
+      g.fillRect(ix + 7, iy - 5, 8, 5);
+      g.fillStyle = skin;
+      g.fillRect(ix + 6, iy - 7, 7, 6);
+      g.fillStyle = turban;
+      g.fillRect(ix + 9, iy - 8, 6, 6);
+      g.fillStyle = '#110f22';
+      g.fillRect(ix + 7, iy - 5, 1, 2); // closed eye
+      return;
+    }
+
+    const lean = pose === 'recoil' ? -4 : (pose === 'wince' ? -2 : 0);
+
+    // Crossed legs / dhoti base
+    g.fillStyle = '#110f22';
+    g.fillRect(ix - 11, iy - 5, 22, 8);
+    g.fillStyle = '#ebe0c5';
+    g.fillRect(ix - 10, iy - 4, 20, 6);
+    g.fillStyle = '#c9ba9b';
+    g.fillRect(ix - 9, iy, 18, 2);
+
+    // Torso (silk kurta)
+    g.fillStyle = '#110f22';
+    g.fillRect(ix - 7 + lean, iy - 17, 14, 14);
+    g.fillStyle = kurtaDark;
+    g.fillRect(ix - 6 + lean, iy - 16, 12, 12);
+    g.fillStyle = kurta;
+    g.fillRect(ix - 5 + lean, iy - 16, 10, 10);
+    // Gold collar trim
+    g.fillStyle = '#f2c44d';
+    g.fillRect(ix - 2 + lean, iy - 16, 4, 4);
+
+    // Arms
+    if (pose === 'recoil') {
+      // Both arms thrown back/up in horror!
+      g.fillStyle = '#110f22';
+      g.fillRect(ix - 12 + lean, iy - 20, 6, 8);
+      g.fillRect(ix + 6 + lean, iy - 21, 6, 9);
+      g.fillStyle = kurta;
+      g.fillRect(ix - 11 + lean, iy - 17, 4, 4);
+      g.fillRect(ix + 7 + lean, iy - 17, 4, 4);
+      g.fillStyle = skin;
+      g.fillRect(ix - 11 + lean, iy - 20, 4, 3);
+      g.fillRect(ix + 7 + lean, iy - 21, 4, 4);
+    } else if (pose === 'jolt') {
+      // Bolt upright clutching back/head!
+      g.fillStyle = '#110f22';
+      g.fillRect(ix - 11, iy - 19, 5, 9);
+      g.fillRect(ix + 6, iy - 19, 5, 9);
+      g.fillStyle = kurta;
+      g.fillRect(ix - 10, iy - 16, 3, 5);
+      g.fillRect(ix + 7, iy - 16, 3, 5);
+      g.fillStyle = skin;
+      g.fillRect(ix - 10, iy - 19, 3, 3);
+      g.fillRect(ix + 7, iy - 19, 3, 3);
+    } else if (pose === 'wince') {
+      // Bare/draped right shoulder exposed, left hand grabbing shoulder!
+      g.fillStyle = skin;
+      g.fillRect(ix + 2 + lean, iy - 16, 5, 5);
+      g.fillStyle = '#110f22';
+      g.fillRect(ix - 10 + lean, iy - 15, 4, 7);
+      g.fillStyle = skin;
+      g.fillRect(ix - 9 + lean, iy - 14, 3, 5);
+    } else if (pose === 'calm') {
+      // Calm seated with serene moonlit bare/draped right shoulder
+      g.fillStyle = skin;
+      g.fillRect(ix + 2, iy - 16, 5, 5);
+      g.fillStyle = kurta;
+      g.fillRect(ix - 9, iy - 14, 3, 7);
+      g.fillStyle = skin;
+      g.fillRect(ix - 8, iy - 7, 3, 2);
+      g.fillRect(ix + 5, iy - 7, 3, 2);
+    } else {
+      // Reaching slightly toward saffron rice
+      g.fillStyle = kurta;
+      g.fillRect(ix + 5, iy - 14, 5, 4);
+      g.fillStyle = skin;
+      g.fillRect(ix + 9, iy - 14, 3, 3);
+    }
+
+    // Head
+    const hx = ix + lean;
+    const hy = iy - 25;
+    g.fillStyle = '#110f22';
+    g.fillRect(hx - 5, hy - 1, 10, 10);
+    g.fillStyle = skinDark;
+    g.fillRect(hx - 4, hy, 8, 8);
+    g.fillStyle = skin;
+    g.fillRect(hx - 3, hy, 7, 7);
+
+    // Royal Turban
+    g.fillStyle = '#110f22';
+    g.fillRect(hx - 6, hy - 5, 12, 6);
+    g.fillStyle = turban;
+    g.fillRect(hx - 5, hy - 4, 10, 5);
+    g.fillStyle = '#d1bfa0';
+    g.fillRect(hx - 5, hy - 1, 10, 2);
+    g.fillStyle = turbanGem;
+    g.fillRect(hx, hy - 4, 2, 2);
+
+    // Facial expression
+    g.fillStyle = '#110f22';
+    if (pose === 'recoil' || pose === 'jolt') {
+      // Wide shocked eyes + open gasp mouth
+      g.fillStyle = '#ffffff';
+      g.fillRect(hx - 2, hy + 2, 2, 2);
+      g.fillRect(hx + 2, hy + 2, 2, 2);
+      g.fillStyle = '#110f22';
+      g.fillRect(hx - 1, hy + 2, 1, 1);
+      g.fillRect(hx + 2, hy + 2, 1, 1);
+      g.fillRect(hx, hy + 5, 2, 2);
+    } else if (pose === 'wince') {
+      // Squeezed eyes in pain
+      g.fillRect(hx - 2, hy + 2, 2, 1);
+      g.fillRect(hx + 2, hy + 2, 2, 1);
+      g.fillRect(hx, hy + 5, 3, 1);
+    } else {
+      g.fillRect(hx - 2, hy + 2, 1, 2);
+      g.fillRect(hx + 2, hy + 2, 1, 2);
+      g.fillRect(hx - 1, hy + 5, 3, 1); // mustache
+    }
+  }
+
+  // --- CLUE I (7s–15s): Saffron Rice, Chowki Table, Banana Leaf & Graveyard Mist ---
+  function drawVignetteSaffronRice(g, vx, vy, vw, vh, t) {
+    // Warm sandstone royal dining hall
+    g.fillStyle = '#382530';
+    g.fillRect(vx, vy, vw, vh);
+    // Decorative palace arch backdrop
+    g.fillStyle = '#4d323d';
+    g.fillRect(vx + 12, vy + 6, vw - 24, vh - 26);
+    g.fillStyle = '#291a24';
+    g.fillRect(vx + 22, vy + 12, vw - 44, vh - 32);
+    // Floor rug
+    g.fillStyle = '#6e2833';
+    g.fillRect(vx, vy + vh - 22, vw, 22);
+    g.fillStyle = '#993b44';
+    g.fillRect(vx + 8, vy + vh - 19, vw - 16, 15);
+    g.fillStyle = '#d49d3b';
+    g.fillRect(vx + 10, vy + vh - 18, vw - 20, 1);
+    g.fillRect(vx + 10, vy + vh - 5, vw - 20, 1);
+
+    // Carved Wooden Chowki Low Table (center-right)
+    const cx = vx + 104;
+    const cy = vy + vh - 12;
+    g.fillStyle = '#110f22';
+    g.fillRect(cx - 26, cy - 13, 52, 15);
+    // Table legs
+    g.fillStyle = '#5c331c';
+    g.fillRect(cx - 24, cy - 5, 5, 6);
+    g.fillRect(cx + 19, cy - 5, 5, 6);
+    // Table top
+    g.fillStyle = '#874c2a';
+    g.fillRect(cx - 25, cy - 12, 50, 7);
+    g.fillStyle = '#ad683b';
+    g.fillRect(cx - 24, cy - 12, 48, 3);
+
+    // Vibrant Emerald Banana Leaf on Chowki
+    g.fillStyle = '#184d2c';
+    g.fillRect(cx - 20, cy - 15, 40, 6);
+    g.fillStyle = '#2e8044';
+    g.fillRect(cx - 19, cy - 14, 38, 4);
+    g.fillStyle = '#4ea85c';
+    g.fillRect(cx - 16, cy - 13, 32, 1);
+
+    // Golden Saffron Rice Mound + Orange-Red Saffron Strands
+    g.fillStyle = '#d4911e';
+    g.fillRect(cx - 12, cy - 17, 22, 4);
+    g.fillStyle = '#f7c53b';
+    g.fillRect(cx - 10, cy - 20, 18, 5);
+    g.fillStyle = '#ffe47a';
+    g.fillRect(cx - 7, cy - 22, 12, 3);
+    // Saffron threads
+    g.fillStyle = '#d9381e';
+    g.fillRect(cx - 5, cy - 20, 2, 1);
+    g.fillRect(cx + 1, cy - 21, 2, 1);
+    g.fillRect(cx + 4, cy - 18, 2, 1);
+
+    // Brass Katori bowl
+    g.fillStyle = '#c48d25';
+    g.fillRect(cx + 12, cy - 16, 6, 4);
+    g.fillStyle = '#ffd55e';
+    g.fillRect(cx + 13, cy - 16, 4, 1);
+
+    // Eerie Rising Graveyard Mist curling up from the Saffron Rice!
+    const mistStart = clamp((t - 0.6) / 0.8, 0, 1);
+    if (mistStart > 0) {
+      for (let i = 0; i < 16; i++) {
+        const phase = (t * 1.15 + i * 0.19) % 1.0;
+        const mx = cx - 2 + Math.sin(phase * 7.5 + i) * (5 + phase * 8);
+        const my = (cy - 22) - phase * 36;
+        const mr = Math.round(2 + Math.sin(phase * Math.PI) * 3.5);
+        g.globalAlpha = Math.sin(phase * Math.PI) * 0.65 * mistStart;
+        fillPixelCircle(g, mx, my, mr, i % 2 === 0 ? '#78d99c' : '#b8f2cc');
+      }
+      // Subtle ghostly skull wisp floating inside the mist after t=2.0
+      if (t > 1.8) {
+        const skA = clamp(Math.sin((t - 1.8) * 2.2) * 0.5 + 0.5, 0.25, 0.85);
+        const sx = Math.round(cx - 2 + Math.sin(t * 2.5) * 4);
+        const sy = Math.round(cy - 44 + Math.cos(t * 3) * 2);
+        g.globalAlpha = skA;
+        g.fillStyle = '#c8fae0';
+        g.fillRect(sx - 4, sy - 4, 8, 6);
+        g.fillRect(sx - 3, sy + 2, 6, 2);
+        g.fillStyle = '#1b3b2c';
+        g.fillRect(sx - 3, sy - 2, 2, 2);
+        g.fillRect(sx + 1, sy - 2, 2, 2);
+        g.fillRect(sx - 1, sy + 1, 2, 1);
+      }
+      g.globalAlpha = 1;
+    }
+
+    // Brother 1 (Seated Pixel Nobleman recoiling!)
+    const recoiling = t > 1.75;
+    const recoilShake = (t > 1.75 && t < 2.4) ? Math.round(Math.sin(t * 48) * 1.2) : 0;
+    drawPixelNobleman(g, vx + 48 + recoilShake, vy + vh - 12, {
+      kurta: '#2b73a6',
+      kurtaDark: '#1b4b70',
+      turban: '#f5e4c3',
+      turbanGem: '#e6394c',
+      pose: recoiling ? 'recoil' : 'sit'
+    });
+
+    if (recoiling) {
+      const ep = clamp((t - 1.75) / 2.6, 0.05, 0.85);
+      drawEmoteBubble(g, vx + 44, vy + 18, '!', ep, '#e6394c');
+    }
+  }
+
+  // --- CLUE II (15s–23s): Seven Stacked Mattresses + Single Red Stray Hair ---
+  function drawVignetteSevenMattresses(g, vx, vy, vw, vh, t) {
+    // Royal midnight bedchamber
+    g.fillStyle = '#241a38';
+    g.fillRect(vx, vy, vw, vh);
+    // Crimson drapes flanking sides
+    g.fillStyle = '#6e192d';
+    g.fillRect(vx, vy, 16, vh);
+    g.fillRect(vx + vw - 16, vy, 16, vh);
+    g.fillStyle = '#99243d';
+    g.fillRect(vx + 2, vy, 5, vh);
+    g.fillRect(vx + vw - 12, vy, 5, vh);
+    // Floor
+    g.fillStyle = '#472c24';
+    g.fillRect(vx, vy + vh - 11, vw, 11);
+
+    const bx = vx + 84;
+    const baseY = vy + vh - 12;
+
+    // Ornate Carved Bed Frame Base
+    g.fillStyle = '#110f22';
+    g.fillRect(bx - 52, baseY - 5, 104, 8);
+    g.fillStyle = '#784224';
+    g.fillRect(bx - 50, baseY - 4, 100, 4);
+    g.fillStyle = '#a35d34';
+    g.fillRect(bx - 48, baseY - 4, 96, 1);
+    // Bed posts
+    g.fillStyle = '#5e321a';
+    g.fillRect(bx - 52, baseY - 48, 5, 48);
+    g.fillRect(bx + 47, baseY - 48, 5, 48);
+    g.fillStyle = '#f0c24b';
+    g.fillRect(bx - 52, baseY - 51, 5, 3);
+    g.fillRect(bx + 47, baseY - 51, 5, 3);
+
+    // SEVEN DISTINCT STACKED MATTRESS LAYERS (clearly countable 1..7!)
+    const mattressColors = [
+      ['#ebe0c6', '#c4b699'], // Layer 1 (bottom)
+      ['#cf576b', '#993647'], // Layer 2
+      ['#46968a', '#2b6b61'], // Layer 3
+      ['#e8b848', '#b88823'], // Layer 4
+      ['#7e63b8', '#553f8a'], // Layer 5
+      ['#d97859', '#a65037'], // Layer 6
+      ['#faf2df', '#d1c5ab']  // Layer 7 (top)
+    ];
+
+    const jolting = t > 1.85;
+    const bounceOffset = (t > 1.85 && t < 2.55) ? Math.round(Math.sin((t - 1.85) * 28) * 1.5) : 0;
+
+    for (let m = 0; m < 7; m++) {
+      const my = baseY - 9 - m * 5 + (m > 2 ? Math.round(bounceOffset * (m / 7)) : 0);
+      const [topC, botC] = mattressColors[m];
+      g.fillStyle = '#110f22';
+      g.fillRect(bx - 46, my - 1, 92, 6);
+      g.fillStyle = topC;
+      g.fillRect(bx - 45, my, 90, 2);
+      g.fillStyle = botC;
+      g.fillRect(bx - 45, my + 2, 90, 2);
+      // Crisp quilted button dots along mattress edge
+      g.fillStyle = '#110f22';
+      for (let q = -36; q <= 36; q += 18) {
+        g.fillRect(bx + q, my + 1, 1, 1);
+      }
+    }
+
+    // SINGLE RED STRAY-HAIR MARKER beneath Layer 1 (bottom mattress)!
+    const hairX = bx - 2;
+    const hairY = baseY - 4;
+    // Pulsing crisp red-gold highlight halo so the viewer instantly sees the stray hair!
+    const pulse = 0.55 + 0.45 * Math.sin(t * 7);
+    g.fillStyle = `rgba(255, 46, 76, ${0.35 + pulse * 0.45})`;
+    g.fillRect(hairX - 10, hairY - 2, 20, 6);
+    // The crisp coiled crimson stray hair pixel curve
+    g.fillStyle = '#ff1f40';
+    g.fillRect(hairX - 6, hairY, 4, 1);
+    g.fillRect(hairX - 2, hairY + 1, 5, 1);
+    g.fillRect(hairX + 3, hairY, 4, 1);
+    g.fillRect(hairX + 6, hairY - 1, 2, 1);
+    // Tiny crisp upward indicator caret beneath the hair
+    g.fillStyle = '#ffe270';
+    g.fillRect(hairX, hairY + 4, 1, 2);
+    g.fillRect(hairX - 1, hairY + 5, 3, 1);
+    drawPixelText(g, '7', bx - 57, baseY - 39, '#ffe270', 1, 'center');
+    drawPixelText(g, '1', bx - 57, baseY - 9, '#ff5c74', 1, 'center');
+
+    // Brother 2 atop Mattress #7: lying down, then jolting bolt upright!
+    const topMattressY = baseY - 40;
+    if (!jolting) {
+      const toss = Math.round(Math.sin(t * 6) * 1.5);
+      drawPixelNobleman(g, bx + toss, topMattressY, {
+        kurta: '#2c8a62',
+        kurtaDark: '#1b5c40',
+        turban: '#f5d98c',
+        turbanGem: '#3b82f6',
+        pose: 'lie'
+      });
+    } else {
+      const jumpZ = t < 2.25 ? Math.round(Math.sin(((t - 1.85) / 0.4) * Math.PI) * 9) : 0;
+      drawPixelNobleman(g, bx, topMattressY - jumpZ, {
+        kurta: '#2c8a62',
+        kurtaDark: '#1b5c40',
+        turban: '#f5d98c',
+        turbanGem: '#3b82f6',
+        pose: 'jolt'
+      });
+      // Motion shock lines
+      if (t < 2.6) {
+        g.fillStyle = '#ffe47a';
+        g.fillRect(bx - 16, topMattressY - 22, 3, 1);
+        g.fillRect(bx + 13, topMattressY - 22, 3, 1);
+      }
+      const ep = clamp((t - 1.85) / 2.4, 0.05, 0.85);
+      drawEmoteBubble(g, bx + 20, topMattressY - 18, '!', ep, '#e6394c');
+    }
+  }
+
+  // --- CLUE III (23s–30s): Moonlight Terrace & Drifting Pink Lotus Petal ---
+  function drawVignetteLotusPetal(g, vx, vy, vw, vh, t) {
+    // Deep indigo night sky over marble palace terrace
+    g.fillStyle = '#111736';
+    g.fillRect(vx, vy, vw, vh);
+    g.fillStyle = '#1a234f';
+    g.fillRect(vx, vy + 24, vw, vh - 24);
+
+    // Small crisp moon in top-left corner of vignette
+    fillPixelCircle(g, vx + 24, vy + 16, 10, '#f4ecc8');
+    fillPixelCircle(g, vx + 21, vy + 14, 2, '#d1c69d');
+
+    // Silvery Diagonal Shaft of Moonlight sweeping across Brother 3!
+    g.save();
+    g.fillStyle = 'rgba(224, 236, 255, 0.14)';
+    g.beginPath();
+    g.moveTo(vx + 24, vy + 6);
+    g.lineTo(vx + 46, vy + 6);
+    g.lineTo(vx + 132, vy + vh);
+    g.lineTo(vx + 64, vy + vh);
+    g.closePath();
+    g.fill();
+    g.restore();
+
+    // Marble balustrade & terrace floor
+    g.fillStyle = '#627094';
+    g.fillRect(vx, vy + vh - 22, vw, 5);
+    g.fillStyle = '#9aa8cc';
+    g.fillRect(vx, vy + vh - 22, vw, 2);
+    for (let px = vx + 8; px < vx + vw; px += 16) {
+      g.fillStyle = '#475373';
+      g.fillRect(px, vy + vh - 17, 4, 7);
+    }
+    g.fillStyle = '#c4cde3';
+    g.fillRect(vx, vy + vh - 12, vw, 12);
+    g.fillStyle = '#9ba7c4';
+    g.fillRect(vx, vy + vh - 5, vw, 5);
+
+    // Brother 3 seated calmly in moonlight
+    const nx = vx + 88;
+    const ny = vy + vh - 10;
+    const impactT = 2.25;
+    const hit = t >= impactT;
+
+    drawPixelNobleman(g, nx, ny, {
+      kurta: '#6a3d8f',
+      kurtaDark: '#472566',
+      turban: '#e8d7f5',
+      turbanGem: '#f0c24b',
+      pose: hit ? 'wince' : 'calm'
+    });
+
+    // Shoulder target coordinates
+    const shX = nx + 3;
+    const shY = ny - 15;
+
+    // Animated Pink Lotus Petal drifting gracefully down onto his shoulder!
+    const fallU = clamp(t / impactT, 0, 1);
+    const petalX = hit ? shX - 1 : (vx + 114 - fallU * (114 - (shX - vx)) + Math.sin(fallU * Math.PI * 3.5) * 14 * (1 - fallU));
+    const petalY = hit ? shY - 1 : (vy + 4 + smoothstep(fallU) * (shY - vy - 5));
+
+    // Draw crisp pink lotus petal
+    const px = Math.round(petalX);
+    const py = Math.round(petalY);
+    g.fillStyle = '#110f22';
+    g.fillRect(px - 3, py - 2, 7, 5);
+    g.fillStyle = '#e85d99';
+    g.fillRect(px - 2, py - 1, 5, 3);
+    g.fillStyle = '#ff9ec7';
+    g.fillRect(px - 2, py - 1, 3, 2);
+    g.fillStyle = '#ffe0ee';
+    g.fillRect(px - 1, py - 1, 1, 1);
+
+    // Instant bruise/blister flash & impact ring when the petal touches his shoulder!
+    if (hit) {
+      const dt = t - impactT;
+      if (dt < 0.7) {
+        const ringR = Math.round(2 + dt * 14);
+        g.strokeStyle = `rgba(255, 110, 150, ${clamp(1 - dt / 0.7, 0, 1)})`;
+        g.lineWidth = 1;
+        g.beginPath();
+        g.arc(shX, shY, ringR, 0, Math.PI * 2);
+        g.stroke();
+      }
+      // Visible crimson bruise mark on shoulder
+      g.fillStyle = '#cf1d3a';
+      g.fillRect(shX - 1, shY, 3, 2);
+      g.fillStyle = '#ff6b81';
+      g.fillRect(shX, shY, 1, 1);
+
+      const ep = clamp(dt / 2.2, 0.05, 0.85);
+      drawEmoteBubble(g, nx + 16, ny - 28, '!', ep, '#e6394c');
+    }
+  }
+
+  // =========================================================================
+  // 9. PIXEL-ART CHARACTER PORTRAITS (32x32 Hand-Crafted RPG Dialogue Portraits)
+  // =========================================================================
+  function buildPortraitCanvas(who, talking) {
+    const c = document.createElement('canvas');
+    c.width = 32;
+    c.height = 32;
+    const g = c.getContext('2d');
+    g.imageSmoothingEnabled = false;
+
+    if (who === 'vikram') {
+      // Rich nocturnal indigo-gold backdrop
+      g.fillStyle = '#1a2142';
+      g.fillRect(0, 0, 32, 32);
+      g.fillStyle = '#25305c';
+      g.fillRect(2, 2, 28, 28);
+      // Subtle moon halo behind king
+      fillPixelCircle(g, 16, 15, 11, '#303f73');
+
+      // Crimson royal shoulders & gold brocade collar
+      g.fillStyle = '#110f22';
+      g.fillRect(4, 24, 24, 8);
+      g.fillStyle = '#8f172b';
+      g.fillRect(5, 25, 22, 7);
+      g.fillStyle = '#c4253e';
+      g.fillRect(7, 25, 18, 5);
+      g.fillStyle = '#f2c44d';
+      g.fillRect(10, 25, 12, 3);
+      g.fillRect(14, 28, 4, 4);
+
+      // Flowing dark hair behind head
+      g.fillStyle = '#141121';
+      g.fillRect(7, 10, 18, 16);
+      g.fillStyle = '#282240';
+      g.fillRect(8, 12, 16, 13);
+
+      // Neck & Face
+      g.fillStyle = '#a16442';
+      g.fillRect(13, 22, 6, 4);
+      g.fillStyle = '#110f22';
+      g.fillRect(9, 11, 14, 13);
+      g.fillStyle = '#b87651';
+      g.fillRect(10, 12, 12, 11);
+      g.fillStyle = '#d99971';
+      g.fillRect(11, 12, 10, 10);
+      // Gold earrings
+      g.fillStyle = '#f7c948';
+      g.fillRect(9, 18, 1, 3);
+      g.fillRect(22, 18, 1, 3);
+
+      // Brows & Determined Eyes
+      g.fillStyle = '#171224';
+      g.fillRect(11, 14, 4, 1);
+      g.fillRect(17, 14, 4, 1);
+      g.fillStyle = '#ffffff';
+      g.fillRect(12, 16, 2, 2);
+      g.fillRect(18, 16, 2, 2);
+      g.fillStyle = '#141021';
+      g.fillRect(13, 16, 1, 2);
+      g.fillRect(19, 16, 1, 2);
+
+      // Royal Tilak on forehead
+      g.fillStyle = '#e6394c';
+      g.fillRect(15, 12, 2, 3);
+
+      // Noble Mustache & Speaking Mouth
+      g.fillStyle = '#1a1529';
+      g.fillRect(12, 19, 8, 1);
+      g.fillRect(11, 20, 2, 1);
+      g.fillRect(19, 20, 2, 1);
+      if (talking) {
+        g.fillStyle = '#5c1420';
+        g.fillRect(14, 21, 4, 2);
+        g.fillStyle = '#faf0dc';
+        g.fillRect(15, 21, 2, 1);
+      } else {
+        g.fillStyle = '#874c34';
+        g.fillRect(14, 21, 4, 1);
+      }
+
+      // Tiered Golden Mukut Crown with glowing Ruby Gem!
+      g.fillStyle = '#110f22';
+      g.fillRect(8, 7, 16, 6);
+      g.fillRect(10, 4, 12, 4);
+      g.fillRect(13, 2, 6, 3);
+      g.fillStyle = '#c48318';
+      g.fillRect(9, 8, 14, 4);
+      g.fillStyle = '#f5c442';
+      g.fillRect(10, 8, 12, 3);
+      g.fillRect(11, 5, 10, 3);
+      g.fillStyle = '#fff0a6';
+      g.fillRect(14, 3, 4, 2);
+      g.fillRect(12, 6, 8, 1);
+      // Center Ruby Gem
+      g.fillStyle = '#ff1f4b';
+      g.fillRect(15, 8, 2, 3);
+      g.fillStyle = '#ff99ad';
+      g.fillRect(15, 8, 1, 1);
+    } else {
+      // BETAAL Portrait: eerie midnight violet-indigo aura
+      g.fillStyle = '#130f26';
+      g.fillRect(0, 0, 32, 32);
+      g.fillStyle = '#20183d';
+      g.fillRect(2, 2, 28, 28);
+      fillPixelCircle(g, 16, 16, 11, '#2f2257');
+
+      // Wild billowing charcoal-violet spirit hair
+      g.fillStyle = '#110d1f';
+      g.fillRect(4, 3, 24, 22);
+      g.fillStyle = '#272042';
+      g.fillRect(5, 4, 22, 18);
+      g.fillStyle = '#3f3469';
+      g.fillRect(7, 5, 18, 6);
+      // Spiky wispy side hair tufts
+      g.fillRect(3, 9, 3, 5);
+      g.fillRect(26, 8, 3, 6);
+      g.fillRect(11, 2, 10, 3);
+
+      // Shoulders & tattered ash drape
+      g.fillStyle = '#110f22';
+      g.fillRect(6, 24, 20, 8);
+      g.fillStyle = '#394163';
+      g.fillRect(7, 25, 18, 7);
+      g.fillStyle = '#92abc7';
+      g.fillRect(12, 23, 8, 5);
+
+      // Pale Spirit Face (angular, mischievous)
+      g.fillStyle = '#110f22';
+      g.fillRect(9, 9, 14, 15);
+      g.fillStyle = '#8fa8c4';
+      g.fillRect(10, 10, 12, 13);
+      g.fillStyle = '#c5dbf0';
+      g.fillRect(11, 10, 10, 11);
+      g.fillStyle = '#e3f1fc';
+      g.fillRect(12, 11, 8, 4);
+
+      // Dark sunken sockets & Glowing Crimson Eyes!
+      g.fillStyle = '#1b162e';
+      g.fillRect(11, 14, 4, 3);
+      g.fillRect(17, 14, 4, 3);
+      g.fillStyle = '#ff1c42';
+      g.fillRect(12, 15, 2, 2);
+      g.fillRect(18, 15, 2, 2);
+      g.fillStyle = '#ff99aa';
+      g.fillRect(12, 15, 1, 1);
+      g.fillRect(18, 15, 1, 1);
+
+      // Mischievous fanged grin
+      if (talking) {
+        g.fillStyle = '#1a0c1f';
+        g.fillRect(12, 19, 8, 3);
+        g.fillStyle = '#f2f7ff';
+        g.fillRect(13, 19, 1, 2);
+        g.fillRect(18, 19, 1, 2);
+        g.fillStyle = '#cf2b4c';
+        g.fillRect(14, 21, 4, 1);
+      } else {
+        g.fillStyle = '#1a0c1f';
+        g.fillRect(12, 20, 8, 1);
+        g.fillRect(11, 19, 1, 1);
+        g.fillRect(20, 19, 1, 1);
+        g.fillStyle = '#f2f7ff';
+        g.fillRect(13, 20, 1, 1);
+        g.fillRect(18, 20, 1, 1);
+      }
+    }
+    return c;
+  }
+
+  const PORTRAITS = {
+    vikramIdle: buildPortraitCanvas('vikram', false),
+    vikramTalk: buildPortraitCanvas('vikram', true),
+    betaalIdle: buildPortraitCanvas('betaal', false),
+    betaalTalk: buildPortraitCanvas('betaal', true)
+  };
+
+  // =========================================================================
+  // 10. HIGH-CADENCE 36-SECOND SCRIPT & CHOREOGRAPHY (2160 FRAMES @ 60 FPS)
+  // =========================================================================
+  const DIALOGUE_CUES = [
+    {
+      start: 1.85, end: 4.55, speaker: 'vikram', name: 'KING VIKRAMADITYA',
+      text: 'There you hang again, Betaal! Down from the banyan—at once!'
+    },
+    {
+      start: 4.70, end: 7.05, speaker: 'betaal', name: 'BETAAL',
+      text: 'Hehe! Walk in silence, King—or answer my riddle of three delicate brothers!'
+    },
+    {
+      start: 7.15, end: 11.05, speaker: 'betaal', name: 'BETAAL',
+      text: 'The first sniffed royal saffron rice and recoiled in horror...'
+    },
+    {
+      start: 11.10, end: 15.00, speaker: 'betaal', name: 'BETAAL',
+      text: '...for he sensed its grain had grown beside a cremation ground—and he was right!'
+    },
+    {
+      start: 15.10, end: 19.05, speaker: 'betaal', name: 'BETAAL',
+      text: 'The second jolted bolt upright atop seven plush royal mattresses...'
+    },
+    {
+      start: 19.10, end: 23.00, speaker: 'betaal', name: 'BETAAL',
+      text: '...bruised by a single stray red hair hidden beneath the bottom layer!'
+    },
+    {
+      start: 23.10, end: 26.80, speaker: 'betaal', name: 'BETAAL',
+      text: 'The third sat in silver moonlight—yet one drifting lotus petal blistered his shoulder!'
+    },
+    {
+      start: 26.85, end: 30.00, speaker: 'betaal', name: 'BETAAL',
+      text: 'Speak, wise Vikram: which brother was truly the most sensitive?'
+    },
+    {
+      start: 30.15, end: 33.40, speaker: 'vikram', name: 'KING VIKRAMADITYA',
+      text: 'The third! Scent warns and weight presses—only he bled from a mere falling petal!'
+    },
+    {
+      start: 33.45, end: 36.00, speaker: 'betaal', name: 'BETAAL',
+      text: 'Brilliant as ever, King! Yet you broke your silence—so back to the banyan I fly!'
+    }
+  ];
+
+  function getBeatTitle(t) {
+    if (t < 7) return 'Act I · Banyan & Leap';
+    if (t < 15) return 'Act II · Clue I — Saffron Rice';
+    if (t < 23) return 'Act III · Clue II — Seven Mattresses';
+    if (t < 30) return 'Act IV · Clue III — Lotus Petal';
+    return 'Act V · The Verdict & Escape';
+  }
+
+  // Parabolic Escape Path for Betaal returning to the Banyan Canopy (u: 0..1 over t = 33.4..35.6)
+  function getBetaalEscapePos(u) {
+    const startX = 212, startY = 186, startZ = 22;
+    const endX = BOUGH_HANG_X, endY = BOUGH_HANG_Y, endZ = BOUGH_HANG_Z + 2;
+    const eu = smoothstep(u);
+    const x = lerp(startX, endX, eu) - Math.sin(u * Math.PI) * 18;
+    const y = lerp(startY, endY, eu);
+    const z = lerp(startZ, endZ, eu) + Math.sin(u * Math.PI) * 44;
+    return { x, y, z };
+  }
+
+  // Smooth damped camera state
+  const cam = { x: 260, y: 150, zoom: 1.0 };
+
+  function getCameraTarget(t) {
+    if (t < 1.8) {
+      // Wide moonlit establishing glide
+      return { x: lerp(246, 272, smoothstep(t / 1.8)), y: 152, zoom: lerp(1.0, 1.06, t / 1.8) };
+    } else if (t < 3.0) {
+      // Punch in on Vikram spotting Betaal on the banyan bough
+      return { x: 310, y: 146, zoom: 1.18 };
+    } else if (t < 4.7) {
+      // Dynamic leap tracking & landing
+      const leapU = clamp((t - 3.0) / 1.35, 0, 1);
+      const lift = Math.sin(leapU * Math.PI) * 14;
+      const thump = (t >= 4.25 && t < 4.5) ? Math.sin((t - 4.25) * 35) * 2.2 : 0;
+      return { x: 318, y: 140 - lift + thump, zoom: 1.22 };
+    } else if (t < 7.0) {
+      // Smoothly pull out as Vikram hoists Betaal and strides left into clearing frame
+      const u = smoothstep((t - 4.7) / 2.2);
+      return { x: lerp(312, 260, u), y: lerp(148, 148, u), zoom: lerp(1.16, 1.02, u) };
+    } else if (t < 15.0) {
+      // Clue I: anchored nicely with Vikram+Betaal on lower-left, Thought Cloud on upper-right!
+      return { x: 256 + Math.sin((t - 7) * 0.4) * 4, y: 148, zoom: 1.02 };
+    } else if (t < 23.0) {
+      // Clue II: snappy subtle micro-zoom rhythm shift
+      const punch = t < 15.35 ? 1.06 : 1.03;
+      return { x: 264 + Math.sin((t - 15) * 0.5) * 4, y: 149, zoom: punch };
+    } else if (t < 30.0) {
+      // Clue III: gentle intimate zoom on moonlight clue
+      const punch = t < 23.35 ? 1.07 : 1.04;
+      return { x: 270, y: 148, zoom: punch };
+    } else if (t < 33.4) {
+      // The Verdict! Dramatic punch-in on Vikram & Betaal!
+      return { x: 218, y: 162, zoom: 1.26 };
+    } else {
+      // Betaal darts back to the banyan canopy — camera pulls wide to show the whole moonlit clearing!
+      const u = smoothstep((t - 33.4) / 1.8);
+      return { x: lerp(230, 294, u), y: lerp(156, 144, u), zoom: lerp(1.22, 1.02, u) };
+    }
+  }
+
+  // Compute exact world positions & poses of Vikram and Betaal for any time t in [0..36]
+  function getActorsState(t) {
+    let vikram = { x: 140, y: getPathY(140), z: 0, sprite: SPRITES.vikramIdle, flipX: false, emote: null };
+    let betaal = { visible: true, x: BOUGH_HANG_X, y: BOUGH_HANG_Y, z: BOUGH_HANG_Z, sprite: SPRITES.betaalHang[0], flipX: false, emote: null };
+
+    const walkFrame = Math.floor(t * 7.5) % 4;
+    const hoverFrame = Math.floor(t * 5) % 2;
+
+    if (t < 2.65) {
+      // Striding briskly along the forest path toward the Banyan tree
+      const u = smoothstep(t / 2.65);
+      const vx = lerp(112, 286, u);
+      const vy = getPathY(vx);
+      vikram = { x: vx, y: vy, z: 0, sprite: SPRITES.vikramWalk[walkFrame], flipX: false, emote: null };
+      if (t >= 1.9 && t < 2.95) {
+        vikram.emote = { sym: '!', p: (t - 1.9) / 1.05, col: '#e6394c' };
+      }
+      betaal = { visible: true, x: BOUGH_HANG_X, y: BOUGH_HANG_Y, z: BOUGH_HANG_Z, sprite: SPRITES.betaalHang[Math.floor(t * 2.2) % 2], flipX: false, emote: null };
+    } else if (t < 3.0) {
+      // Heroic crouch before parabolic leap!
+      const vx = 286;
+      vikram = { x: vx, y: getPathY(vx), z: 0, sprite: SPRITES.vikramCrouch, flipX: false, emote: null };
+      betaal = { visible: true, x: BOUGH_HANG_X, y: BOUGH_HANG_Y, z: BOUGH_HANG_Z, sprite: SPRITES.betaalHang[Math.floor(t * 3) % 2], flipX: false, emote: null };
+    } else if (t < 4.3) {
+      // Parabolic Leap Arc up to grab Betaal off the bough!
+      const u = clamp((t - 3.0) / 1.3, 0, 1);
+      const vx = lerp(286, 312, u);
+      const vy = lerp(getPathY(286), getPathY(312), u);
+      const vz = 4 * 40 * u * (1 - u); // Crisp 40px parabolic arc peak right at bough height!
+      const grabbed = u >= 0.5;
+      vikram = { x: vx, y: vy, z: vz, sprite: grabbed ? SPRITES.vikramCarryIdle : SPRITES.vikramLeap, flipX: false, emote: null };
+      if (!grabbed) {
+        betaal = { visible: true, x: BOUGH_HANG_X, y: BOUGH_HANG_Y, z: BOUGH_HANG_Z, sprite: SPRITES.betaalHang[1], flipX: false, emote: { sym: '!', p: clamp((u - 0.15) / 0.4, 0, 0.9), col: '#ff294d' } };
+      } else {
+        betaal.visible = false; // Now hoisted onto Vikram's back!
+      }
+    } else if (t < 4.65) {
+      // Solid heroic landing with Betaal hoisted onto his back
+      const vx = 312;
+      vikram = { x: vx, y: getPathY(vx), z: 0, sprite: SPRITES.vikramCarryIdle, flipX: false, emote: null };
+      betaal.visible = false;
+    } else if (t < 7.0) {
+      // Strides steadily leftward to center-left clearing spot to open frame for Thought Clouds
+      const u = smoothstep((t - 4.65) / 2.35);
+      const vx = lerp(312, 168, u);
+      vikram = { x: vx, y: getPathY(vx), z: 0, sprite: SPRITES.vikramCarry[walkFrame], flipX: true, emote: null };
+      betaal.visible = false;
+    } else if (t < 30.0) {
+      // Slow purposeful walk along the moonlit clearing path while Betaal tells the 3 Clues!
+      // Cycles smoothly across the lower-left path (x = 152..216) keeping composition locked & clean
+      const walkU = (t - 7.0) / 23.0;
+      const vx = lerp(154, 212, smoothstep(walkU));
+      const vy = getPathY(vx);
+      vikram = { x: vx, y: vy, z: 0, sprite: SPRITES.vikramCarry[Math.floor(t * 5.2) % 4], flipX: false, emote: null };
+      // Betaal '?' emote when posing the riddle question at 27.0..29.8s!
+      if (t >= 27.0 && t < 29.85) {
+        vikram.emote = { sym: '?', p: (t - 27.0) / 2.85, col: '#9d4edd', dx: -6, dy: -4 };
+      }
+      betaal.visible = false;
+    } else if (t < 33.4) {
+      // THE VERDICT: Vikram stops decisively and delivers the answer!
+      const vx = 212;
+      const vy = getPathY(vx);
+      vikram = { x: vx, y: vy, z: 0, sprite: SPRITES.vikramCarryIdle, flipX: false, emote: null };
+      if (t >= 30.15 && t < 31.6) {
+        vikram.emote = { sym: '!', p: (t - 30.15) / 1.45, col: '#f0c24b' };
+      }
+      betaal.visible = false;
+    } else {
+      // BETAAL ESCAPES! Vikram draws his verdict stance looking back right as Betaal floats/darts to the banyan!
+      const vx = 212;
+      const vy = getPathY(vx);
+      vikram = { x: vx, y: vy, z: 0, sprite: SPRITES.vikramVerdict, flipX: false, emote: null };
+      if (t >= 34.0 && t < 35.4) {
+        vikram.emote = { sym: '!', p: (t - 34.0) / 1.4, col: '#e6394c' };
+      }
+
+      const escU = clamp((t - 33.4) / 2.2, 0, 1);
+      if (escU < 0.96) {
+        const pos = getBetaalEscapePos(escU);
+        const sp = escU < 0.25 ? SPRITES.betaalHover[hoverFrame] : SPRITES.betaalDart[hoverFrame];
+        betaal = { visible: true, x: pos.x, y: pos.y, z: pos.z, sprite: sp, flipX: false, emote: null };
+      } else {
+        // Safely perched upside-down back on the banyan bough!
+        betaal = { visible: true, x: BOUGH_HANG_X, y: BOUGH_HANG_Y, z: BOUGH_HANG_Z, sprite: SPRITES.betaalHang[Math.floor(t * 3) % 2], flipX: false, emote: null };
+      }
+    }
+
+    return { vikram, betaal };
+  }
+
+  // =========================================================================
+  // 11. MAIN FRAME RENDERER (480x270 Pixel World -> 1920x1080 Crisp Upscale + RPG UI)
+  // =========================================================================
+  function drawSprite(g, spr, x, y, z = 0, flipX = false) {
+    const dx = Math.round(x);
+    const dy = Math.round(y - z);
+    if (!flipX) {
+      g.drawImage(spr.canvas, dx - spr.ax, dy - spr.ay);
+    } else {
+      g.save();
+      g.translate(dx, dy);
+      g.scale(-1, 1);
+      g.drawImage(spr.canvas, -spr.ax, -spr.ay);
+      g.restore();
+    }
+  }
+
+  function renderFrame(frameIdx) {
+    const t = frameIdx / FPS;
+
+    // 1. Update damped camera
+    const target = getCameraTarget(t);
+    if (frameIdx === 0 || Math.abs(cam.x - target.x) > 80) {
+      cam.x = target.x;
+      cam.y = target.y;
+      cam.zoom = target.zoom;
+    } else {
+      const k = 0.14;
+      cam.x = lerp(cam.x, target.x, k);
+      cam.y = lerp(cam.y, target.y, k);
+      cam.zoom = lerp(cam.zoom, target.zoom, k);
+    }
+
+    // Clamp camera so world edges never show black gaps
+    const halfViewW = (LOG_W / 2) / cam.zoom;
+    const halfViewH = (LOG_H / 2) / cam.zoom;
+    const cx = clamp(cam.x, halfViewW, WORLD_W - halfViewW);
+    const cy = clamp(cam.y, halfViewH, WORLD_H - halfViewH);
+
+    // 2. Render Nocturnal World onto 480x270 Logical Pixel Buffer
+    lowCtx.save();
+    lowCtx.fillStyle = '#090c1c';
+    lowCtx.fillRect(0, 0, LOG_W, LOG_H);
+
+    lowCtx.translate(LOG_W / 2, LOG_H / 2);
+    lowCtx.scale(cam.zoom, cam.zoom);
+    lowCtx.translate(-Math.round(cx), -Math.round(cy));
+
+    // Pre-baked sky, cratered moon, emerald grass & dirt path
+    lowCtx.drawImage(worldBg, 0, 0);
+
+    // Soft radial warm Diya oil lamp pools on the ground
+    for (let i = 0; i < DIYAS.length; i++) {
+      const d = DIYAS[i];
+      const flick = 0.88 + 0.12 * Math.sin(t * 14 + i * 2.1);
+      const r = 34 * flick;
+      const grad = lowCtx.createRadialGradient(d.x, d.y - 4, 2, d.x, d.y - 4, r);
+      grad.addColorStop(0, 'rgba(255, 200, 84, 0.42)');
+      grad.addColorStop(0.45, 'rgba(245, 138, 38, 0.18)');
+      grad.addColorStop(1, 'rgba(245, 138, 38, 0)');
+      lowCtx.fillStyle = grad;
+      lowCtx.beginPath();
+      lowCtx.arc(d.x, d.y - 4, r, 0, Math.PI * 2);
+      lowCtx.fill();
+    }
+
+    // Actors state
+    const { vikram, betaal } = getActorsState(t);
+
+    // Ground contact shadows under Vikram & Betaal
+    lowCtx.fillStyle = 'rgba(8, 11, 22, 0.46)';
+    const vShR = Math.max(4, Math.round(7 - vikram.z * 0.08));
+    lowCtx.fillRect(Math.round(vikram.x - vShR), Math.round(vikram.y - 2), vShR * 2, 4);
+    if (betaal.visible) {
+      const bShR = Math.max(3, Math.round(6 - betaal.z * 0.06));
+      lowCtx.fillRect(Math.round(betaal.x - bShR), Math.round(betaal.y - 1), bShR * 2, 3);
+    }
+
+    // Build Y-sorted draw queue (all SpriteStacks + Characters + Diya flames!)
+    const drawList = [];
+    for (const p of STATIC_PROPS) {
+      drawList.push(p);
+    }
+    drawList.push({
+      sortY: vikram.y,
+      render: (g) => {
+        drawSprite(g, vikram.sprite, vikram.x, vikram.y, vikram.z, vikram.flipX);
+        if (vikram.emote) {
+          drawEmoteBubble(
+            g,
+            vikram.x + (vikram.emote.dx || 0),
+            vikram.y - vikram.z - 28 + (vikram.emote.dy || 0),
+            vikram.emote.sym,
+            vikram.emote.p,
+            vikram.emote.col
+          );
+        }
+      }
+    });
+    if (betaal.visible) {
+      drawList.push({
+        sortY: betaal.y + 1,
+        render: (g) => {
+          // Subtle ghostly cyan-violet shimmer when hovering/escaping
+          if (t >= 33.4 && t < 35.5) {
+            const aura = g.createRadialGradient(betaal.x, betaal.y - betaal.z - 10, 2, betaal.x, betaal.y - betaal.z - 10, 22);
+            aura.addColorStop(0, 'rgba(186, 214, 247, 0.42)');
+            aura.addColorStop(0.6, 'rgba(255, 48, 92, 0.14)');
+            aura.addColorStop(1, 'rgba(186, 214, 247, 0)');
+            g.fillStyle = aura;
+            g.beginPath();
+            g.arc(betaal.x, betaal.y - betaal.z - 10, 22, 0, Math.PI * 2);
+            g.fill();
+          }
+          drawSprite(g, betaal.sprite, betaal.x, betaal.y, betaal.z, betaal.flipX);
+          if (betaal.emote) {
+            drawEmoteBubble(g, betaal.x, betaal.y - betaal.z - 25, betaal.emote.sym, betaal.emote.p, betaal.emote.col);
+          }
+        }
+      });
+    }
+
+    drawList.sort((a, b) => a.sortY - b.sortY);
+
+    for (const item of drawList) {
+      if (item.render) {
+        item.render(lowCtx);
+      } else {
+        drawSprite(lowCtx, item.sprite, item.x, item.y, 0, false);
+        if (item.isDiya) {
+          // Animated crisp flickering flame pixel atop each Diya!
+          const sway = Math.round(Math.sin(t * 16 + item.x) * 0.7);
+          const fx = Math.round(item.x) + sway;
+          const fy = Math.round(item.y) - 11;
+          lowCtx.fillStyle = '#ff7b1c';
+          lowCtx.fillRect(fx - 1, fy - 2, 3, 3);
+          lowCtx.fillStyle = '#ffd84d';
+          lowCtx.fillRect(fx, fy - 3, 1, 3);
+          lowCtx.fillStyle = '#fff9c4';
+          lowCtx.fillRect(fx, fy - 1, 1, 1);
+        }
+      }
+    }
+
+    // Event particles (banyan leaf burst, landing dust, spectral escape trail)
+    drawEventParticles(lowCtx, t);
+
+    // Drifting golden-lime fireflies
+    for (const f of fireflies) {
+      const fx = f.bx + Math.sin(t * f.spdX + f.ph) * f.ampX;
+      const fy = f.by + Math.cos(t * f.spdY + f.ph * 1.3) * f.ampY;
+      const glow = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(t * f.blinkSpd + f.ph));
+      lowCtx.globalAlpha = glow * 0.35;
+      lowCtx.fillStyle = '#e4ff7a';
+      lowCtx.fillRect(Math.round(fx) - 1, Math.round(fy) - 1, 3, 3);
+      lowCtx.globalAlpha = glow;
+      lowCtx.fillStyle = '#ffffc2';
+      lowCtx.fillRect(Math.round(fx), Math.round(fy), 1, 1);
+    }
+    lowCtx.globalAlpha = 1;
+
+    lowCtx.restore();
+
+    // 3. Screen-space Scalloped 16-bit Thought Clouds (Acts II, III, IV) on 480x270 buffer!
+    // Compute Betaal's current screen coordinates so thought puffs rise directly from his head!
+    const betaalScreenX = (vikram.x - 4 - cx) * cam.zoom + LOG_W / 2;
+    const betaalScreenY = (vikram.y - 24 - cy) * cam.zoom + LOG_H / 2;
+
+    if (t >= 7.0 && t < 15.0) {
+      drawScallopedCloud(lowCtx, betaalScreenX, betaalScreenY, 1, t - 7.0, 8.0);
+    } else if (t >= 15.0 && t < 23.0) {
+      drawScallopedCloud(lowCtx, betaalScreenX, betaalScreenY, 2, t - 15.0, 8.0);
+    } else if (t >= 23.0 && t < 30.0) {
+      drawScallopedCloud(lowCtx, betaalScreenX, betaalScreenY, 3, t - 23.0, 7.0);
+    }
+
+    // 4. Crisp Exact 4x Nearest-Neighbor Blit to 1920x1080 Master Canvas
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(lowCanvas, 0, 0, LOG_W, LOG_H, 0, 0, OUT_W, OUT_H);
+
+    // 5. Crisp Opening Title Card (0.0s - 1.85s)
+    if (t < 1.88) {
+      renderTitleCard(ctx, t);
+    }
+
+    // 6. Pinned Bottom 16-Bit Stardew-Style RPG Dialogue Box (with Pixel Portrait)
+    const activeCue = findActiveDialogue(t);
+    if (activeCue) {
+      renderDialogueBox(ctx, activeCue, t);
+    }
+
+    // Subtle crisp fade-in on very first 0.25s
+    if (t < 0.25) {
+      ctx.fillStyle = `rgba(7, 9, 19, ${1 - t / 0.25})`;
+      ctx.fillRect(0, 0, OUT_W, OUT_H);
+    }
+  }
+
+  function findActiveDialogue(t) {
+    for (let i = 0; i < DIALOGUE_CUES.length; i++) {
+      const c = DIALOGUE_CUES[i];
+      if (t >= c.start && t <= c.end) return c;
+    }
+    return null;
+  }
+
+  // --- CRISP TITLE CARD (1920x1080 Pixel-Framed Wooden & Gold Banner) ---
+  function renderTitleCard(g, t) {
+    const fadeIn = smoothstep(clamp(t / 0.28, 0, 1));
+    const fadeOut = smoothstep(clamp((1.88 - t) / 0.28, 0, 1));
+    const alpha = Math.min(fadeIn, fadeOut);
+    if (alpha <= 0.01) return;
+
+    g.save();
+    g.globalAlpha = alpha;
+
+    // Subtle dark scrim band for effortless 4.5:1+ legibility
+    const bx = 360, by = 140, bw = 1200, bh = 256;
+    const p = 4; // 4px pixel-grid unit matching 4x scale
+
+    // Outer dark ink border
+    g.fillStyle = '#110f22';
+    g.fillRect(bx - p * 2, by - p * 2, bw + p * 4, bh + p * 4);
+    // Carved walnut outer timber frame
+    g.fillStyle = '#5c341d';
+    g.fillRect(bx - p, by - p, bw + p * 2, bh + p * 2);
+    g.fillStyle = '#8c5531';
+    g.fillRect(bx, by, bw, bh);
+    // Inner dark midnight-indigo tapestry panel
+    g.fillStyle = '#141830';
+    g.fillRect(bx + p * 3, by + p * 3, bw - p * 6, bh - p * 6);
+    // Fine gold inner trim
+    g.strokeStyle = '#e8b948';
+    g.lineWidth = p;
+    g.strokeRect(bx + p * 5, by + p * 5, bw - p * 10, bh - p * 10);
+
+    // Brass corner studs
+    const studs = [
+      [bx + p * 1.5, by + p * 1.5],
+      [bx + bw - p * 3.5, by + p * 1.5],
+      [bx + p * 1.5, by + bh - p * 3.5],
+      [bx + bw - p * 3.5, by + bh - p * 3.5]
+    ];
+    for (const [sx, sy] of studs) {
+      g.fillStyle = '#ffd966';
+      g.fillRect(sx, sy, p * 2, p * 2);
+      g.fillStyle = '#8a5610';
+      g.fillRect(sx + p, sy + p, p, p);
+    }
+
+    // Crisp Title Typography
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.font = '900 72px Georgia, "Palatino Linotype", "Book Antiqua", serif';
+    g.fillStyle = '#090b17';
+    g.fillText('VIKRAM & BETAAL', OUT_W / 2 + 4, by + 102 + 4);
+    g.fillStyle = '#ffd666';
+    g.fillText('VIKRAM & BETAAL', OUT_W / 2, by + 102);
+
+    // Decorative gold divider with ruby diamond
+    g.fillStyle = '#c48f29';
+    g.fillRect(OUT_W / 2 - 250, by + 150, 500, 4);
+    g.fillStyle = '#ff294d';
+    g.fillRect(OUT_W / 2 - 8, by + 144, 16, 16);
+    g.fillStyle = '#ffd666';
+    g.fillRect(OUT_W / 2 - 4, by + 148, 8, 8);
+
+    // Subtitle
+    g.font = '700 36px Georgia, "Palatino Linotype", serif';
+    g.fillStyle = '#f5ead0';
+    g.fillText('The Three Sensitive Brothers', OUT_W / 2, by + 196);
+
+    g.restore();
+  }
+
+  // --- PINNED BOTTOM STARDEW-INSPIRED RPG DIALOGUE BOX (1920x1080) ---
+  function wrapCanvasText(g, text, maxWidth) {
+    const words = text.split(' ');
+    const lines = [];
+    let line = '';
+    for (let i = 0; i < words.length; i++) {
+      const test = line ? line + ' ' + words[i] : words[i];
+      if (g.measureText(test).width > maxWidth && line) {
+        lines.push(line);
+        line = words[i];
+      } else {
+        line = test;
+      }
+    }
+    if (line) lines.push(line);
+    return lines;
+  }
+
+  function renderDialogueBox(g, cue, t) {
+    const p = 4; // Crisp 4px pixel unit
+    const boxW = 1640;
+    const boxH = 212;
+    const boxX = (OUT_W - boxW) / 2;
+    const boxY = OUT_H - boxH - 28;
+
+    // Subtle drop shadow
+    g.fillStyle = 'rgba(5, 7, 15, 0.55)';
+    g.fillRect(boxX + 8, boxY + 10, boxW, boxH);
+
+    // Outer pixel ink border
+    g.fillStyle = '#1a110c';
+    g.fillRect(boxX - p, boxY - p, boxW + p * 2, boxH + p * 2);
+
+    // Carved Stardew Valley warm timber frame
+    g.fillStyle = '#633820';
+    g.fillRect(boxX, boxY, boxW, boxH);
+    g.fillStyle = '#9e6238';
+    g.fillRect(boxX + p, boxY + p, boxW - p * 2, boxH - p * 2);
+    g.fillStyle = '#4a2816';
+    g.fillRect(boxX + p * 3, boxY + p * 3, boxW - p * 6, boxH - p * 6);
+
+    // Warm parchment interior
+    g.fillStyle = '#f5e6c4';
+    g.fillRect(boxX + p * 4, boxY + p * 4, boxW - p * 8, boxH - p * 8);
+    // Subtle inner parchment top-left highlight & bottom bevel
+    g.fillStyle = '#fcf2da';
+    g.fillRect(boxX + p * 4, boxY + p * 4, boxW - p * 8, p * 2);
+    g.fillStyle = '#dbc496';
+    g.fillRect(boxX + p * 4, boxY + boxH - p * 6, boxW - p * 8, p * 2);
+
+    // Corner brass rivets
+    const rivets = [
+      [boxX + p, boxY + p],
+      [boxX + boxW - p * 3, boxY + p],
+      [boxX + p, boxY + boxH - p * 3],
+      [boxX + boxW - p * 3, boxY + boxH - p * 3]
+    ];
+    for (const [rx, ry] of rivets) {
+      g.fillStyle = '#f2c44d';
+      g.fillRect(rx, ry, p * 2, p * 2);
+      g.fillStyle = '#875512';
+      g.fillRect(rx + p, ry + p, p, p);
+    }
+
+    // Pixel-Art Character Portrait Frame (Left inside dialogue box)
+    const portSize = 144; // 36 * 4 (32px art + frame)
+    const portX = boxX + 34;
+    const portY = boxY + (boxH - portSize) / 2;
+
+    g.fillStyle = '#3b2113';
+    g.fillRect(portX - p, portY - p, portSize + p * 2, portSize + p * 2);
+    g.fillStyle = '#d9a43b';
+    g.fillRect(portX, portY, portSize, portSize);
+    g.fillStyle = '#141121';
+    g.fillRect(portX + p, portY + p, portSize - p * 2, portSize - p * 2);
+
+    const localT = t - cue.start;
+    const revealDur = Math.min(1.05, (cue.end - cue.start) * 0.42);
+    const charRatio = clamp(localT / revealDur, 0, 1);
+    const isSpeaking = charRatio < 0.98 && (Math.floor(t * 11) % 2 === 0);
+
+    const portraitImg = cue.speaker === 'vikram'
+      ? (isSpeaking ? PORTRAITS.vikramTalk : PORTRAITS.vikramIdle)
+      : (isSpeaking ? PORTRAITS.betaalTalk : PORTRAITS.betaalIdle);
+
+    g.imageSmoothingEnabled = false;
+    g.drawImage(portraitImg, 0, 0, 32, 32, portX + p * 2, portY + p * 2, 128, 128);
+
+    // Speaker Nameplate & Crisp Subtitle Column
+    const textX = portX + portSize + 36;
+    const textMaxW = boxX + boxW - textX - 54;
+
+    g.textAlign = 'left';
+    g.textBaseline = 'top';
+    g.font = '800 28px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif';
+    g.fillStyle = cue.speaker === 'vikram' ? '#8c182c' : '#3a1d6b';
+    g.fillText(cue.name, textX, boxY + 32);
+
+    // Subtle hairline separator under speaker name
+    g.fillStyle = 'rgba(99, 56, 32, 0.28)';
+    g.fillRect(textX, boxY + 68, textMaxW, 3);
+
+    // Snappy typewriter reveal of crisp dark-espresso ink subtitle text
+    const visibleCount = Math.max(1, Math.floor(cue.text.length * charRatio));
+    const shownText = cue.text.slice(0, visibleCount);
+
+    g.font = '700 38px Georgia, "Palatino Linotype", "Book Antiqua", serif';
+    g.fillStyle = '#24140b';
+    const lines = wrapCanvasText(g, shownText, textMaxW);
+    for (let i = 0; i < Math.min(2, lines.length); i++) {
+      g.fillText(lines[i], textX, boxY + 86 + i * 48);
+    }
+
+    // Bouncing RPG continue chevron when line is fully revealed
+    if (charRatio >= 0.99) {
+      const bob = Math.round(Math.sin(t * 9) * 4);
+      const ax = boxX + boxW - 44;
+      const ay = boxY + boxH - 42 + bob;
+      g.fillStyle = '#8c182c';
+      g.fillRect(ax - 12, ay, 24, 4);
+      g.fillRect(ax - 8, ay + 4, 16, 4);
+      g.fillRect(ax - 4, ay + 8, 8, 4);
+      g.fillRect(ax - 2, ay + 12, 4, 4);
+    }
+  }
+
+  // =========================================================================
+  // 12. WEBAUDIO PROCEDURAL RAAG BHAIRAVI SCORE (Plucked Harp & Bansuri Flute)
+  // =========================================================================
+  class RaagBhairaviAudio {
+    constructor() {
+      this.ctx = null;
+      this.master = null;
+      this.recordDest = null;
+      this.droneNodes = [];
+      this.unlocked = false;
+      this.muted = false;
+      this.lastStep = -1;
+      this.lastCueIdx = -1;
+      // Raag Bhairavi scale degrees in semitones above D4 (Sa = 293.66 Hz):
+      // Sa(0), komal Re(1), komal Ga(3), Ma(5), Pa(7), komal Dha(8), komal Ni(10), Sa'(12)
+      this.scale = [0, 1, 3, 5, 7, 8, 10, 12, 13, 15, 17];
+      this.baseFreq = 293.6648; // D4
+    }
+
+    freq(degIdx, octShift = 0) {
+      const semi = this.scale[((degIdx % this.scale.length) + this.scale.length) % this.scale.length] + octShift * 12;
+      return this.baseFreq * Math.pow(2, semi / 12);
+    }
+
+    unlock() {
+      if (!this.ctx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return false;
+        this.ctx = new AC();
+        this.master = this.ctx.createGain();
+        this.master.gain.value = this.muted ? 0 : 0.62;
+
+        // Warm subtle stereo echo bus
+        this.delayL = this.ctx.createDelay(0.6);
+        this.delayL.delayTime.value = 0.24;
+        this.delayGain = this.ctx.createGain();
+        this.delayGain.gain.value = 0.24;
+        this.delayFilter = this.ctx.createBiquadFilter();
+        this.delayFilter.type = 'lowpass';
+        this.delayFilter.frequency.value = 1800;
+
+        this.delayL.connect(this.delayFilter);
+        this.delayFilter.connect(this.delayGain);
+        this.delayGain.connect(this.master);
+        this.delayGain.connect(this.delayL);
+
+        this.master.connect(this.ctx.destination);
+
+        // Recording stream destination so MediaRecorder captures audio + 1080p60 video!
+        if (this.ctx.createMediaStreamDestination) {
+          this.recordDest = this.ctx.createMediaStreamDestination();
+          this.master.connect(this.recordDest);
+        }
+
+        this.startTanpuraDrone();
+      }
+      if (this.ctx.state === 'suspended') {
+        this.ctx.resume().catch(() => {});
+      }
+      this.unlocked = true;
+      return true;
+    }
+
+    startTanpuraDrone() {
+      const now = this.ctx.currentTime;
+      const droneFreqs = [73.42, 110.0, 146.83, 147.25]; // D2, A2, D3, slight shimmer D3
+      const droneBus = this.ctx.createGain();
+      droneBus.gain.value = 0.085;
+
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 420;
+      filter.Q.value = 1.4;
+
+      droneBus.connect(filter);
+      filter.connect(this.master);
+
+      for (const f of droneFreqs) {
+        const osc = this.ctx.createOscillator();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(f, now);
+        osc.connect(droneBus);
+        osc.start(now);
+        this.droneNodes.push(osc);
+      }
+      this.droneBus = droneBus;
+    }
+
+    setMuted(m) {
+      this.muted = m;
+      if (this.master && this.ctx) {
+        this.master.gain.setTargetAtTime(m ? 0 : 0.62, this.ctx.currentTime, 0.04);
+      }
+    }
+
+    setPlaying(isPlaying) {
+      if (!this.droneBus || !this.ctx) return;
+      this.droneBus.gain.setTargetAtTime(isPlaying ? 0.085 : 0.0, this.ctx.currentTime, 0.08);
+    }
+
+    reset() {
+      this.lastStep = -1;
+      this.lastCueIdx = -1;
+    }
+
+    playPluckedHarp(deg, octShift = 0, vol = 0.22, dur = 0.65) {
+      if (!this.ctx || this.muted) return;
+      const now = this.ctx.currentTime;
+      const f = this.freq(deg, octShift);
+
+      const osc1 = this.ctx.createOscillator();
+      const osc2 = this.ctx.createOscillator();
+      osc1.type = 'triangle';
+      osc2.type = 'sawtooth';
+      osc1.frequency.setValueAtTime(f, now);
+      osc2.frequency.setValueAtTime(f * 2, now);
+
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(f * 6.5, now);
+      filter.frequency.exponentialRampToValueAtTime(Math.max(220, f * 1.3), now + dur);
+      filter.Q.value = 2.4;
+
+      const gain = this.ctx.createGain();
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.linearRampToValueAtTime(vol, now + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0008, now + dur);
+
+      const g2 = this.ctx.createGain();
+      g2.gain.value = 0.22;
+
+      osc1.connect(filter);
+      osc2.connect(g2);
+      g2.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.master);
+      gain.connect(this.delayL);
+
+      osc1.start(now);
+      osc2.start(now);
+      osc1.stop(now + dur + 0.05);
+      osc2.stop(now + dur + 0.05);
+    }
+
+    playBansuriFlute(deg, prevDeg, octShift = 0, vol = 0.16, dur = 0.85) {
+      if (!this.ctx || this.muted) return;
+      const now = this.ctx.currentTime;
+      const fTarget = this.freq(deg, octShift);
+      const fStart = prevDeg !== null ? this.freq(prevDeg, octShift) : fTarget * 0.96;
+
+      const osc = this.ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(fStart, now);
+      osc.frequency.exponentialRampToValueAtTime(fTarget, now + 0.09);
+
+      // Gentle expressive flute vibrato
+      const vib = this.ctx.createOscillator();
+      const vibGain = this.ctx.createGain();
+      vib.frequency.value = 5.4;
+      vibGain.gain.setValueAtTime(0, now);
+      vibGain.gain.linearRampToValueAtTime(fTarget * 0.012, now + 0.25);
+      vib.connect(vibGain);
+      vibGain.connect(osc.frequency);
+
+      // Soft warm 2nd harmonic breath overtone
+      const over = this.ctx.createOscillator();
+      over.type = 'triangle';
+      over.frequency.setValueAtTime(fTarget * 2, now);
+      const overGain = this.ctx.createGain();
+      overGain.gain.value = 0.06;
+
+      const env = this.ctx.createGain();
+      env.gain.setValueAtTime(0.0001, now);
+      env.gain.linearRampToValueAtTime(vol, now + 0.12);
+      env.gain.setValueAtTime(vol * 0.85, now + dur * 0.65);
+      env.gain.exponentialRampToValueAtTime(0.0008, now + dur);
+
+      osc.connect(env);
+      over.connect(overGain);
+      overGain.connect(env);
+      env.connect(this.master);
+      env.connect(this.delayL);
+
+      osc.start(now);
+      over.start(now);
+      vib.start(now);
+      osc.stop(now + dur + 0.06);
+      over.stop(now + dur + 0.06);
+      vib.stop(now + dur + 0.06);
+    }
+
+    playFoleyChime(type) {
+      if (!this.ctx || this.muted) return;
+      const now = this.ctx.currentTime;
+      if (type === 'leap') {
+        const osc = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(180, now);
+        osc.frequency.exponentialRampToValueAtTime(520, now + 0.24);
+        g.gain.setValueAtTime(0.001, now);
+        g.gain.linearRampToValueAtTime(0.16, now + 0.04);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+        osc.connect(g);
+        g.connect(this.master);
+        osc.start(now);
+        osc.stop(now + 0.3);
+      } else if (type === 'cloud') {
+        this.playPluckedHarp(4, 1, 0.16, 0.4);
+        setTimeout(() => this.playPluckedHarp(7, 1, 0.14, 0.45), 75);
+      } else if (type === 'verdict') {
+        this.playPluckedHarp(0, 0, 0.26, 1.1);
+        this.playPluckedHarp(4, 0, 0.22, 1.1);
+        this.playPluckedHarp(7, 0, 0.24, 1.2);
+      } else if (type === 'escape') {
+        // Mischievous rapid ascending Bhairavi flourish
+        [2, 3, 4, 5, 6, 7].forEach((deg, idx) => {
+          setTimeout(() => this.playPluckedHarp(deg, 1, 0.14, 0.35), idx * 55);
+        });
+      }
+    }
+
+    update(t, isPlaying) {
+      if (!this.unlocked || !this.ctx || !isPlaying) return;
+
+      // 8th-note grid at 136 BPM (~0.2206s per step) — snappy Short cadence!
+      const stepDur = 0.2206;
+      const step = Math.floor(t / stepDur);
+      if (step !== this.lastStep && step >= 0) {
+        this.lastStep = step;
+
+        // Harp rhythmic Bhairavi ostinato tailored by Act
+        const harpMotifA = [0, 4, 2, 3, 4, 5, 4, 2, 1, 2, 0, 4, 3, 2, 1, 0];
+        const harpMotifB = [4, 5, 6, 7, 5, 4, 3, 2, 3, 4, 5, 4, 2, 1, 2, 0];
+        const motif = (t >= 15 && t < 30) ? harpMotifB : harpMotifA;
+        const note = motif[step % motif.length];
+
+        if (step % 2 === 0 || (t >= 3.0 && t < 4.5) || t >= 33.4) {
+          this.playPluckedHarp(note, t >= 33.4 ? 1 : 0, 0.18, 0.58);
+        } else if (step % 4 === 1) {
+          // Soft bass Sa/Pa pulse
+          this.playPluckedHarp(step % 8 === 1 ? 0 : 4, -1, 0.14, 0.72);
+        }
+
+        // Expressive Bansuri Flute phrases every 4 steps
+        const flutePhrase = [
+          [7, 5], [5, 7], [4, 5], [2, 4],
+          [3, 2], [4, 3], [2, 4], [0, 2],
+          [4, 2], [5, 4], [6, 5], [7, 6],
+          [5, 7], [3, 5], [1, 3], [0, 1]
+        ];
+        if (step % 4 === 0 && t > 0.3 && t < 35.4) {
+          const phraseIdx = Math.floor(step / 4) % flutePhrase.length;
+          const [deg, prev] = flutePhrase[phraseIdx];
+          this.playBansuriFlute(deg, prev, t >= 23 && t < 30 ? 1 : 0, 0.14, 0.88);
+        }
+      }
+
+      // Story beat foley triggers
+      let cueId = 0;
+      if (t >= 3.0 && t < 3.4) cueId = 1;
+      else if (t >= 7.0 && t < 7.3) cueId = 2;
+      else if (t >= 15.0 && t < 15.3) cueId = 3;
+      else if (t >= 23.0 && t < 23.3) cueId = 4;
+      else if (t >= 30.05 && t < 30.4) cueId = 5;
+      else if (t >= 33.4 && t < 33.8) cueId = 6;
+
+      if (cueId !== 0 && cueId !== this.lastCueIdx) {
+        this.lastCueIdx = cueId;
+        if (cueId === 1) this.playFoleyChime('leap');
+        else if (cueId === 2 || cueId === 3 || cueId === 4) this.playFoleyChime('cloud');
+        else if (cueId === 5) this.playFoleyChime('verdict');
+        else if (cueId === 6) this.playFoleyChime('escape');
+      }
+    }
+  }
+
+  const audio = new RaagBhairaviAudio();
+
+  // =========================================================================
+  // 13. PLAYBACK LOOP, CONTROLS, THEATRE MODE & 1080p60 WEBM RECORDING
+  // =========================================================================
+  const btnPlayPause = document.getElementById('btnPlayPause');
+  const playPauseIcon = document.getElementById('playPauseIcon');
+  const playPauseLabel = document.getElementById('playPauseLabel');
+  const btnReplay = document.getElementById('btnReplay');
+  const btnMute = document.getElementById('btnMute');
+  const muteIcon = document.getElementById('muteIcon');
+  const muteLabel = document.getElementById('muteLabel');
+  const btnTheatre = document.getElementById('btnTheatre');
+  const theatreLabel = document.getElementById('theatreLabel');
+  const btnRecord = document.getElementById('btnRecord');
+  const recordLabel = document.getElementById('recordLabel');
+  const beatLabel = document.getElementById('beatLabel');
+  const timeReadout = document.getElementById('timeReadout');
+  const scrubber = document.getElementById('scrubber');
+  const scrubberFill = document.getElementById('scrubberFill');
+  const audioUnlockPrompt = document.getElementById('audioUnlockPrompt');
+  const theatreToast = document.getElementById('theatreToast');
+
+  const SVG_PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>';
+  const SVG_PLAY  = '<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>';
+  const SVG_VOL   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>';
+  const SVG_MUTE  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>';
+
+  let isPlaying = true;
+  let currentFrame = 0;
+  let lastTs = 0;
+  let frameAcc = 0;
+
+  let mediaRecorder = null;
+  let recordedChunks = [];
+  let isRecording = false;
+  let hudTimer = null;
+  let toastTimer = null;
+
+  function formatTime(sec) {
+    const s = Math.floor(clamp(sec, 0, TOTAL_SECONDS));
+    return '00:' + (s < 10 ? '0' + s : '' + s);
+  }
+
+  function syncUI() {
+    playPauseIcon.innerHTML = isPlaying ? SVG_PAUSE : SVG_PLAY;
+    playPauseLabel.textContent = isPlaying ? 'Pause' : (currentFrame >= TOTAL_FRAMES - 1 ? 'Replay' : 'Play');
+    muteIcon.innerHTML = audio.muted ? SVG_MUTE : SVG_VOL;
+    muteLabel.textContent = audio.muted ? 'Muted' : 'Sound On';
+    theatreLabel.textContent = document.body.classList.contains('theatre-mode') ? 'Exit Theatre' : 'Theatre';
+
+    const t = currentFrame / FPS;
+    beatLabel.textContent = getBeatTitle(t);
+    timeReadout.textContent = `${formatTime(t)} / 00:36`;
+    scrubberFill.style.width = `${(currentFrame / TOTAL_FRAMES) * 100}%`;
+    scrubber.setAttribute('aria-valuenow', t.toFixed(1));
+  }
+
+  function unlockAudioSafely() {
+    if (!audio.unlocked) {
+      audio.unlock();
+      audioUnlockPrompt.classList.add('hidden');
+      audio.setPlaying(isPlaying);
+    } else if (audio.ctx && audio.ctx.state === 'suspended') {
+      audio.ctx.resume().catch(() => {});
+      audioUnlockPrompt.classList.add('hidden');
+    }
+  }
+
+  function togglePlayPause() {
+    unlockAudioSafely();
+    if (!isPlaying && currentFrame >= TOTAL_FRAMES - 1) {
+      replayShort();
+      return;
+    }
+    isPlaying = !isPlaying;
+    audio.setPlaying(isPlaying);
+    lastTs = performance.now();
+    syncUI();
+  }
+
+  function replayShort() {
+    unlockAudioSafely();
+    currentFrame = 0;
+    frameAcc = 0;
+    isPlaying = true;
+    audio.reset();
+    audio.setPlaying(true);
+    lastTs = performance.now();
+    renderFrame(0);
+    syncUI();
+  }
+
+  function toggleMute() {
+    unlockAudioSafely();
+    audio.setMuted(!audio.muted);
+    syncUI();
+  }
+
+  function setTheatreMode(enabled) {
+    if (enabled) {
+      document.body.classList.add('theatre-mode', 'show-hud');
+      theatreToast.classList.add('visible');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => theatreToast.classList.remove('visible'), 2400);
+      scheduleHudHide();
+    } else {
+      document.body.classList.remove('theatre-mode', 'show-hud');
+      theatreToast.classList.remove('visible');
+      if (document.fullscreenElement && document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+    syncUI();
+  }
+
+  function scheduleHudHide() {
+    clearTimeout(hudTimer);
+    if (!document.body.classList.contains('theatre-mode')) return;
+    document.body.classList.add('show-hud');
+    hudTimer = setTimeout(() => {
+      if (document.body.classList.contains('theatre-mode')) {
+        document.body.classList.remove('show-hud');
+      }
+    }, 2200);
+  }
+
+  function startOrStopRecording() {
+    unlockAudioSafely();
+    if (isRecording) {
+      stopRecording();
+      return;
+    }
+    if (typeof canvas.captureStream !== 'function' || typeof MediaRecorder === 'undefined') {
+      recordLabel.textContent = 'Recording Unavailable';
+      setTimeout(() => { recordLabel.textContent = 'Record (.webm)'; }, 2200);
+      return;
+    }
+
+    try {
+      const videoStream = canvas.captureStream(FPS);
+      const tracks = [...videoStream.getVideoTracks()];
+      if (audio.recordDest && !audio.muted) {
+        const audioTracks = audio.recordDest.stream.getAudioTracks();
+        if (audioTracks.length > 0) tracks.push(...audioTracks);
+      }
+      const combinedStream = new MediaStream(tracks);
+
+      const mimeCandidates = [
+        'video/webm;codecs=vp9,opus',
+        'video/webm;codecs=vp8,opus',
+        'video/webm;codecs=vp9',
+        'video/webm'
+      ];
+      let chosenMime = '';
+      for (const m of mimeCandidates) {
+        if (MediaRecorder.isTypeSupported(m)) { chosenMime = m; break; }
+      }
+
+      recordedChunks = [];
+      mediaRecorder = new MediaRecorder(
+        combinedStream,
+        chosenMime ? { mimeType: chosenMime, videoBitsPerSecond: 10_000_000 } : { videoBitsPerSecond: 10_000_000 }
+      );
+
+      mediaRecorder.ondataavailable = (ev) => {
+        if (ev.data && ev.data.size > 0) recordedChunks.push(ev.data);
+      };
+
+      mediaRecorder.onstop = () => {
+        isRecording = false;
+        btnRecord.classList.remove('recording');
+        recordLabel.textContent = 'Record (.webm)';
+        if (recordedChunks.length > 0) {
+          const blob = new Blob(recordedChunks, { type: chosenMime || 'video/webm' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'vikram_betaal_stardew_short.webm';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 4000);
+        }
+      };
+
+      // Restart cleanly from 00:00 so recording captures the full 36-second 1080p60 short!
+      replayShort();
+      mediaRecorder.start(250);
+      isRecording = true;
+      btnRecord.classList.add('recording');
+      recordLabel.textContent = 'Stop & Save (.webm)';
+    } catch (err) {
+      isRecording = false;
+      btnRecord.classList.remove('recording');
+      recordLabel.textContent = 'Record (.webm)';
+    }
+  }
+
+  function stopRecording() {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      mediaRecorder.stop();
+    }
+  }
+
+  // Scrubber seeking
+  function seekFromEvent(ev) {
+    const rect = scrubber.getBoundingClientRect();
+    const ratio = clamp((ev.clientX - rect.left) / rect.width, 0, 1);
+    currentFrame = Math.min(TOTAL_FRAMES - 1, Math.floor(ratio * TOTAL_FRAMES));
+    audio.reset();
+    renderFrame(currentFrame);
+    syncUI();
+  }
+
+  let isScrubbing = false;
+  scrubber.addEventListener('pointerdown', (ev) => {
+    unlockAudioSafely();
+    isScrubbing = true;
+    scrubber.setPointerCapture(ev.pointerId);
+    seekFromEvent(ev);
+  });
+  scrubber.addEventListener('pointermove', (ev) => {
+    if (isScrubbing) seekFromEvent(ev);
+  });
+  scrubber.addEventListener('pointerup', () => { isScrubbing = false; });
+
+  // Event listeners
+  btnPlayPause.addEventListener('click', togglePlayPause);
+  btnReplay.addEventListener('click', replayShort);
+  btnMute.addEventListener('click', toggleMute);
+  btnTheatre.addEventListener('click', () => setTheatreMode(!document.body.classList.contains('theatre-mode')));
+  btnRecord.addEventListener('click', startOrStopRecording);
+  audioUnlockPrompt.addEventListener('click', () => {
+    unlockAudioSafely();
+    audio.setMuted(false);
+    syncUI();
+  });
+  canvas.addEventListener('click', () => {
+    if (!audio.unlocked) {
+      unlockAudioSafely();
+      audio.setMuted(false);
+      syncUI();
+    } else {
+      togglePlayPause();
+    }
+  });
+  window.addEventListener('mousemove', () => {
+    if (document.body.classList.contains('theatre-mode')) scheduleHudHide();
+  });
+
+  window.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Escape') {
+      if (document.body.classList.contains('theatre-mode')) {
+        setTheatreMode(false);
+      }
+    } else if (ev.code === 'Space') {
+      ev.preventDefault();
+      togglePlayPause();
+    } else if (ev.key === 'r' || ev.key === 'R') {
+      replayShort();
+    } else if (ev.key === 'm' || ev.key === 'M') {
+      toggleMute();
+    } else if (ev.key === 't' || ev.key === 'T') {
+      setTheatreMode(!document.body.classList.contains('theatre-mode'));
+    }
+  });
+
+  // Main 60 FPS deterministic animation loop
+  function tick(ts) {
+    if (!lastTs) lastTs = ts;
+    const dt = Math.min(0.1, (ts - lastTs) / 1000);
+    lastTs = ts;
+
+    if (isPlaying && !isScrubbing) {
+      frameAcc += dt * FPS;
+      while (frameAcc >= 1) {
+        frameAcc -= 1;
+        if (currentFrame < TOTAL_FRAMES - 1) {
+          currentFrame++;
+        } else {
+          isPlaying = false;
+          audio.setPlaying(false);
+          if (isRecording) stopRecording();
+          break;
+        }
+      }
+    }
+
+    audio.update(currentFrame / FPS, isPlaying);
+    renderFrame(currentFrame);
+    syncUI();
+
+    requestAnimationFrame(tick);
+  }
+
+  // Initial render & launch
+  renderFrame(0);
+  syncUI();
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
