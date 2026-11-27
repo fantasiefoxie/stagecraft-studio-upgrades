@@ -19,15 +19,23 @@ import path from 'node:path';
 
 import { PRESET_EPISODES } from '../src/studio/presets';
 import {
+  ARCHETYPE_CATALOG,
+  ARCHETYPE_DEFAULT_COLORS,
   CAPTION_STYLE_CATALOG,
+  CROWD_CATALOG,
   EpisodeScript,
+  FX_LIST,
+  MOOD_CATALOG,
   MOTION_CADENCE_CATALOG,
   MOTION_PROFILE_CATALOG,
   POST_FX_PASS_CATALOG,
+  PROP_CATALOG,
   RENDER_STYLE_CATALOG,
   RENDER_STYLE_CATEGORIES,
   SHOT_CATALOG,
+  STAGE_CATALOG,
   STUDIO_FPS,
+  WEATHER_LIST,
   frameIndexToTime,
   getEpisodeDuration,
   getEpisodeTotalFrames,
@@ -138,11 +146,43 @@ import {
   resolvePhonemeViseme,
 } from '../src/studio/facialExpressions';
 import {
+  ACT_ARC_PRESETS,
+  BACKDROP_THEMES,
+  CUSTOM_PROP_PRESETS,
   applyActVisualProgression,
   generateProceduralBackdropDataUrl,
   generateProceduralPropDataUrl,
 } from '../src/studio/backdropGenerator';
-import { createBaseDna, syncMemberWithDna } from '../src/studio/characterDna';
+import {
+  HEADWEAR_CATALOG,
+  SURFACE_PATTERN_CATALOG,
+  TOP_STYLE_CATALOG,
+  createBaseDna,
+  hydrateArchetypeToDna,
+  syncMemberWithDna,
+  validateAndNormalizeDna,
+} from '../src/studio/characterDna';
+import {
+  SPRITE_PRESET_CATEGORIES,
+  SPRITE_WORKSHOP_PRESETS,
+  buildCastMemberFromSpritePreset,
+} from '../src/studio/spriteWorkshopPresets';
+import {
+  MOOD_PALETTES,
+  drawActorCloseUp,
+  drawActorFullBody,
+  drawStageBackdrop,
+  drawStoryProp,
+} from '../src/studio/renderAssets';
+import {
+  drawUniversalBeatFx,
+  drawUniversalCrowdLayer,
+  drawUniversalWeather,
+} from '../src/studio/renderAssetsUniversal';
+import {
+  drawModularEntityCloseUp,
+  drawModularEntityFullBody,
+} from '../src/studio/modularEntityRenderer';
 import {
   measurePcmLoudness,
   normalizePcmLufs,
@@ -1859,6 +1899,315 @@ test('36. Upgrade 20: scripts/studio-stress-test.mjs exists, uses seeded PRNG (z
     'analyzeEpisodePacing',
   ]) {
     assert.ok(src.includes(fnName), `Stress test CLI must exercise ${fnName}`);
+  }
+});
+
+// Helper: full-featured mock Canvas 2D context for headless Node draw smoke tests
+function createMockCanvas2D(): { ctx: CanvasRenderingContext2D; getOps: () => number } {
+  let ops = 0;
+  const grad = { addColorStop() {} };
+  const ctx = {
+    save() {},
+    restore() {},
+    beginPath() {},
+    closePath() {},
+    moveTo() {},
+    lineTo() {},
+    quadraticCurveTo() {},
+    bezierCurveTo() {},
+    arc() {},
+    arcTo() {},
+    ellipse() {},
+    rect() {},
+    roundRect() {},
+    clip() {},
+    fill() { ops++; },
+    stroke() { ops++; },
+    fillRect() { ops++; },
+    strokeRect() { ops++; },
+    clearRect() {},
+    fillText() { ops++; },
+    strokeText() { ops++; },
+    measureText(t: string) { return { width: t.length * 8 }; },
+    translate() {},
+    rotate() {},
+    scale() {},
+    transform() {},
+    setTransform() {},
+    setLineDash() {},
+    getLineDash() { return []; },
+    createLinearGradient() { return grad; },
+    createRadialGradient() { return grad; },
+    createPattern() { return null; },
+    drawImage() { ops++; },
+    fillStyle: '#000',
+    strokeStyle: '#000',
+    lineWidth: 1,
+    lineCap: 'butt',
+    lineJoin: 'miter',
+    miterLimit: 10,
+    globalAlpha: 1,
+    globalCompositeOperation: 'source-over',
+    shadowColor: 'transparent',
+    shadowBlur: 0,
+    shadowOffsetX: 0,
+    shadowOffsetY: 0,
+    font: '16px sans-serif',
+    textAlign: 'left',
+    textBaseline: 'alphabetic',
+    direction: 'ltr',
+    filter: 'none',
+  } as unknown as CanvasRenderingContext2D;
+  return { ctx, getOps: () => ops };
+}
+
+// ---------------------------------------------------------------------------
+// Test 37 (Wave 3): Mega Catalog Counts, Validator Acceptance & Deterministic Draw Smoke Test
+// ---------------------------------------------------------------------------
+test('37. Wave 3: All 60 archetypes, 50 stages, 65 props, 16 moods, 12 weathers, 12 crowds & 14 FX validate and render cleanly', () => {
+  assert.equal(ARCHETYPE_CATALOG.length, 60, `Expected 60 archetypes, got ${ARCHETYPE_CATALOG.length}`);
+  assert.equal(STAGE_CATALOG.length, 50, `Expected 50 stages, got ${STAGE_CATALOG.length}`);
+  assert.equal(PROP_CATALOG.length, 65, `Expected 65 props (incl. none), got ${PROP_CATALOG.length}`);
+  assert.equal(MOOD_CATALOG.length, 16, `Expected 16 moods, got ${MOOD_CATALOG.length}`);
+  assert.equal(WEATHER_LIST.length, 12, `Expected 12 weathers, got ${WEATHER_LIST.length}`);
+  assert.equal(CROWD_CATALOG.length, 12, `Expected 12 crowds, got ${CROWD_CATALOG.length}`);
+  assert.equal(FX_LIST.length, 14, `Expected 14 FX, got ${FX_LIST.length}`);
+
+  // Zero non-deterministic RNG in renderAssetsUniversal.ts
+  const uniSrc = fs.readFileSync(path.join(process.cwd(), 'src/studio/renderAssetsUniversal.ts'), 'utf8');
+  assert.equal(/\bMath\.random\s*\(/.test(uniSrc), false, 'renderAssetsUniversal.ts must never call Math.random()');
+
+  // Every mood has a complete palette
+  for (const m of MOOD_CATALOG) {
+    assert.ok(MOOD_PALETTES[m.id], `Missing MOOD_PALETTES entry for ${m.id}`);
+  }
+
+  // Every archetype has default colors
+  for (const a of ARCHETYPE_CATALOG) {
+    assert.ok(ARCHETYPE_DEFAULT_COLORS[a.id], `Missing ARCHETYPE_DEFAULT_COLORS for ${a.id}`);
+  }
+
+  // Validate an episode exercising Wave 3 IDs
+  const ep = clone(PRESET_EPISODES[0]);
+  ep.cast.push({
+    id: 'w3_detective',
+    name: 'Inspector Vance',
+    archetype: 'detective',
+    primaryColor: ARCHETYPE_DEFAULT_COLORS.detective.primary,
+    accentColor: ARCHETYPE_DEFAULT_COLORS.detective.accent,
+    skinColor: ARCHETYPE_DEFAULT_COLORS.detective.skin,
+  });
+  ep.beats[0] = {
+    ...ep.beats[0],
+    stage: 'neon_cyber_alley',
+    mood: 'cyber_magenta',
+    prop: 'holo_tablet',
+    weather: 'data_matrix',
+    crowd: 'cyber_drones',
+    fx: 'glitch_tear',
+    actors: [
+      {
+        castId: 'w3_detective',
+        slot: 'center',
+        pose: 'gesture',
+        expression: 'angry',
+        facing: 'right',
+        motion: 'still',
+      },
+    ],
+  };
+  const validated = validateEpisodeScript(ep);
+  assert.equal(validated.ok, true, `Wave 3 episode failed validation: ${validated.ok ? '' : validated.error}`);
+
+  // Smoke-render every single stage, archetype (close-up + full-body), prop, weather, crowd, and FX
+  const { ctx, getOps } = createMockCanvas2D();
+  const baseOps = getOps();
+  const cyberPal = MOOD_PALETTES.cyber_magenta;
+  const noirPal = MOOD_PALETTES.noir_monochrome;
+
+  for (const st of STAGE_CATALOG) {
+    drawStageBackdrop(ctx, 640, 360, st.id, 'cyber_magenta', 1.25);
+  }
+  for (const a of ARCHETYPE_CATALOG) {
+    const col = ARCHETYPE_DEFAULT_COLORS[a.id];
+    const member = {
+      id: `test_${a.id}`,
+      name: a.label,
+      archetype: a.id,
+      primaryColor: col.primary,
+      accentColor: col.accent,
+      skinColor: col.skin,
+    };
+    drawActorCloseUp(ctx, member, 'calm', 2, 0.5, 'right', 1.2);
+    drawActorFullBody(ctx, member, 320, 300, 1.0, 'stand', 'joy', 'right', 2, 0.5, 1.2, 0.5, 'still');
+  }
+  for (const p of PROP_CATALOG) {
+    if (p.id === 'none') continue;
+    drawStoryProp(ctx, p.id, 320, 180, 1.0, 1.2, 0.5);
+  }
+  for (const w of WEATHER_LIST) {
+    drawUniversalWeather(ctx, 640, 360, w, cyberPal, 1.25);
+  }
+  for (const c of CROWD_CATALOG) {
+    drawUniversalCrowdLayer(ctx, 640, 360, c.id, noirPal, 1.25, ep.beats[0], 0);
+  }
+  for (const fx of FX_LIST) {
+    drawUniversalBeatFx(ctx, 640, 360, fx, 0.5, 1.25);
+  }
+
+  assert.ok(getOps() - baseOps > 2000, `Expected >2000 canvas draw ops across all catalogs, got ${getOps() - baseOps}`);
+});
+
+// ---------------------------------------------------------------------------
+// Test 38 (Wave 3): Expanded Procedural Backdrop Studio (24), Props (24) & Act Arcs (9)
+// ---------------------------------------------------------------------------
+test('38. Wave 3: All 24 procedural backdrop themes, 24 prop presets & 9 Act Arcs generate deterministic outputs', () => {
+  assert.equal(BACKDROP_THEMES.length, 24, `Expected 24 backdrop themes, got ${BACKDROP_THEMES.length}`);
+  assert.equal(CUSTOM_PROP_PRESETS.length, 24, `Expected 24 custom prop presets, got ${CUSTOM_PROP_PRESETS.length}`);
+  assert.equal(ACT_ARC_PRESETS.length, 9, `Expected 9 act arc presets, got ${ACT_ARC_PRESETS.length}`);
+
+  for (const theme of BACKDROP_THEMES) {
+    const a = generateProceduralBackdropDataUrl({ theme: theme.id, seed: 13 });
+    const b = generateProceduralBackdropDataUrl({ theme: theme.id, seed: 13 });
+    assert.equal(a.dataUrl, b.dataUrl, `Backdrop theme ${theme.id} must be deterministic`);
+    assert.ok(a.dataUrl.startsWith('data:image/'), `Backdrop theme ${theme.id} must return valid data URL`);
+  }
+
+  for (const preset of CUSTOM_PROP_PRESETS) {
+    const a = generateProceduralPropDataUrl({ preset: preset.id, seed: 9 });
+    const b = generateProceduralPropDataUrl({ preset: preset.id, seed: 9 });
+    assert.equal(a.dataUrl, b.dataUrl, `Prop preset ${preset.id} must be deterministic`);
+    assert.ok(a.dataUrl.startsWith('data:image/'), `Prop preset ${preset.id} must return valid data URL`);
+  }
+
+  const baseEp = clone(PRESET_EPISODES[0]);
+  for (const arc of ACT_ARC_PRESETS) {
+    const applied = applyActVisualProgression(baseEp, arc.id);
+    assert.equal(applied.episode.beats.length, baseEp.beats.length);
+    assert.equal(
+      validateEpisodeScript(applied.episode).ok,
+      true,
+      `Act arc ${arc.id} must produce a schema-valid episode`
+    );
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Test 39 (Wave 3): 32 Curated Sprite DNA Presets + New CharacterDNA Parts & Hydration
+// ---------------------------------------------------------------------------
+test('39. Wave 3: 32 curated Sprite DNA presets, new headwear/tops/patterns & all 20 archetype hydrations validate and render cleanly', () => {
+  assert.equal(SPRITE_WORKSHOP_PRESETS.length, 32, `Expected 32 sprite presets, got ${SPRITE_WORKSHOP_PRESETS.length}`);
+  assert.equal(SPRITE_PRESET_CATEGORIES.length, 6, `Expected 6 sprite categories, got ${SPRITE_PRESET_CATEGORIES.length}`);
+  assert.ok(HEADWEAR_CATALOG.length >= 16, `Expected >= 16 headwear styles, got ${HEADWEAR_CATALOG.length}`);
+  assert.ok(TOP_STYLE_CATALOG.length >= 15, `Expected >= 15 top styles, got ${TOP_STYLE_CATALOG.length}`);
+  assert.ok(SURFACE_PATTERN_CATALOG.length >= 14, `Expected >= 14 surface patterns, got ${SURFACE_PATTERN_CATALOG.length}`);
+
+  // Verify every new DNA part ID is preserved by validateAndNormalizeDna
+  const probeDna = createBaseDna('humanoid');
+  for (const hw of ['fedora', 'cyber_visor', 'astronaut_helmet', 'tricorn_hat'] as const) {
+    const norm = validateAndNormalizeDna({ ...probeDna, outfit: { ...probeDna.outfit, headwear: hw } });
+    assert.ok(norm, `Expected normalized DNA for headwear ${hw}`);
+    assert.equal(norm.outfit.headwear, hw, `Headwear ${hw} must survive normalization`);
+  }
+  for (const top of ['trench_coat', 'lab_coat', 'cyber_jacket', 'space_suit'] as const) {
+    const norm = validateAndNormalizeDna({ ...probeDna, outfit: { ...probeDna.outfit, topStyle: top } });
+    assert.ok(norm, `Expected normalized DNA for topStyle ${top}`);
+    assert.equal(norm.outfit.topStyle, top, `Top ${top} must survive normalization`);
+  }
+  for (const pat of ['circuit_trace', 'pinstripe', 'camo_hex', 'starfield_speckle'] as const) {
+    const norm = validateAndNormalizeDna({ ...probeDna, outfit: { ...probeDna.outfit, surfacePattern: pat } });
+    assert.ok(norm, `Expected normalized DNA for surfacePattern ${pat}`);
+    assert.equal(norm.outfit.surfacePattern, pat, `Surface pattern ${pat} must survive normalization`);
+  }
+
+  const { ctx, getOps } = createMockCanvas2D();
+  const seenIds = new Set<string>();
+  const baseOps = getOps();
+
+  for (let i = 0; i < SPRITE_WORKSHOP_PRESETS.length; i++) {
+    const preset = SPRITE_WORKSHOP_PRESETS[i];
+    assert.equal(seenIds.has(preset.id), false, `Duplicate sprite preset ID: ${preset.id}`);
+    seenIds.add(preset.id);
+
+    const normalizedDna = validateAndNormalizeDna(preset.dna);
+    assert.ok(normalizedDna, `Expected normalized DNA for preset ${preset.id}`);
+    assert.equal(normalizedDna.chassis, preset.dna.chassis);
+
+    const member = buildCastMemberFromSpritePreset(preset, i);
+    drawModularEntityCloseUp(ctx, member, normalizedDna, 'joy', 2, 0.5, 'right', 1.1);
+    drawModularEntityFullBody(ctx, member, normalizedDna, 260, 290, 1.0, 'stand', 'calm', 'right', 2, 0.4, 1.1, 0.5, 'still');
+  }
+
+  // Hydrate and render all 20 new Wave 3 archetypes
+  const wave3Archetypes = [
+    'detective', 'scientist', 'astronaut', 'cyber_hacker', 'android',
+    'mech_pilot', 'wizard', 'pirate_captain', 'ninja', 'viking',
+    'pharaoh', 'vampire_lord', 'dragon_kin', 'elf_archer', 'dwarf_smith',
+    'ghost_phantom', 'journalist', 'street_musician', 'cat_mascot', 'robot_companion',
+  ] as const;
+
+  for (const arch of wave3Archetypes) {
+    const col = ARCHETYPE_DEFAULT_COLORS[arch];
+    const hydrated = hydrateArchetypeToDna({
+      id: `hyd_${arch}`,
+      name: arch,
+      archetype: arch,
+      primaryColor: col.primary,
+      accentColor: col.accent,
+      skinColor: col.skin,
+    });
+    const norm = validateAndNormalizeDna(hydrated);
+    assert.ok(norm, `Expected normalized DNA for hydrated archetype ${arch}`);
+    const member = syncMemberWithDna(
+      { id: `hyd_${arch}`, name: arch, archetype: arch, primaryColor: col.primary, accentColor: col.accent, skinColor: col.skin },
+      norm
+    );
+    drawModularEntityFullBody(ctx, member, norm, 260, 290, 1.0, 'stand', 'calm', 'right', 2, 0.3, 0.9, 0.4, 'still');
+  }
+
+  assert.ok(getOps() - baseOps > 1000, `Expected >1000 modular entity draw ops, got ${getOps() - baseOps}`);
+});
+
+// ---------------------------------------------------------------------------
+// Test 40 (Wave 3): Spatial Acoustics & Volumetric Lighting Coverage for Wave 3 Stages & Moods
+// ---------------------------------------------------------------------------
+test('40. Wave 3: All 20 new stages resolve deterministic spatial acoustics & volumetric lighting across new moods', () => {
+  const wave3Stages = [
+    'neon_cyber_alley', 'orbital_starship_bridge', 'mars_colony_dome', 'noir_rainy_street',
+    'modern_news_studio', 'cozy_bookshop_cafe', 'high_tech_lab', 'courtroom_hall',
+    'ancient_egypt_temple', 'roman_colosseum', 'nordic_fjord_hall', 'gothic_cathedral',
+    'steampunk_clocktower', 'pirate_galleon_deck', 'underwater_atlantis', 'volcanic_citadel',
+    'snowy_mountain_pass', 'cherry_blossom_shrine', 'vintage_train_car', 'astral_observatory',
+  ] as const;
+
+  const wave3Moods = [
+    'cyber_magenta', 'noir_monochrome', 'arctic_aurora', 'sunlit_morning',
+    'volcanic_inferno', 'deep_abyss', 'sakura_dawn', 'sepia_archive',
+  ] as const;
+
+  const baseBeat = clone(PRESET_EPISODES[0].beats[0]);
+  baseBeat.frame = 'main';
+  baseBeat.shot = 'wide_stage';
+  const style = resolveVisualStyle({ lightShafts: 0.65 });
+
+  for (let i = 0; i < wave3Stages.length; i++) {
+    const stage = wave3Stages[i];
+    const mood = wave3Moods[i % wave3Moods.length];
+
+    const acoustics = getStageRoomAcoustics(stage);
+    assert.ok(acoustics.profileId.length > 0, `Missing room acoustics for ${stage}`);
+    assert.ok(acoustics.wetMix >= 0 && acoustics.wetMix <= 0.5, `Out-of-range wetMix for ${stage}`);
+
+    const beamKind = resolveVolumetricBeamKind(stage, mood);
+    assert.ok(
+      ['temple_godrays', 'window_sunbeams', 'moonlight_shafts', 'hearth_glow'].includes(beamKind),
+      `Unexpected volumetric beam kind ${beamKind} for ${stage}/${mood}`
+    );
+
+    const planA = computeVolumetricLightPlan({ ...baseBeat, stage, mood }, style, 1.5, 'neon_cybernoir');
+    const planB = computeVolumetricLightPlan({ ...baseBeat, stage, mood }, style, 1.5, 'neon_cybernoir');
+    assert.deepEqual(planA, planB, `Volumetric light plan must be deterministic for ${stage}`);
+    assert.equal(planA.enabled, true, `Volumetric light plan should enable for ${stage}/${mood}`);
   }
 });
 

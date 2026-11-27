@@ -242,6 +242,51 @@ function paintSurfacePatternClipped(
       ctx.lineTo(sx + 2, sy + 28);
       ctx.stroke();
     }
+  } else if (pattern === 'circuit_trace') {
+    ctx.strokeStyle = tint;
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 6; i++) {
+      const sx = x + ((i * 23 + 8) % 88) * 0.01 * w;
+      const sy = y + ((i * 19 + 6) % 72) * 0.01 * h;
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.lineTo(sx + 16, sy);
+      ctx.lineTo(sx + 22, sy + 14);
+      ctx.stroke();
+      ctx.fillStyle = tint;
+      ctx.beginPath(); ctx.arc(sx + 22, sy + 14, 3, 0, Math.PI * 2); ctx.fill();
+    }
+  } else if (pattern === 'pinstripe') {
+    ctx.strokeStyle = tint;
+    ctx.lineWidth = 1.4;
+    for (let sx = x + 6; sx < x + w; sx += 10) {
+      ctx.beginPath(); ctx.moveTo(sx, y); ctx.lineTo(sx, y + h); ctx.stroke();
+    }
+  } else if (pattern === 'camo_hex') {
+    ctx.strokeStyle = tint;
+    ctx.lineWidth = 1.6;
+    for (let row = 0; row < 6; row++) {
+      for (let col = 0; col < 5; col++) {
+        const cx = x + col * 24 + (row % 2) * 12;
+        const cy = y + row * 20;
+        ctx.beginPath();
+        for (let k = 0; k < 6; k++) {
+          const a = (k / 6) * Math.PI * 2;
+          const px = cx + Math.cos(a) * 9;
+          const py = cy + Math.sin(a) * 9;
+          if (k === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.stroke();
+      }
+    }
+  } else if (pattern === 'starfield_speckle') {
+    ctx.fillStyle = tint;
+    for (let i = 0; i < 26; i++) {
+      const sx = x + ((i * 47 + 11) % 95) * 0.01 * w;
+      const sy = y + ((i * 31 + 7) % 91) * 0.01 * h;
+      ctx.beginPath(); ctx.arc(sx, sy, i % 4 === 0 ? 2.6 : 1.3, 0, Math.PI * 2); ctx.fill();
+    }
   }
 
   ctx.restore();
@@ -1127,6 +1172,33 @@ function drawModularHeadwear(
     ctx.strokeStyle = '#92692b';
     ctx.lineWidth = 3;
     ctx.stroke();
+  } else if (headwear === 'fedora') {
+    ctx.fillStyle = darkenHex(primary, 0.65);
+    ctx.beginPath(); ctx.ellipse(0, -52, 92, 16, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = primary;
+    ctx.beginPath();
+    ctx.moveTo(-60, -52); ctx.lineTo(-42, -108); ctx.lineTo(0, -96); ctx.lineTo(42, -108); ctx.lineTo(60, -52);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = accent;
+    ctx.fillRect(-56, -62, 112, 10);
+  } else if (headwear === 'cyber_visor') {
+    ctx.fillStyle = 'rgba(0, 240, 255, 0.34)';
+    ctx.strokeStyle = accent;
+    ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.roundRect(-62, -26, 124, 30, 10); ctx.fill(); ctx.stroke();
+  } else if (headwear === 'astronaut_helmet') {
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.lineWidth = 10;
+    ctx.beginPath(); ctx.arc(0, -4, 86, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = 'rgba(186, 230, 253, 0.16)';
+    ctx.beginPath(); ctx.arc(0, -4, 82, 0, Math.PI * 2); ctx.fill();
+  } else if (headwear === 'tricorn_hat') {
+    ctx.fillStyle = '#18181b';
+    ctx.beginPath();
+    ctx.moveTo(-98, -46); ctx.quadraticCurveTo(0, -134, 98, -46); ctx.lineTo(66, -38); ctx.lineTo(-66, -38);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = accent;
+    ctx.beginPath(); ctx.arc(0, -76, 11, 0, Math.PI * 2); ctx.fill();
   }
   ctx.restore();
 }
@@ -2070,6 +2142,35 @@ export function drawModularEntityFullBody(
     ctx.lineTo(waistW * 0.45, waistY - 4);
     ctx.closePath();
     ctx.fill();
+  } else if (dna.outfit.topStyle === 'trench_coat' || dna.outfit.topStyle === 'lab_coat') {
+    // Crisp coat lapels & shirt V-panel
+    ctx.fillStyle = dna.outfit.topStyle === 'lab_coat' ? '#f8fafc' : '#e2e8f0';
+    ctx.beginPath();
+    ctx.moveTo(-10, torsoTopY); ctx.lineTo(10, torsoTopY); ctx.lineTo(0, torsoTopY + 34); ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = pal.accent;
+    ctx.fillRect(-3, torsoTopY + 8, 6, 28);
+    if (dna.outfit.topStyle === 'trench_coat') {
+      ctx.fillStyle = pal.accent;
+      ctx.fillRect(-waistW - 2, waistY - 12, (waistW + 2) * 2, 5);
+    }
+  } else if (dna.outfit.topStyle === 'cyber_jacket') {
+    // Neon high-collar jacket piping & glowing chest chevron
+    ctx.strokeStyle = pal.accent;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(-chestW * 0.72, torsoTopY + 8);
+    ctx.lineTo(0, torsoTopY + 26);
+    ctx.lineTo(chestW * 0.72, torsoTopY + 8);
+    ctx.stroke();
+  } else if (dna.outfit.topStyle === 'space_suit') {
+    // EVA chest control pack & pressure hoses
+    ctx.fillStyle = '#e2e8f0';
+    ctx.fillRect(-13, torsoTopY + 12, 26, 20);
+    ctx.fillStyle = pal.accent;
+    ctx.fillRect(-9, torsoTopY + 16, 8, 6);
+    ctx.fillStyle = '#ef4444';
+    ctx.fillRect(2, torsoTopY + 16, 7, 6);
   }
 
   // Collar Accessories on full-body torso

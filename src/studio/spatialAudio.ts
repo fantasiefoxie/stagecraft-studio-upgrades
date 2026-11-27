@@ -127,6 +127,27 @@ const STAGE_ACOUSTIC_MAP: Record<StageId, RoomAcousticProfileId> = {
   ashoka_vatika: 'dry_outdoor',
   savanna_baobab: 'dry_outdoor',
   tropical_archipelago: 'dry_outdoor',
+  // Wave 3: +20 Multi-Genre Stages
+  neon_cyber_alley: 'canyon_echo',
+  orbital_starship_bridge: 'palace_hall',
+  mars_colony_dome: 'palace_hall',
+  noir_rainy_street: 'canyon_echo',
+  modern_news_studio: 'wood_interior',
+  cozy_bookshop_cafe: 'wood_interior',
+  high_tech_lab: 'palace_hall',
+  courtroom_hall: 'palace_hall',
+  ancient_egypt_temple: 'temple_reverb',
+  roman_colosseum: 'canyon_echo',
+  nordic_fjord_hall: 'wood_interior',
+  gothic_cathedral: 'temple_reverb',
+  steampunk_clocktower: 'cave_slapback',
+  pirate_galleon_deck: 'dry_outdoor',
+  underwater_atlantis: 'cave_slapback',
+  volcanic_citadel: 'cave_slapback',
+  snowy_mountain_pass: 'canyon_echo',
+  cherry_blossom_shrine: 'dry_outdoor',
+  vintage_train_car: 'wood_interior',
+  astral_observatory: 'temple_reverb',
 };
 
 export function getStageRoomAcoustics(stage: StageId | string): StageRoomAcoustics {

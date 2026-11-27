@@ -45,7 +45,13 @@ export type StorybookShelf =
 import { CharacterDNA, validateAndNormalizeDna } from './characterDna';
 export type { CharacterDNA } from './characterDna';
 
-export type ArchetypeGroup = 'Epic & Divine' | 'Royalty & Folk' | 'Fable Fauna' | 'World Legends';
+export type ArchetypeGroup =
+  | 'Epic & Divine'
+  | 'Royalty & Folk'
+  | 'Fable Fauna'
+  | 'World Legends'
+  | 'Modern & Sci-Fi'
+  | 'Fantasy & Creatures';
 
 export type ArchetypeId =
   | 'deva'
@@ -87,7 +93,28 @@ export type ArchetypeId =
   | 'spider'
   | 'knight'
   | 'samurai'
-  | 'raven';
+  | 'raven'
+  // Wave 3: Modern, Sci-Fi, Fantasy, Historical, Noir & Creatures (+20 -> 60 total)
+  | 'detective'
+  | 'scientist'
+  | 'astronaut'
+  | 'cyber_hacker'
+  | 'android'
+  | 'mech_pilot'
+  | 'wizard'
+  | 'pirate_captain'
+  | 'ninja'
+  | 'viking'
+  | 'pharaoh'
+  | 'vampire_lord'
+  | 'dragon_kin'
+  | 'elf_archer'
+  | 'dwarf_smith'
+  | 'ghost_phantom'
+  | 'journalist'
+  | 'street_musician'
+  | 'cat_mascot'
+  | 'robot_companion';
 
 export type StageId =
   | 'banyan_clearing'
@@ -119,7 +146,28 @@ export type StageId =
   | 'enchanted_cottage'
   | 'savanna_baobab'
   | 'red_canyon_mesa'
-  | 'tropical_archipelago';
+  | 'tropical_archipelago'
+  // Wave 3: Multi-Genre Stages (+20 -> 50 total)
+  | 'neon_cyber_alley'
+  | 'orbital_starship_bridge'
+  | 'mars_colony_dome'
+  | 'noir_rainy_street'
+  | 'modern_news_studio'
+  | 'cozy_bookshop_cafe'
+  | 'high_tech_lab'
+  | 'courtroom_hall'
+  | 'ancient_egypt_temple'
+  | 'roman_colosseum'
+  | 'nordic_fjord_hall'
+  | 'gothic_cathedral'
+  | 'steampunk_clocktower'
+  | 'pirate_galleon_deck'
+  | 'underwater_atlantis'
+  | 'volcanic_citadel'
+  | 'snowy_mountain_pass'
+  | 'cherry_blossom_shrine'
+  | 'vintage_train_car'
+  | 'astral_observatory';
 
 export type MoodId =
   | 'midnight_banyan'
@@ -129,7 +177,16 @@ export type MoodId =
   | 'twilight_temple'
   | 'moonlit_marble'
   | 'emerald_jungle'
-  | 'mystic_teal';
+  | 'mystic_teal'
+  // Wave 3: +8 Mood Palettes (16 total)
+  | 'cyber_magenta'
+  | 'noir_monochrome'
+  | 'arctic_aurora'
+  | 'sunlit_morning'
+  | 'volcanic_inferno'
+  | 'deep_abyss'
+  | 'sakura_dawn'
+  | 'sepia_archive';
 
 export type PropId =
   | 'none'
@@ -172,7 +229,32 @@ export type PropId =
   | 'golden_fleece'
   | 'sun_orb'
   | 'magic_peach'
-  | 'kris_dagger';
+  | 'kris_dagger'
+  // Wave 3: Multi-Genre Story Props (+24 -> 65 total)
+  | 'magnifying_glass'
+  | 'holo_tablet'
+  | 'energy_blade'
+  | 'neon_drone'
+  | 'vintage_camera'
+  | 'microphone_stand'
+  | 'briefcase'
+  | 'newspaper_frontpage'
+  | 'coffee_mug'
+  | 'laptop_screen'
+  | 'potion_flask'
+  | 'spellbook_tome'
+  | 'wizard_staff'
+  | 'crystal_amulet'
+  | 'brass_compass'
+  | 'antique_pocketwatch'
+  | 'violin_bow'
+  | 'electric_guitar'
+  | 'golden_trophy'
+  | 'judge_gavel'
+  | 'microscope'
+  | 'rocket_model'
+  | 'pirate_map'
+  | 'key_ornate';
 
 export type ShotId =
   | 'wide_stage'
@@ -226,7 +308,20 @@ export type MotionId =
 
 export type FrameMode = 'main' | 'nested_story' | 'chapter_title' | 'moral_card' | 'end_screen';
 
-export type CrowdId = 'none' | 'courtiers' | 'villagers' | 'army' | 'forest_herd' | 'monks';
+export type CrowdId =
+  | 'none'
+  | 'courtiers'
+  | 'villagers'
+  | 'army'
+  | 'forest_herd'
+  | 'monks'
+  // Wave 3: +6 Crowds (12 total)
+  | 'city_commuters'
+  | 'cyber_drones'
+  | 'pirate_crew'
+  | 'scholars_hall'
+  | 'spectral_flock'
+  | 'masquerade_ball';
 
 export type CameraMoveId =
   | 'still'
@@ -242,9 +337,31 @@ export type FxId =
   | 'question_mark'
   | 'smear_swoop'
   | 'crimson_impact'
-  | 'divine_aura';
+  | 'divine_aura'
+  // Wave 3: +8 Beat FX (14 total)
+  | 'speed_lines'
+  | 'magic_runes'
+  | 'glitch_tear'
+  | 'sparkle_burst'
+  | 'spotlight_beam'
+  | 'shatter_glass'
+  | 'heartbeat_pulse'
+  | 'comic_pow';
 
-export type WeatherId = 'fireflies' | 'embers' | 'rain' | 'mist' | 'petals' | 'none';
+export type WeatherId =
+  | 'fireflies'
+  | 'embers'
+  | 'rain'
+  | 'mist'
+  | 'petals'
+  | 'none'
+  // Wave 3: +6 Weathers (12 total)
+  | 'snow'
+  | 'lightning_storm'
+  | 'sandstorm'
+  | 'starfall'
+  | 'sakura_blossoms'
+  | 'data_matrix';
 
 export type RaagId =
   | 'bhairavi'
@@ -721,6 +838,28 @@ export const ARCHETYPE_CATALOG: Array<{
   { id: 'knight', label: 'Knight / Nordic Hero', group: 'World Legends', stories: 'King Arthur, Grimm Heroes, Greek & Norse Epics' },
   { id: 'samurai', label: 'Samurai / Eastern Hero', group: 'World Legends', stories: 'Momotaro, Japanese Yokai, Chinese Martial Epics' },
   { id: 'raven', label: 'Spirit Raven / Thunderbird', group: 'World Legends', stories: 'Pacific NW Raven Steals the Sun, Norse Ravens' },
+  // Modern & Sci-Fi (10)
+  { id: 'detective', label: 'Noir Detective', group: 'Modern & Sci-Fi', stories: 'Mystery, True Crime, 1940s Noir Investigations' },
+  { id: 'scientist', label: 'Lead Scientist', group: 'Modern & Sci-Fi', stories: 'Science Explainers, Space Labs, Discoveries' },
+  { id: 'astronaut', label: 'EVA Astronaut', group: 'Modern & Sci-Fi', stories: 'Orbital Missions, Mars Colonies, Deep Space' },
+  { id: 'cyber_hacker', label: 'Cyberpunk Hacker', group: 'Modern & Sci-Fi', stories: 'Neon Thrillers, Netrunner Heists, Tech Noir' },
+  { id: 'android', label: 'Synthetic Android', group: 'Modern & Sci-Fi', stories: 'AI Ethics, Sci-Fi Dramas, Future Worlds' },
+  { id: 'mech_pilot', label: 'Starfighter / Mech Pilot', group: 'Modern & Sci-Fi', stories: 'Mecha Anime, Starship Squadrons, Space Operas' },
+  { id: 'journalist', label: 'Investigative Journalist', group: 'Modern & Sci-Fi', stories: 'Documentaries, Newsroom Explainers, History' },
+  { id: 'street_musician', label: 'Indie Street Musician', group: 'Modern & Sci-Fi', stories: 'Slice of Life, Urban Stories, Music Shorts' },
+  { id: 'cat_mascot', label: 'Stylized Cat Mascot', group: 'Modern & Sci-Fi', stories: 'Channel Host, Cozy Explainers, Fables' },
+  { id: 'robot_companion', label: 'Helper Bot Companion', group: 'Modern & Sci-Fi', stories: 'Tech Tutorials, Sci-Fi Sidekick, Kids STEM' },
+  // Fantasy & Creatures (10)
+  { id: 'wizard', label: 'Arcane Wizard', group: 'Fantasy & Creatures', stories: 'High Fantasy, Spellcraft, Merlin & Lore' },
+  { id: 'pirate_captain', label: 'Pirate Captain', group: 'Fantasy & Creatures', stories: 'High Seas Adventures, Treasure Hunts' },
+  { id: 'ninja', label: 'Shadow Shinobi', group: 'Fantasy & Creatures', stories: 'Feudal Stealth, Martial Arts, Eastern Lore' },
+  { id: 'viking', label: 'Nordic Viking', group: 'Fantasy & Creatures', stories: 'Norse Sagas, Fjord Expeditions, Mythology' },
+  { id: 'pharaoh', label: 'Ancient Pharaoh', group: 'Fantasy & Creatures', stories: 'Egyptian History, Pyramid Mysteries, Empires' },
+  { id: 'vampire_lord', label: 'Gothic Vampire Lord', group: 'Fantasy & Creatures', stories: 'Gothic Horror, Victorian Mystery, Dark Fantasy' },
+  { id: 'dragon_kin', label: 'Dragon-Kin Champion', group: 'Fantasy & Creatures', stories: 'Draconic Epics, RPG Campaigns, Fantasy' },
+  { id: 'elf_archer', label: 'Sylvan Elf Archer', group: 'Fantasy & Creatures', stories: 'Elven Kingdoms, Woodland Quests, RPG' },
+  { id: 'dwarf_smith', label: 'Mountain Dwarf Smith', group: 'Fantasy & Creatures', stories: 'Forge Legends, Underground Citadels, RPG' },
+  { id: 'ghost_phantom', label: 'Luminous Phantom', group: 'Fantasy & Creatures', stories: 'Ghost Stories, Haunted Halls, Supernatural' },
 ];
 
 export const STAGE_CATALOG: Array<{ id: StageId; label: string; useCase: string }> = [
@@ -754,6 +893,27 @@ export const STAGE_CATALOG: Array<{ id: StageId; label: string; useCase: string 
   { id: 'savanna_baobab', label: 'African Savanna & Great Baobab', useCase: 'Anansi the Spider & African Griot Fables' },
   { id: 'red_canyon_mesa', label: 'Red Rock Canyon & Starry Mesa', useCase: 'Indigenous American & Mesoamerican Legends' },
   { id: 'tropical_archipelago', label: 'Javanese Banyan & Volcano Bay', useCase: 'Sang Kancil, Wayang & Southeast Asian Tales' },
+  // Wave 3: +20 Multi-Genre Stages (50 total)
+  { id: 'neon_cyber_alley', label: 'Neon Cyber Alley', useCase: 'Cyberpunk thrillers, rain-slicked sci-fi noir' },
+  { id: 'orbital_starship_bridge', label: 'Orbital Starship Bridge', useCase: 'Deep space command deck, sci-fi dramas' },
+  { id: 'mars_colony_dome', label: 'Mars Colony Dome', useCase: 'Planetary exploration, future frontiers' },
+  { id: 'noir_rainy_street', label: '1940s Noir Rainy Street', useCase: 'Detective mysteries, true crime, art-deco' },
+  { id: 'modern_news_studio', label: 'Modern Broadcast Studio', useCase: 'News explainers, tech briefings, commentary' },
+  { id: 'cozy_bookshop_cafe', label: 'Cozy Bookshop Café', useCase: 'Slice-of-life, literary essays, warm talks' },
+  { id: 'high_tech_lab', label: 'High-Tech Research Lab', useCase: 'STEM explainers, biotech, AI experiments' },
+  { id: 'courtroom_hall', label: 'Grand Courtroom Hall', useCase: 'Legal dramas, debates, historical trials' },
+  { id: 'ancient_egypt_temple', label: 'Ancient Egypt Temple', useCase: 'Pharaoh chronicles, pyramid mysteries' },
+  { id: 'roman_colosseum', label: 'Roman Colosseum Arena', useCase: 'Classical history, gladiator epics, Rome' },
+  { id: 'nordic_fjord_hall', label: 'Nordic Fjord Longhouse', useCase: 'Viking sagas, aurora legends, Norse lore' },
+  { id: 'gothic_cathedral', label: 'Gothic Rose Cathedral', useCase: 'Victorian horror, vampire tales, dark fantasy' },
+  { id: 'steampunk_clocktower', label: 'Steampunk Clocktower', useCase: 'Brass gearworks, time-travel adventures' },
+  { id: 'pirate_galleon_deck', label: 'Pirate Galleon Deck', useCase: 'High-seas battles, treasure voyages' },
+  { id: 'underwater_atlantis', label: 'Sunken Atlantis Ruins', useCase: 'Oceanic myths, underwater exploration' },
+  { id: 'volcanic_citadel', label: 'Obsidian Volcanic Citadel', useCase: 'Dark fantasy climaxes, dragon lairs' },
+  { id: 'snowy_mountain_pass', label: 'Snowy Alpine Pass', useCase: 'Survival treks, Himalayan & Nordic quests' },
+  { id: 'cherry_blossom_shrine', label: 'Cherry Blossom Shrine', useCase: 'Anime romance, samurai duels, sakura spring' },
+  { id: 'vintage_train_car', label: 'Vintage Express Train Car', useCase: 'Murder mysteries, cross-country journeys' },
+  { id: 'astral_observatory', label: 'Astral Cosmos Observatory', useCase: 'Astronomy explainers, arcane starlore' },
 ];
 
 export const MOOD_CATALOG: Array<{ id: MoodId; label: string }> = [
@@ -765,6 +925,15 @@ export const MOOD_CATALOG: Array<{ id: MoodId; label: string }> = [
   { id: 'moonlit_marble', label: 'Silver Moonlight' },
   { id: 'emerald_jungle', label: 'Emerald Jungle' },
   { id: 'mystic_teal', label: 'Mystic Lake Teal' },
+  // Wave 3: +8 Mood Palettes (16 total)
+  { id: 'cyber_magenta', label: 'Cyberpunk Neon Magenta' },
+  { id: 'noir_monochrome', label: 'Silver Noir Monochrome' },
+  { id: 'arctic_aurora', label: 'Arctic Aurora Glow' },
+  { id: 'sunlit_morning', label: 'Crisp Sunlit Morning' },
+  { id: 'volcanic_inferno', label: 'Volcanic Molten Inferno' },
+  { id: 'deep_abyss', label: 'Deep Ocean Abyss' },
+  { id: 'sakura_dawn', label: 'Sakura Blossom Dawn' },
+  { id: 'sepia_archive', label: 'Vintage Sepia Archive' },
 ];
 
 export const PROP_CATALOG: Array<{ id: PropId; label: string; note: string }> = [
@@ -809,6 +978,31 @@ export const PROP_CATALOG: Array<{ id: PropId; label: string; note: string }> = 
   { id: 'sun_orb', label: 'Radiant Stolen Sun Orb', note: 'Raven Steals the Sun & sky myths' },
   { id: 'magic_peach', label: 'Giant Immortal Peach', note: 'Journey to the West, Momotaro & Grimm' },
   { id: 'kris_dagger', label: 'Javanese Golden Kris', note: 'Southeast Asian Wayang & archipelago blade' },
+  // Wave 3: +24 Multi-Genre Props (65 total)
+  { id: 'magnifying_glass', label: 'Detective Magnifying Glass', note: 'Noir clue lens with glint' },
+  { id: 'holo_tablet', label: 'Holographic Data Tablet', note: 'Glowing sci-fi projection slate' },
+  { id: 'energy_blade', label: 'Plasma Energy Blade', note: 'Luminous sci-fi laser saber' },
+  { id: 'neon_drone', label: 'Hovering Neon Drone', note: 'Orbiting recon drone with optic beam' },
+  { id: 'vintage_camera', label: 'Vintage Press Camera', note: 'Classic flash-bulb journalism camera' },
+  { id: 'microphone_stand', label: 'Studio Broadcast Mic', note: 'Chrome podcast & stage condenser mic' },
+  { id: 'briefcase', label: 'Executive Leather Briefcase', note: 'Noir dossier & business mystery case' },
+  { id: 'newspaper_frontpage', label: 'Breaking News Frontpage', note: 'Extra! Extra! printed headline sheet' },
+  { id: 'coffee_mug', label: 'Steaming Coffee Mug', note: 'Cozy café & late-night desk cup' },
+  { id: 'laptop_screen', label: 'Glowing Code Laptop', note: 'Modern hacker & creator workstation' },
+  { id: 'potion_flask', label: 'Bubbling Alchemy Flask', note: 'Glowing emerald/violet elixir bottle' },
+  { id: 'spellbook_tome', label: 'Arcane Spellbook Tome', note: 'Floating leather grimoire with runes' },
+  { id: 'wizard_staff', label: 'Crystal-Tipped Wizard Staff', note: 'Gnarled oak staff with pulsing orb' },
+  { id: 'crystal_amulet', label: 'Radiant Crystal Amulet', note: 'Enchanted prism pendant with halo' },
+  { id: 'brass_compass', label: 'Nautical Brass Compass', note: 'Spinning expedition needle & dial' },
+  { id: 'antique_pocketwatch', label: 'Antique Pocket Watch', note: 'Steampunk ticking timepiece & chain' },
+  { id: 'violin_bow', label: 'Concert Violin & Bow', note: 'Classical strings & noir melody' },
+  { id: 'electric_guitar', label: 'Electric Rock Guitar', note: 'Indie stage & cyber-band riff axe' },
+  { id: 'golden_trophy', label: 'Championship Golden Trophy', note: 'Gleaming victory cup & laurel base' },
+  { id: 'judge_gavel', label: 'Courtroom Judge Gavel', note: 'Mahogany verdict mallet & sound block' },
+  { id: 'microscope', label: 'Laboratory Microscope', note: 'Precision optical STEM instrument' },
+  { id: 'rocket_model', label: 'Orbital Launch Rocket', note: 'Retro-futurist spacecraft model' },
+  { id: 'pirate_map', label: 'Weathered Treasure Map', note: 'Parchment sea chart with crimson X' },
+  { id: 'key_ornate', label: 'Ornate Skeleton Key', note: 'Gilded gothic vault & mystery key' },
 ];
 
 export const SHOT_CATALOG: Array<{ id: ShotId; label: string }> = [
@@ -846,6 +1040,13 @@ export const CROWD_CATALOG: Array<{ id: CrowdId; label: string }> = [
   { id: 'army', label: 'Epic Army & Spears' },
   { id: 'forest_herd', label: 'Forest Herd' },
   { id: 'monks', label: 'Sages & Monks' },
+  // Wave 3: +6 Crowds (12 total)
+  { id: 'city_commuters', label: 'City Commuters & Umbrellas' },
+  { id: 'cyber_drones', label: 'Patrol Cyber Drones' },
+  { id: 'pirate_crew', label: 'Pirate Deck Crew' },
+  { id: 'scholars_hall', label: 'Scholars & Senate Hall' },
+  { id: 'spectral_flock', label: 'Spectral Flock & Bats' },
+  { id: 'masquerade_ball', label: 'Masquerade Ballroom Guests' },
 ];
 
 export const CAMERA_MOVE_CATALOG: Array<{ id: CameraMoveId; label: string }> = [
@@ -1092,7 +1293,20 @@ export const POSE_LIST: PoseId[] = [
   'soar',
   'attack',
 ];
-export const WEATHER_LIST: WeatherId[] = ['fireflies', 'embers', 'rain', 'mist', 'petals', 'none'];
+export const WEATHER_LIST: WeatherId[] = [
+  'fireflies',
+  'embers',
+  'rain',
+  'mist',
+  'petals',
+  'none',
+  'snow',
+  'lightning_storm',
+  'sandstorm',
+  'starfall',
+  'sakura_blossoms',
+  'data_matrix',
+];
 export const FX_LIST: FxId[] = [
   'none',
   'shock_burst',
@@ -1100,6 +1314,14 @@ export const FX_LIST: FxId[] = [
   'smear_swoop',
   'crimson_impact',
   'divine_aura',
+  'speed_lines',
+  'magic_runes',
+  'glitch_tear',
+  'sparkle_burst',
+  'spotlight_beam',
+  'shatter_glass',
+  'heartbeat_pulse',
+  'comic_pow',
 ];
 
 export const SFX_CATALOG: Array<{ id: SfxId; label: string; note: string }> = [
@@ -1611,6 +1833,27 @@ export const ARCHETYPE_DEFAULT_COLORS: Record<
   knight: { primary: '#2d4b82', accent: '#f2c85b', skin: '#dfb18c' },
   samurai: { primary: '#9e1b2c', accent: '#ffd04d', skin: '#e6b894' },
   raven: { primary: '#161b2e', accent: '#56e8ff', skin: '#202842' },
+  // Wave 3: +20 Universal Archetype Palettes
+  detective: { primary: '#4a433b', accent: '#f0b84c', skin: '#dfb18c' },
+  scientist: { primary: '#e2e8f0', accent: '#38bdf8', skin: '#d89b72' },
+  astronaut: { primary: '#e8eef5', accent: '#fb923c', skin: '#dfb18c' },
+  cyber_hacker: { primary: '#1e1b4b', accent: '#22d3ee', skin: '#e6b894' },
+  android: { primary: '#64748b', accent: '#38bdf8', skin: '#cbd5e1' },
+  mech_pilot: { primary: '#b91c1c', accent: '#facc15', skin: '#e0a580' },
+  wizard: { primary: '#312e81', accent: '#fbbf24', skin: '#e6b894' },
+  pirate_captain: { primary: '#7f1d1d', accent: '#f5be38', skin: '#d4956b' },
+  ninja: { primary: '#111827', accent: '#ef4444', skin: '#e0a580' },
+  viking: { primary: '#3f4e63', accent: '#d99a26', skin: '#e8bc99' },
+  pharaoh: { primary: '#1d4ed8', accent: '#f5be38', skin: '#cc8f62' },
+  vampire_lord: { primary: '#18181b', accent: '#dc2626', skin: '#e2e8f0' },
+  dragon_kin: { primary: '#991b1b', accent: '#fbbf24', skin: '#b45309' },
+  elf_archer: { primary: '#166534', accent: '#fde047', skin: '#f1c7a5' },
+  dwarf_smith: { primary: '#78350f', accent: '#f59e0b', skin: '#dca077' },
+  ghost_phantom: { primary: '#1e3a5f', accent: '#67e8f9', skin: '#cfefff' },
+  journalist: { primary: '#1e3a8a', accent: '#f59e0b', skin: '#d9986c' },
+  street_musician: { primary: '#4c1d95', accent: '#f472b6', skin: '#c9885b' },
+  cat_mascot: { primary: '#ea580c', accent: '#fde047', skin: '#fb923c' },
+  robot_companion: { primary: '#0ea5e9', accent: '#fde047', skin: '#e0f2fe' },
 };
 
 export function getEpisodeDuration(ep: EpisodeScript): number {

@@ -32,6 +32,11 @@ import {
   drawStoryProp,
   snap24,
 } from './renderAssets';
+import {
+  drawUniversalBeatFx,
+  drawUniversalCrowdLayer,
+  drawUniversalWeather,
+} from './renderAssetsUniversal';
 import { resolvePhonemeViseme } from './facialExpressions';
 import { applyPooledBackdropDof, computeBeatDepthOfFieldSpec } from './depthOfField';
 import { composeCameraWithKeyframes } from './cameraKeyframes';
@@ -617,6 +622,10 @@ function drawCrowdLayer(
     beat?.fx === 'crimson_impact';
   const startle = sfxChoreo?.crowdStartle || (beat?.fx === 'shock_burst' ? 0.55 : 0);
 
+  if (drawUniversalCrowdLayer(ctx, w, h, crowd, pal, ts, beat, startle)) {
+    return;
+  }
+
   ctx.save();
   ctx.fillStyle = pal.farSil;
   ctx.globalAlpha = 0.78;
@@ -1118,6 +1127,10 @@ function drawWeather(
   const s = Math.min(w, h) / 620;
   const pal = MOOD_PALETTES[mood] || MOOD_PALETTES.midnight_banyan;
 
+  if (drawUniversalWeather(ctx, w, h, weather, pal, t)) {
+    return;
+  }
+
   if (weather === 'fireflies' || weather === 'embers') {
     for (let i = 0; i < 16; i++) {
       const fx =
@@ -1189,6 +1202,9 @@ function drawBeatFx(
   t: number
 ): void {
   if (fx === 'none') return;
+  if (drawUniversalBeatFx(ctx, w, h, fx, u, t)) {
+    return;
+  }
   const s = Math.min(w, h) / 620;
 
   if (fx === 'shock_burst') {

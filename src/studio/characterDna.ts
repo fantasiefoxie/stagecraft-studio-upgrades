@@ -137,7 +137,11 @@ export type TopStyleId =
   | 'scholar_robe'
   | 'toga_chiton'
   | 'kente_wrap'
-  | 'mystic_vest';
+  | 'mystic_vest'
+  | 'trench_coat'
+  | 'lab_coat'
+  | 'cyber_jacket'
+  | 'space_suit';
 
 export type BottomStyleId =
   | 'dhoti'
@@ -180,7 +184,11 @@ export type HeadwearStyleId =
   | 'laurel_wreath'
   | 'floral_tiara'
   | 'bandana'
-  | 'straw_conical';
+  | 'straw_conical'
+  | 'fedora'
+  | 'cyber_visor'
+  | 'astronaut_helmet'
+  | 'tricorn_hat';
 
 export type SurfacePatternId =
   | 'solid'
@@ -192,7 +200,11 @@ export type SurfacePatternId =
   | 'kente_weave'
   | 'bark_grain'
   | 'starfield_cosmic'
-  | 'stone_cracks';
+  | 'stone_cracks'
+  | 'circuit_trace'
+  | 'pinstripe'
+  | 'camo_hex'
+  | 'starfield_speckle';
 
 export type WingStyleId =
   | 'none'
@@ -437,6 +449,10 @@ export const TOP_STYLE_CATALOG: Array<{ id: TopStyleId; label: string }> = [
   { id: 'toga_chiton', label: 'Classical Chiton' },
   { id: 'kente_wrap', label: 'Kente Woven Wrap' },
   { id: 'mystic_vest', label: 'Mystic Shadow Vest' },
+  { id: 'trench_coat', label: 'Noir Trench Coat' },
+  { id: 'lab_coat', label: 'Research Lab Coat' },
+  { id: 'cyber_jacket', label: 'Neon Cyber Jacket' },
+  { id: 'space_suit', label: 'Orbital EVA Space Suit' },
 ];
 
 export const BOTTOM_STYLE_CATALOG: Array<{ id: BottomStyleId; label: string }> = [
@@ -484,6 +500,10 @@ export const HEADWEAR_CATALOG: Array<{ id: HeadwearStyleId; label: string }> = [
   { id: 'floral_tiara', label: 'Lotus Tiara' },
   { id: 'bandana', label: 'Traveler Headband' },
   { id: 'straw_conical', label: 'Conical Kasa Hat' },
+  { id: 'fedora', label: 'Noir Detective Fedora' },
+  { id: 'cyber_visor', label: 'Neon Cyber Visor' },
+  { id: 'astronaut_helmet', label: 'EVA Astronaut Helmet' },
+  { id: 'tricorn_hat', label: 'Corsair Tricorn Hat' },
 ];
 
 export const SURFACE_PATTERN_CATALOG: Array<{ id: SurfacePatternId; label: string }> = [
@@ -497,6 +517,10 @@ export const SURFACE_PATTERN_CATALOG: Array<{ id: SurfacePatternId; label: strin
   { id: 'bark_grain', label: 'Forest Bark Grain' },
   { id: 'starfield_cosmic', label: 'Cosmic Starfield' },
   { id: 'stone_cracks', label: 'Ancient Carved Stone' },
+  { id: 'circuit_trace', label: 'Cyber Circuit Trace' },
+  { id: 'pinstripe', label: 'Tailored Pinstripe' },
+  { id: 'camo_hex', label: 'Tactical Camo Hex' },
+  { id: 'starfield_speckle', label: 'Nebula Starfield Speckle' },
 ];
 
 export const WING_STYLE_CATALOG: Array<{ id: WingStyleId; label: string }> = [
@@ -1362,6 +1386,172 @@ export function hydrateArchetypeToDna(member: Partial<CastMember>, seedSalt = ''
         outfit: { topStyle: 'kente_wrap', bottomStyle: 'animal_legs', headwear: 'bandana', surfacePattern: 'kente_weave' },
         appendages: { extraArms: 2 },
         palette: { ...basePal, eye: '#facc15' },
+      });
+      break;
+    case 'detective':
+      dna = createBaseDna('humanoid', {
+        morph: { height: clampNum(scale * 1.02, 0.72, 1.32, 1.02), shoulderWidth: 1.06, gait: 'folk' },
+        head: { headShape: 'chiseled', hairStyle: 'short_crop', facialHair: 'short_trimmed' },
+        outfit: { topStyle: 'trench_coat', bottomStyle: 'trousers', collarAccessory: 'scarf_muffler', headwear: 'fedora', surfacePattern: 'pinstripe' },
+        palette: basePal,
+      });
+      break;
+    case 'scientist':
+      dna = createBaseDna('humanoid', {
+        morph: { height: clampNum(scale * 1.0, 0.72, 1.32, 1.0), shoulderWidth: 0.96, gait: 'folk' },
+        head: { headShape: 'oval', hairStyle: 'wild_spiky', eyeStyle: 'wide_fable' },
+        outfit: { topStyle: 'lab_coat', bottomStyle: 'trousers', collarAccessory: 'none', headwear: 'none', surfacePattern: 'solid' },
+        palette: basePal,
+      });
+      break;
+    case 'astronaut':
+      dna = createBaseDna('humanoid', {
+        morph: { height: clampNum(scale * 1.06, 0.72, 1.32, 1.06), shoulderWidth: 1.2, torsoBulk: 1.16, gait: 'heavy' },
+        head: { headShape: 'round', hairStyle: 'none' },
+        outfit: { topStyle: 'space_suit', bottomStyle: 'armored_greaves', headwear: 'astronaut_helmet', surfacePattern: 'starfield_speckle' },
+        palette: basePal,
+      });
+      break;
+    case 'cyber_hacker':
+      dna = createBaseDna('humanoid', {
+        morph: { height: clampNum(scale * 0.98, 0.72, 1.32, 0.98), shoulderWidth: 0.96, gait: 'agile' },
+        head: { headShape: 'angular', hairStyle: 'wild_spiky', eyeStyle: 'narrow_sharp' },
+        outfit: { topStyle: 'cyber_jacket', bottomStyle: 'trousers', headwear: 'cyber_visor', surfacePattern: 'circuit_trace' },
+        palette: basePal,
+      });
+      break;
+    case 'android':
+      dna = createBaseDna('humanoid', {
+        morph: { height: clampNum(scale * 1.04, 0.72, 1.32, 1.04), shoulderWidth: 1.08, gait: 'regal' },
+        head: { headShape: 'angular', eyeStyle: 'glowing_orb', hairStyle: 'short_crop' },
+        outfit: { topStyle: 'cyber_jacket', bottomStyle: 'armored_greaves', headwear: 'none', surfacePattern: 'circuit_trace' },
+        palette: { ...basePal, skin: '#d8e4f0', eye: accent },
+      });
+      break;
+    case 'mech_pilot':
+      dna = createBaseDna('humanoid', {
+        morph: { height: clampNum(scale * 1.05, 0.72, 1.32, 1.05), shoulderWidth: 1.18, torsoBulk: 1.1, gait: 'martial' },
+        head: { headShape: 'chiseled', hairStyle: 'short_crop' },
+        outfit: { topStyle: 'space_suit', bottomStyle: 'armored_greaves', headwear: 'cyber_visor', surfacePattern: 'camo_hex' },
+        palette: basePal,
+      });
+      break;
+    case 'wizard':
+      dna = createBaseDna('humanoid', {
+        morph: { height: clampNum(scale * 1.02, 0.72, 1.32, 1.02), shoulderWidth: 0.94, gait: 'ethereal' },
+        head: { headShape: 'gaunt', hairStyle: 'long_flowing', facialHair: 'sage_long_beard', eyeStyle: 'glowing_orb' },
+        outfit: { topStyle: 'scholar_robe', bottomStyle: 'robe_hem', capeStyle: 'royal_cape', headwear: 'wizard_hat', surfacePattern: 'starfield_speckle' },
+        appendages: { aura: 'lunar_crescent' },
+        palette: { ...basePal, hair: '#e2e8f0' },
+      });
+      break;
+    case 'pirate_captain':
+      dna = createBaseDna('humanoid', {
+        morph: { height: clampNum(scale * 1.06, 0.72, 1.32, 1.06), shoulderWidth: 1.14, gait: 'martial' },
+        head: { headShape: 'broad_jaw', hairStyle: 'dreadlocks', facialHair: 'handlebar', faceMark: 'eye_patch' },
+        outfit: { topStyle: 'trench_coat', bottomStyle: 'trousers', capeStyle: 'royal_cape', headwear: 'tricorn_hat' },
+        palette: basePal,
+      });
+      break;
+    case 'ninja':
+      dna = createBaseDna('humanoid', {
+        morph: { height: clampNum(scale * 0.98, 0.72, 1.32, 0.98), shoulderWidth: 1.0, torsoBulk: 0.9, gait: 'agile' },
+        head: { headShape: 'angular', eyeStyle: 'narrow_sharp', hairStyle: 'hooded_cowl' },
+        outfit: { topStyle: 'mystic_vest', bottomStyle: 'trousers', headwear: 'bandana', surfacePattern: 'camo_hex' },
+        palette: basePal,
+      });
+      break;
+    case 'viking':
+      dna = createBaseDna('humanoid', {
+        morph: { height: clampNum(scale * 1.14, 0.72, 1.32, 1.14), shoulderWidth: 1.28, torsoBulk: 1.22, gait: 'heavy' },
+        head: { headShape: 'broad_jaw', horns: 'bull_horns', facialHair: 'sage_long_beard', faceMark: 'war_paint' },
+        outfit: { topStyle: 'plate_armor', bottomStyle: 'armored_greaves', collarAccessory: 'fur_mantle', headwear: 'battle_helm' },
+        palette: { ...basePal, hair: '#d97706' },
+      });
+      break;
+    case 'pharaoh':
+      dna = createBaseDna('humanoid', {
+        morph: { height: clampNum(scale * 1.08, 0.72, 1.32, 1.08), shoulderWidth: 1.12, gait: 'regal' },
+        head: { headShape: 'chiseled', facialHair: 'goatee' },
+        outfit: { topStyle: 'royal_angarkha', bottomStyle: 'dhoti', collarAccessory: 'gold_necklace', headwear: 'golden_mukut', surfacePattern: 'royal_brocade' },
+        appendages: { aura: 'solar_halo' },
+        palette: basePal,
+      });
+      break;
+    case 'vampire_lord':
+      dna = createBaseDna('humanoid', {
+        morph: { height: clampNum(scale * 1.1, 0.72, 1.32, 1.1), shoulderWidth: 1.08, torsoBulk: 0.9, gait: 'regal' },
+        head: { headShape: 'gaunt', eyeStyle: 'glowing_orb', ears: 'pointed_elf', hairStyle: 'swept_royal' },
+        outfit: { topStyle: 'trench_coat', bottomStyle: 'trousers', capeStyle: 'royal_cape', surfacePattern: 'pinstripe' },
+        appendages: { wings: 'bat_demon', aura: 'shadow_wisps' },
+        palette: { ...basePal, eye: '#ef4444' },
+      });
+      break;
+    case 'dragon_kin':
+      dna = createBaseDna('humanoid', {
+        morph: { height: clampNum(scale * 1.14, 0.72, 1.32, 1.14), shoulderWidth: 1.24, torsoBulk: 1.16, gait: 'martial' },
+        head: { headShape: 'angular', eyeStyle: 'slit_reptile', horns: 'demon_crown_horns' },
+        outfit: { topStyle: 'plate_armor', bottomStyle: 'armored_greaves', surfacePattern: 'serpent_scales' },
+        appendages: { wings: 'dragon_leathery', tail: 'dragon_spiked', aura: 'ember_sparks' },
+        palette: basePal,
+      });
+      break;
+    case 'elf_archer':
+      dna = createBaseDna('humanoid', {
+        morph: { height: clampNum(scale * 1.04, 0.72, 1.32, 1.04), shoulderWidth: 0.92, torsoBulk: 0.86, gait: 'agile' },
+        head: { headShape: 'oval', ears: 'pointed_elf', hairStyle: 'long_flowing' },
+        outfit: { topStyle: 'peasant_tunic', bottomStyle: 'trousers', capeStyle: 'tattered_cloak', headwear: 'laurel_wreath' },
+        palette: { ...basePal, hair: '#fde68a' },
+      });
+      break;
+    case 'dwarf_smith':
+      dna = createBaseDna('humanoid', {
+        morph: { height: clampNum(scale * 0.82, 0.72, 1.32, 0.82), shoulderWidth: 1.32, torsoBulk: 1.3, gait: 'heavy' },
+        head: { headShape: 'broad_jaw', facialHair: 'sage_long_beard', hairStyle: 'braided_twin' },
+        outfit: { topStyle: 'plate_armor', bottomStyle: 'armored_greaves', collarAccessory: 'fur_mantle' },
+        palette: { ...basePal, hair: '#9a3412' },
+      });
+      break;
+    case 'ghost_phantom':
+      dna = createBaseDna('ethereal', {
+        morph: { height: clampNum(scale * 1.04, 0.72, 1.32, 1.04), shoulderWidth: 0.92, torsoBulk: 0.84, gait: 'ethereal' },
+        head: { headShape: 'gaunt', eyeStyle: 'glowing_orb', hairStyle: 'hooded_cowl' },
+        outfit: { topStyle: 'mystic_vest', bottomStyle: 'ethereal_wisp', capeStyle: 'tattered_cloak', surfacePattern: 'starfield_speckle' },
+        appendages: { aura: 'shadow_wisps' },
+        palette: basePal,
+      });
+      break;
+    case 'journalist':
+      dna = createBaseDna('humanoid', {
+        morph: { height: clampNum(scale * 1.0, 0.72, 1.32, 1.0), shoulderWidth: 0.98, gait: 'folk' },
+        head: { headShape: 'oval', hairStyle: 'swept_royal' },
+        outfit: { topStyle: 'trench_coat', bottomStyle: 'trousers', surfacePattern: 'pinstripe' },
+        palette: basePal,
+      });
+      break;
+    case 'street_musician':
+      dna = createBaseDna('humanoid', {
+        morph: { height: clampNum(scale * 0.98, 0.72, 1.32, 0.98), shoulderWidth: 0.96, gait: 'agile' },
+        head: { headShape: 'round', hairStyle: 'dreadlocks' },
+        outfit: { topStyle: 'cyber_jacket', bottomStyle: 'trousers', collarAccessory: 'scarf_muffler', headwear: 'bandana' },
+        palette: basePal,
+      });
+      break;
+    case 'cat_mascot':
+      dna = createBaseDna('humanoid', {
+        morph: { height: clampNum(scale * 0.86, 0.72, 1.32, 0.86), shoulderWidth: 0.94, headRatio: 1.24, gait: 'agile' },
+        head: { headShape: 'feline_muzzle', eyeStyle: 'wide_fable', ears: 'fox_tall', facialHair: 'whiskers' },
+        outfit: { topStyle: 'peasant_tunic', bottomStyle: 'trousers', surfacePattern: 'tiger_stripes' },
+        appendages: { tail: 'fox_bushy' },
+        palette: basePal,
+      });
+      break;
+    case 'robot_companion':
+      dna = createBaseDna('humanoid', {
+        morph: { height: clampNum(scale * 0.84, 0.72, 1.32, 0.84), shoulderWidth: 1.06, headRatio: 1.26, gait: 'ethereal' },
+        head: { headShape: 'round', eyeStyle: 'glowing_orb', ears: 'none', hairStyle: 'none' },
+        outfit: { topStyle: 'space_suit', bottomStyle: 'armored_greaves', headwear: 'cyber_visor', surfacePattern: 'circuit_trace' },
+        palette: basePal,
       });
       break;
     default:

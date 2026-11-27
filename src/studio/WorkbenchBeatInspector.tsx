@@ -396,7 +396,12 @@ export const WorkbenchBeatInspector: React.FC<WorkbenchBeatInspectorProps> = Rea
               >
                 {WEATHER_LIST.map((wId) => (
                   <option key={wId} value={wId}>
-                    {wId}
+                    {wId === 'none'
+                      ? 'None'
+                      : wId
+                          .split('_')
+                          .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+                          .join(' ')}
                   </option>
                 ))}
               </select>
@@ -407,7 +412,12 @@ export const WorkbenchBeatInspector: React.FC<WorkbenchBeatInspectorProps> = Rea
               >
                 {FX_LIST.map((fId) => (
                   <option key={fId} value={fId}>
-                    {fId}
+                    {fId === 'none'
+                      ? 'None'
+                      : fId
+                          .split('_')
+                          .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+                          .join(' ')}
                   </option>
                 ))}
               </select>

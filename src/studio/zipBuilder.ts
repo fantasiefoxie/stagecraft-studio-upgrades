@@ -48,6 +48,7 @@ import studioAssetsTs from './renderAssets.ts?raw';
 import studioAssetsExpandedTs from './renderAssetsExpanded.ts?raw';
 import studioAssetsEncyclopediaTs from './renderAssetsEncyclopedia.ts?raw';
 import studioAssetsWorldTs from './renderAssetsWorld.ts?raw';
+import studioAssetsUniversalTs from './renderAssetsUniversal.ts?raw';
 import studioAnimationEngineTs from './animationEngine.ts?raw';
 import studioAnimationPrinciplesTs from './animationPrinciples.ts?raw';
 import studioStyleEnginesTs from './styleEngines.ts?raw';
@@ -73,6 +74,7 @@ import studioMlaPackagerTs from './mlaPackager.ts?raw';
 import studioKathaArchiveTs from './kathaArchive.ts?raw';
 import studioSeasonBoardTs from './seasonBoard.ts?raw';
 import studioCharacterDnaTs from './characterDna.ts?raw';
+import studioSpriteWorkshopPresetsTs from './spriteWorkshopPresets.ts?raw';
 import studioModularEntityRendererTs from './modularEntityRenderer.ts?raw';
 import studioEntityWorkshopModalTsx from './EntityWorkshopModal.tsx?raw';
 import studioLongFormEngineTs from './longFormEngine.ts?raw';
@@ -448,6 +450,10 @@ export function collectAllMachinimaEntries(): ZipEntryInput[] {
       content: studioAssetsWorldTs,
     },
     {
+      path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/renderAssetsUniversal.ts`,
+      content: studioAssetsUniversalTs,
+    },
+    {
       path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/animationEngine.ts`,
       content: studioAnimationEngineTs,
     },
@@ -546,6 +552,10 @@ export function collectAllMachinimaEntries(): ZipEntryInput[] {
     {
       path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/characterDna.ts`,
       content: studioCharacterDnaTs,
+    },
+    {
+      path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/spriteWorkshopPresets.ts`,
+      content: studioSpriteWorkshopPresetsTs,
     },
     {
       path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/modularEntityRenderer.ts`,

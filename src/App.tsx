@@ -95,6 +95,10 @@ import {
 import { StoryboardTimelineStrip } from './studio/StoryboardTimelineStrip';
 import { StoryboardQaModal } from './studio/StoryboardQaModal';
 import { WorkbenchAssetsTab } from './studio/WorkbenchAssetsTab';
+import {
+  SpriteWorkshopPreset,
+  buildCastMemberFromSpritePreset,
+} from './studio/spriteWorkshopPresets';
 import { TeleprompterModal } from './studio/TeleprompterModal';
 import { VersionDiffModal, HistoryCheckpointItem } from './studio/VersionDiffModal';
 import { CommandPaletteModal } from './studio/CommandPaletteModal';
@@ -1363,6 +1367,38 @@ export default function App() {
       });
     },
     [episode.cast.length, selectedBeatIdx]
+  );
+
+  const addSpritePresetToEpisode = useCallback(
+    (preset: SpriteWorkshopPreset) => {
+      setEpisode((prev) => {
+        const existing = prev.cast.find(
+          (c) => c.id.startsWith(`sprite_${preset.id}_`) || (c.name === preset.name && Boolean(c.dna))
+        );
+        const member = existing || buildCastMemberFromSpritePreset(preset, prev.cast.length);
+        const nextCast = existing ? prev.cast : [...prev.cast, member];
+        const nextBeats = prev.beats.map((b, i) => {
+          if (i !== selectedBeatIdx) return b;
+          const nextActors = [...b.actors];
+          if (nextActors.length >= 2) {
+            nextActors[1] = { ...nextActors[1], castId: member.id };
+          } else {
+            nextActors.push({
+              castId: member.id,
+              slot: nextActors.length === 0 ? 'left' : 'right',
+              pose: 'stand',
+              expression: 'calm',
+              facing: nextActors.length === 0 ? 'right' : 'left',
+            });
+          }
+          return { ...b, actors: nextActors };
+        });
+        const updated = { ...prev, cast: nextCast, beats: nextBeats };
+        setJsonDraft(JSON.stringify(updated, null, 2));
+        return updated;
+      });
+    },
+    [selectedBeatIdx]
   );
 
   const handleVoiceUpload = useCallback(
@@ -3407,6 +3443,7 @@ export default function App() {
               onGenerateProceduralProp={handleGenerateProceduralProp}
               onOpenWorkshopForNewEntity={openWorkshopForNewEntity}
               onAddArchetypeToEpisode={addArchetypeToEpisode}
+              onAddSpritePresetToEpisode={addSpritePresetToEpisode}
               onUpdateSelectedBeat={updateSelectedBeat}
             />
           )}

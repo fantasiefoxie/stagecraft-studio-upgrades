@@ -68,6 +68,9 @@ export function resolveVolumetricBeamKind(stage: StageId, mood: MoodId): Volumet
     s.includes('monastery') ||
     s.includes('pagoda') ||
     s.includes('acropolis') ||
+    s.includes('cathedral') ||
+    s.includes('observatory') ||
+    s.includes('atlantis') ||
     mood === 'twilight_temple'
   ) {
     return 'temple_godrays';
@@ -79,17 +82,32 @@ export function resolveVolumetricBeamKind(stage: StageId, mood: MoodId): Volumet
     s.includes('throne') ||
     s.includes('bedchamber') ||
     s.includes('golden_lanka') ||
-    mood === 'golden_durbar'
+    s.includes('studio') ||
+    s.includes('lab') ||
+    s.includes('bridge') ||
+    s.includes('dome') ||
+    s.includes('train') ||
+    s.includes('clocktower') ||
+    s.includes('bookshop') ||
+    s.includes('colosseum') ||
+    mood === 'golden_durbar' ||
+    mood === 'sunlit_morning' ||
+    mood === 'sepia_archive'
   ) {
-    return mood === 'crimson_wrath' || mood === 'sandstone_dusk' ? 'hearth_glow' : 'window_sunbeams';
+    return mood === 'crimson_wrath' || mood === 'sandstone_dusk' || mood === 'volcanic_inferno'
+      ? 'hearth_glow'
+      : 'window_sunbeams';
   }
   if (
     s.includes('cave') ||
     s.includes('cremation') ||
     s.includes('dungeon') ||
     s.includes('desert') ||
+    s.includes('volcanic') ||
+    s.includes('nordic_fjord') ||
     mood === 'sandstone_dusk' ||
-    mood === 'crimson_wrath'
+    mood === 'crimson_wrath' ||
+    mood === 'volcanic_inferno'
   ) {
     return 'hearth_glow';
   }
@@ -97,8 +115,15 @@ export function resolveVolumetricBeamKind(stage: StageId, mood: MoodId): Volumet
     mood === 'midnight_banyan' ||
     mood === 'moonlit_marble' ||
     mood === 'mystic_teal' ||
+    mood === 'cyber_magenta' ||
+    mood === 'noir_monochrome' ||
+    mood === 'arctic_aurora' ||
+    mood === 'deep_abyss' ||
     s.includes('moonlit') ||
-    s.includes('banyan')
+    s.includes('banyan') ||
+    s.includes('neon_cyber') ||
+    s.includes('noir_rainy') ||
+    s.includes('snowy_mountain')
   ) {
     return 'moonlight_shafts';
   }
@@ -109,8 +134,29 @@ function resolveBeamPalette(
   kind: VolumetricBeamKind,
   mood: MoodId
 ): { beamColorRgb: [number, number, number]; rimGlowRgb: [number, number, number] } {
-  if (mood === 'crimson_wrath') {
+  if (mood === 'crimson_wrath' || mood === 'volcanic_inferno') {
     return { beamColorRgb: [255, 118, 84], rimGlowRgb: [255, 76, 98] };
+  }
+  if (mood === 'cyber_magenta') {
+    return { beamColorRgb: [72, 232, 255], rimGlowRgb: [255, 78, 214] };
+  }
+  if (mood === 'noir_monochrome') {
+    return { beamColorRgb: [216, 224, 238], rimGlowRgb: [244, 236, 210] };
+  }
+  if (mood === 'arctic_aurora') {
+    return { beamColorRgb: [110, 245, 220], rimGlowRgb: [176, 148, 255] };
+  }
+  if (mood === 'sunlit_morning') {
+    return { beamColorRgb: [255, 246, 214], rimGlowRgb: [255, 232, 168] };
+  }
+  if (mood === 'deep_abyss') {
+    return { beamColorRgb: [74, 220, 242], rimGlowRgb: [120, 248, 255] };
+  }
+  if (mood === 'sakura_dawn') {
+    return { beamColorRgb: [255, 198, 216], rimGlowRgb: [255, 224, 184] };
+  }
+  if (mood === 'sepia_archive') {
+    return { beamColorRgb: [242, 204, 148], rimGlowRgb: [255, 216, 152] };
   }
   if (mood === 'golden_durbar') {
     return { beamColorRgb: [255, 224, 132], rimGlowRgb: [255, 240, 178] };

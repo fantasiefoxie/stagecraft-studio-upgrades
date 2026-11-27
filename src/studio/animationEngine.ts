@@ -497,6 +497,27 @@ const ARCHETYPE_GAIT_MAP: Record<ArchetypeId, GaitClass> = {
   courtier: 'folk',
   merchant: 'folk',
   elder_woman: 'folk',
+  // Wave 3: +20 Universal Archetypes
+  detective: 'folk',
+  scientist: 'folk',
+  astronaut: 'heavy',
+  cyber_hacker: 'agile',
+  android: 'martial',
+  mech_pilot: 'martial',
+  wizard: 'regal',
+  pirate_captain: 'martial',
+  ninja: 'agile',
+  viking: 'heavy',
+  pharaoh: 'regal',
+  vampire_lord: 'ethereal',
+  dragon_kin: 'heavy',
+  elf_archer: 'agile',
+  dwarf_smith: 'heavy',
+  ghost_phantom: 'ethereal',
+  journalist: 'folk',
+  street_musician: 'agile',
+  cat_mascot: 'agile',
+  robot_companion: 'ethereal',
 };
 
 export function getArchetypeKinematics(arch: ArchetypeId): ArchetypeKinematics {

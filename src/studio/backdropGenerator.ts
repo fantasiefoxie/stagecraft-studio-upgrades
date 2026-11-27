@@ -27,7 +27,21 @@ export type BackdropThemeId =
   | 'ancient_banyan_ruins'
   | 'bamboo_mist_bridge'
   | 'crimson_volcano_citadel'
-  | 'golden_sun_temple';
+  | 'golden_sun_temple'
+  | 'cyber_rain_skyline'
+  | 'deep_space_nebula'
+  | 'aurora_glacier_peaks'
+  | 'noir_wet_boulevard'
+  | 'sunlit_botanical_atrium'
+  | 'sunken_coral_ruins'
+  | 'volcanic_caldera_bridge'
+  | 'golden_pyramids_dusk'
+  | 'sakura_temple_stairs'
+  | 'steampunk_airship_dock'
+  | 'gothic_moon_castle'
+  | 'vintage_library_vault'
+  | 'minimal_explainer_grid'
+  | 'broadcast_studio_backdrop';
 
 export interface BackdropThemeMeta {
   id: BackdropThemeId;
@@ -108,6 +122,104 @@ export const BACKDROP_THEMES: BackdropThemeMeta[] = [
     defaultMood: 'golden_durbar',
     accentHex: '#f7b944',
   },
+  {
+    id: 'cyber_rain_skyline',
+    label: 'Cyber Rain Skyline',
+    vibe: 'Neon megatowers, holograms & rain reflections',
+    defaultMood: 'cyber_magenta',
+    accentHex: '#ff2bd6',
+  },
+  {
+    id: 'deep_space_nebula',
+    label: 'Deep Space Nebula',
+    vibe: 'Cosmic starclouds, ringed planet & starship',
+    defaultMood: 'deep_abyss',
+    accentHex: '#38bdf8',
+  },
+  {
+    id: 'aurora_glacier_peaks',
+    label: 'Aurora Glacier Peaks',
+    vibe: 'Shimmering polar aurora ribbons over ice spires',
+    defaultMood: 'arctic_aurora',
+    accentHex: '#5eead4',
+  },
+  {
+    id: 'noir_wet_boulevard',
+    label: 'Noir Wet Boulevard',
+    vibe: 'High-contrast 1940s lamp-lit misty avenue',
+    defaultMood: 'noir_monochrome',
+    accentHex: '#cbd5e1',
+  },
+  {
+    id: 'sunlit_botanical_atrium',
+    label: 'Sunlit Botanical Atrium',
+    vibe: 'Wrought-iron glass conservatory & warm foliage',
+    defaultMood: 'sunlit_morning',
+    accentHex: '#4ade80',
+  },
+  {
+    id: 'sunken_coral_ruins',
+    label: 'Sunken Coral Ruins',
+    vibe: 'Submerged marble arches & glowing reef flora',
+    defaultMood: 'deep_abyss',
+    accentHex: '#2dd4bf',
+  },
+  {
+    id: 'volcanic_caldera_bridge',
+    label: 'Volcanic Caldera Bridge',
+    vibe: 'Basalt suspension bridge above glowing magma',
+    defaultMood: 'volcanic_inferno',
+    accentHex: '#ff6b2b',
+  },
+  {
+    id: 'golden_pyramids_dusk',
+    label: 'Golden Pyramids Dusk',
+    vibe: 'Monumental Giza pyramids & twilight sphinx glow',
+    defaultMood: 'sandstone_dusk',
+    accentHex: '#f5b841',
+  },
+  {
+    id: 'sakura_temple_stairs',
+    label: 'Sakura Temple Stairs',
+    vibe: 'Vermilion shrine steps under pink blossom canopy',
+    defaultMood: 'sakura_dawn',
+    accentHex: '#f9a8d4',
+  },
+  {
+    id: 'steampunk_airship_dock',
+    label: 'Steampunk Airship Dock',
+    vibe: 'Brass mooring tower, zeppelins & clockwork gears',
+    defaultMood: 'sepia_archive',
+    accentHex: '#d99a38',
+  },
+  {
+    id: 'gothic_moon_castle',
+    label: 'Gothic Moon Castle',
+    vibe: 'Spired mountaintop fortress & giant harvest moon',
+    defaultMood: 'twilight_temple',
+    accentHex: '#a78bfa',
+  },
+  {
+    id: 'vintage_library_vault',
+    label: 'Vintage Library Vault',
+    vibe: 'Arched scholar shelves & hanging brass lamps',
+    defaultMood: 'sepia_archive',
+    accentHex: '#e0c088',
+  },
+  {
+    id: 'minimal_explainer_grid',
+    label: 'Minimal Explainer Grid',
+    vibe: 'Clean editorial blueprint & geometric studio grid',
+    defaultMood: 'sunlit_morning',
+    accentHex: '#38bdf8',
+  },
+  {
+    id: 'broadcast_studio_backdrop',
+    label: 'Broadcast Studio Backdrop',
+    vibe: 'Modern newsroom cyclorama & crisp LED light bars',
+    defaultMood: 'mystic_teal',
+    accentHex: '#0ea5e9',
+  },
 ];
 
 export type CustomPropPresetId =
@@ -118,7 +230,23 @@ export type CustomPropPresetId =
   | 'ritual_dagger'
   | 'lotus_chalice'
   | 'rune_scroll'
-  | 'spirit_mask';
+  | 'spirit_mask'
+  | 'hologram_cube'
+  | 'neon_katana'
+  | 'detective_dossier'
+  | 'antique_globe'
+  | 'enchanted_hourglass'
+  | 'crystal_potion'
+  | 'floating_crown'
+  | 'brass_astrolabe'
+  | 'vintage_typewriter'
+  | 'studio_mic'
+  | 'starship_shuttle'
+  | 'ancient_relic_mask'
+  | 'golden_scales'
+  | 'sealed_wax_letter'
+  | 'cyber_visor_deck'
+  | 'bonsai_lantern';
 
 export interface CustomPropPresetMeta {
   id: CustomPropPresetId;
@@ -136,6 +264,22 @@ export const CUSTOM_PROP_PRESETS: CustomPropPresetMeta[] = [
   { id: 'lotus_chalice', label: 'Mystic Lotus Chalice', note: 'Golden nectar goblet & petals', defaultTint: '#ff90c2' },
   { id: 'rune_scroll', label: 'Floating Rune Scroll', note: 'Illuminated manuscript with glowing sigils', defaultTint: '#7dd3fc' },
   { id: 'spirit_mask', label: 'Carved Spirit Mask', note: 'Theatrical folklore mask with golden crown', defaultTint: '#c084fc' },
+  { id: 'hologram_cube', label: 'Hologram Data Cube', note: 'Wireframe sci-fi data prism with cyan core', defaultTint: '#00f0ff' },
+  { id: 'neon_katana', label: 'Neon Energy Katana', note: 'Plasma-edged cyber katana blade', defaultTint: '#ff2bd6' },
+  { id: 'detective_dossier', label: 'Confidential Dossier', note: 'Top-secret manila case file with red stamp', defaultTint: '#dc2626' },
+  { id: 'antique_globe', label: 'Antique Brass Globe', note: 'Cartographer meridian globe on oak pedestal', defaultTint: '#38bdf8' },
+  { id: 'enchanted_hourglass', label: 'Enchanted Hourglass', note: 'Gilded chronometer with luminous stardust sand', defaultTint: '#facc15' },
+  { id: 'crystal_potion', label: 'Crystal Elixir Vial', note: 'Faceted alchemist phial with glowing elixir', defaultTint: '#a855f7' },
+  { id: 'floating_crown', label: 'Floating Royal Crown', note: 'Jeweled sovereign diadem radiating gold aura', defaultTint: '#fbbf24' },
+  { id: 'brass_astrolabe', label: 'Brass Celestial Astrolabe', note: 'Concentric star-navigation rings & pointer', defaultTint: '#eab308' },
+  { id: 'vintage_typewriter', label: 'Vintage Typewriter', note: 'Classic noir reporter typewriter with paper', defaultTint: '#64748b' },
+  { id: 'studio_mic', label: 'Broadcast Studio Mic', note: 'Chrome condenser microphone with LED ring', defaultTint: '#38bdf8' },
+  { id: 'starship_shuttle', label: 'Orbital Shuttle Craft', note: 'Sleek delta-wing starship with ion thrusters', defaultTint: '#22d3ee' },
+  { id: 'ancient_relic_mask', label: 'Pharaoh Relic Mask', note: 'Gold & lapis ceremonial funerary mask', defaultTint: '#eab308' },
+  { id: 'golden_scales', label: 'Golden Scales of Justice', note: 'Balanced brass courtroom scales emblem', defaultTint: '#f59e0b' },
+  { id: 'sealed_wax_letter', label: 'Wax-Sealed Letter', note: 'Parchment envelope stamped with crimson seal', defaultTint: '#e11d48' },
+  { id: 'cyber_visor_deck', label: 'Cyber Deck & Visor', note: 'Hacker neural console with glowing keycaps', defaultTint: '#10b981' },
+  { id: 'bonsai_lantern', label: 'Sakura Bonsai Lantern', note: 'Miniature blooming bonsai & stone shrine lamp', defaultTint: '#f472b6' },
 ];
 
 export type ActArcPresetId =
@@ -143,7 +287,11 @@ export type ActArcPresetId =
   | 'noir_mystery'
   | 'royal_chronicle'
   | 'fable_journey'
-  | 'elemental_storm';
+  | 'elemental_storm'
+  | 'cyber_thriller'
+  | 'noir_investigation'
+  | 'epic_space_odyssey'
+  | 'documentary_explainer';
 
 interface ActStageSpec {
   label: string;
@@ -215,6 +363,50 @@ export const ACT_ARC_PRESETS: ActArcPresetMeta[] = [
       { label: 'Act II · Gathering Squall', mood: 'twilight_temple', weather: 'rain', haze: 0.36, boundaryTransition: 'silhouette_wipe', preferredCameras: ['pan_left', 'slow_push'] },
       { label: 'Act III · Fury of the Sky', mood: 'crimson_wrath', weather: 'embers', haze: 0.28, boundaryTransition: 'diagonal_slash', preferredCameras: ['impact_shake', 'slow_push'] },
       { label: 'Act IV · Golden Aftermath', mood: 'golden_durbar', weather: 'petals', haze: 0.12, boundaryTransition: 'ink_fade', preferredCameras: ['slow_pull', 'still'] },
+    ],
+  },
+  {
+    id: 'cyber_thriller',
+    label: 'Cyber Thriller (Neon Grid → Data Breach → Firewall → Dawn)',
+    description: 'High-voltage cyberpunk progression with neon magenta, digital matrix rain, and lightning climax.',
+    acts: [
+      { label: 'Act I · Neon Underbelly', mood: 'cyber_magenta', weather: 'rain', haze: 0.24, boundaryTransition: 'ink_fade', preferredCameras: ['slow_push', 'pan_right'] },
+      { label: 'Act II · Neural Infiltration', mood: 'deep_abyss', weather: 'data_matrix', haze: 0.2, boundaryTransition: 'silhouette_wipe', preferredCameras: ['pan_left', 'slow_push'] },
+      { label: 'Act III · Core Overload', mood: 'crimson_wrath', weather: 'lightning_storm', haze: 0.28, boundaryTransition: 'diagonal_slash', preferredCameras: ['impact_shake', 'slow_push'] },
+      { label: 'Act IV · Arctic Reboot', mood: 'arctic_aurora', weather: 'starfall', haze: 0.14, boundaryTransition: 'ink_fade', preferredCameras: ['slow_pull', 'still'] },
+    ],
+  },
+  {
+    id: 'noir_investigation',
+    label: 'Noir Investigation (Rainy Clue → Archive → Storm → Reveal)',
+    description: 'Classic detective pacing shifting from monochrome rain to sepia clues and dramatic reveal.',
+    acts: [
+      { label: 'Act I · Cold Case Rain', mood: 'noir_monochrome', weather: 'rain', haze: 0.3, boundaryTransition: 'ink_fade', preferredCameras: ['slow_push', 'still'] },
+      { label: 'Act II · Sepia Archive', mood: 'sepia_archive', weather: 'mist', haze: 0.22, boundaryTransition: 'silhouette_wipe', preferredCameras: ['pan_right', 'slow_push'] },
+      { label: 'Act III · Midnight Ambush', mood: 'noir_monochrome', weather: 'lightning_storm', haze: 0.34, boundaryTransition: 'diagonal_slash', preferredCameras: ['impact_shake', 'slow_push'] },
+      { label: 'Act IV · Sunlit Verdict', mood: 'sunlit_morning', weather: 'none', haze: 0.1, boundaryTransition: 'ink_fade', preferredCameras: ['slow_pull', 'still'] },
+    ],
+  },
+  {
+    id: 'epic_space_odyssey',
+    label: 'Epic Space Odyssey (Orbit → Nebula → Inferno → Aurora)',
+    description: 'Widescreen sci-fi voyage from starfield silence through deep-space peril to alien aurora.',
+    acts: [
+      { label: 'Act I · Orbital Launch', mood: 'deep_abyss', weather: 'starfall', haze: 0.12, boundaryTransition: 'ink_fade', preferredCameras: ['slow_push', 'pan_right'] },
+      { label: 'Act II · Red Frontier', mood: 'sandstone_dusk', weather: 'sandstorm', haze: 0.28, boundaryTransition: 'silhouette_wipe', preferredCameras: ['pan_left', 'slow_push'] },
+      { label: 'Act III · Solar Flare', mood: 'volcanic_inferno', weather: 'embers', haze: 0.24, boundaryTransition: 'diagonal_slash', preferredCameras: ['impact_shake', 'slow_push'] },
+      { label: 'Act IV · New Horizon', mood: 'arctic_aurora', weather: 'starfall', haze: 0.16, boundaryTransition: 'ink_fade', preferredCameras: ['slow_pull', 'still'] },
+    ],
+  },
+  {
+    id: 'documentary_explainer',
+    label: 'Documentary Explainer (Morning → Archive → Insight → Sakura)',
+    description: 'Clean, bright pacing tailored for educational explainers, video essays, and historical deep dives.',
+    acts: [
+      { label: 'Act I · Hook & Context', mood: 'sunlit_morning', weather: 'none', haze: 0.08, boundaryTransition: 'ink_fade', preferredCameras: ['slow_push', 'still'] },
+      { label: 'Act II · Historical Evidence', mood: 'sepia_archive', weather: 'mist', haze: 0.14, boundaryTransition: 'silhouette_wipe', preferredCameras: ['pan_right', 'pan_left'] },
+      { label: 'Act III · Core Mechanism', mood: 'mystic_teal', weather: 'data_matrix', haze: 0.12, boundaryTransition: 'ink_fade', preferredCameras: ['slow_push', 'still'] },
+      { label: 'Act IV · Key Takeaway', mood: 'sakura_dawn', weather: 'sakura_blossoms', haze: 0.1, boundaryTransition: 'ink_fade', preferredCameras: ['slow_pull', 'still'] },
     ],
   },
 ];
@@ -322,6 +514,86 @@ const MOOD_PALETTES: Record<MoodId, MoodPalette> = {
     silhouetteMid: '#071c24',
     ground: '#041016',
     accent: '#5ef2e6',
+  },
+  cyber_magenta: {
+    skyTop: '#0a041c',
+    skyMid: '#290a47',
+    skyLow: '#5e147a',
+    glow: '#ff5ce8',
+    silhouetteFar: '#19062e',
+    silhouetteMid: '#10041f',
+    ground: '#080212',
+    accent: '#00f0ff',
+  },
+  noir_monochrome: {
+    skyTop: '#07080a',
+    skyMid: '#1c2028',
+    skyLow: '#3a414f',
+    glow: '#e2e8f0',
+    silhouetteFar: '#14171e',
+    silhouetteMid: '#0d0f14',
+    ground: '#07080b',
+    accent: '#f8fafc',
+  },
+  arctic_aurora: {
+    skyTop: '#031221',
+    skyMid: '#0b324a',
+    skyLow: '#1b6b7a',
+    glow: '#6ee7d8',
+    silhouetteFar: '#092438',
+    silhouetteMid: '#061926',
+    ground: '#04111c',
+    accent: '#38bdf8',
+  },
+  sunlit_morning: {
+    skyTop: '#1c4d82',
+    skyMid: '#5596d4',
+    skyLow: '#f5ce8a',
+    glow: '#fff3b8',
+    silhouetteFar: '#2f5478',
+    silhouetteMid: '#223e57',
+    ground: '#182b3b',
+    accent: '#f97316',
+  },
+  volcanic_inferno: {
+    skyTop: '#170504',
+    skyMid: '#4f130a',
+    skyLow: '#9c2d12',
+    glow: '#ff8a3d',
+    silhouetteFar: '#2b0907',
+    silhouetteMid: '#1a0605',
+    ground: '#0f0404',
+    accent: '#facc15',
+  },
+  deep_abyss: {
+    skyTop: '#020a17',
+    skyMid: '#061f38',
+    skyLow: '#0d3e61',
+    glow: '#67e8f9',
+    silhouetteFar: '#051729',
+    silhouetteMid: '#03101d',
+    ground: '#020a12',
+    accent: '#2dd4bf',
+  },
+  sakura_dawn: {
+    skyTop: '#231336',
+    skyMid: '#6b2f63',
+    skyLow: '#eb9bb8',
+    glow: '#ffd6e8',
+    silhouetteFar: '#381d45',
+    silhouetteMid: '#24122e',
+    ground: '#170b1f',
+    accent: '#f9a8d4',
+  },
+  sepia_archive: {
+    skyTop: '#1c130d',
+    skyMid: '#422f1f',
+    skyLow: '#7d5c3d',
+    glow: '#f2dfb8',
+    silhouetteFar: '#2e2015',
+    silhouetteMid: '#1f150e',
+    ground: '#140d09',
+    accent: '#d99a38',
   },
 };
 
@@ -690,6 +962,145 @@ export function generateProceduralBackdropDataUrl(opts: ProceduralBackdropOption
     ctx.lineTo(w * 0.28, h);
     ctx.closePath();
     ctx.fill();
+  } else if (opts.theme === 'cyber_rain_skyline') {
+    for (let i = 0; i < 12; i++) {
+      const bx = (i / 12) * w;
+      const bw = w / 11;
+      const bh = h * (0.28 + rng() * 0.36);
+      ctx.fillStyle = i % 2 === 0 ? pal.silhouetteMid : pal.silhouetteFar;
+      ctx.fillRect(bx, horizonY - bh, bw, bh);
+      ctx.fillStyle = i % 3 === 0 ? '#ff2bd6' : '#00f0ff';
+      for (let r = 0; r < 5; r++) {
+        ctx.fillRect(bx + bw * 0.2, horizonY - bh + 28 + r * 36, bw * 0.6, 8);
+      }
+    }
+  } else if (opts.theme === 'deep_space_nebula') {
+    const neb = ctx.createRadialGradient(w * 0.62, h * 0.42, 40, w * 0.62, h * 0.42, w * 0.44);
+    neb.addColorStop(0, 'rgba(236, 72, 153, 0.35)');
+    neb.addColorStop(0.5, 'rgba(56, 189, 248, 0.22)');
+    neb.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = neb;
+    ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = 'rgba(186, 230, 253, 0.55)';
+    ctx.lineWidth = 10;
+    ctx.beginPath();
+    ctx.ellipse(w * 0.34, h * 0.42, 240, 56, -0.22, 0, Math.PI * 2);
+    ctx.stroke();
+  } else if (opts.theme === 'aurora_glacier_peaks') {
+    for (let b = 0; b < 3; b++) {
+      const ag = ctx.createLinearGradient(0, h * 0.08, 0, h * 0.45);
+      ag.addColorStop(0, 'rgba(94, 234, 212, 0)');
+      ag.addColorStop(0.5, b % 2 === 0 ? 'rgba(94, 234, 212, 0.32)' : 'rgba(56, 189, 248, 0.28)');
+      ag.addColorStop(1, 'rgba(94, 234, 212, 0)');
+      ctx.fillStyle = ag;
+      ctx.beginPath();
+      ctx.moveTo(0, h * (0.28 + b * 0.05));
+      ctx.bezierCurveTo(w * 0.33, h * 0.1, w * 0.66, h * 0.38, w, h * 0.18);
+      ctx.lineTo(w, h * 0.48);
+      ctx.lineTo(0, h * 0.48);
+      ctx.closePath();
+      ctx.fill();
+    }
+  } else if (opts.theme === 'noir_wet_boulevard') {
+    ctx.fillStyle = '#0d0f15';
+    ctx.fillRect(0, h * 0.14, w * 0.26, h * 0.65);
+    ctx.fillRect(w * 0.74, h * 0.1, w * 0.26, h * 0.69);
+    const cone = ctx.createLinearGradient(w * 0.28, h * 0.25, w * 0.28, h * 0.9);
+    cone.addColorStop(0, 'rgba(241, 245, 249, 0.38)');
+    cone.addColorStop(1, 'rgba(241, 245, 249, 0)');
+    ctx.fillStyle = cone;
+    ctx.beginPath();
+    ctx.moveTo(w * 0.27, h * 0.24);
+    ctx.lineTo(w * 0.44, h * 0.92);
+    ctx.lineTo(w * 0.12, h * 0.92);
+    ctx.closePath();
+    ctx.fill();
+  } else if (opts.theme === 'sunlit_botanical_atrium') {
+    ctx.strokeStyle = 'rgba(255,255,255,0.28)';
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.arc(w * 0.5, horizonY, w * 0.46, Math.PI, 0);
+    ctx.stroke();
+    for (let i = 0; i < 8; i++) {
+      const a = Math.PI + (i / 7) * Math.PI;
+      ctx.beginPath();
+      ctx.moveTo(w * 0.5, horizonY);
+      ctx.lineTo(w * 0.5 + Math.cos(a) * w * 0.46, horizonY + Math.sin(a) * w * 0.46);
+      ctx.stroke();
+    }
+  } else if (opts.theme === 'sunken_coral_ruins') {
+    ctx.fillStyle = pal.silhouetteMid;
+    for (let i = 0; i < 5; i++) {
+      const cx = w * (0.14 + i * 0.18);
+      ctx.fillRect(cx - 24, h * 0.34 + (i % 2) * 80, 48, horizonY - h * 0.34);
+    }
+  } else if (opts.theme === 'volcanic_caldera_bridge') {
+    ctx.fillStyle = '#ff6b2b';
+    ctx.fillRect(0, horizonY - 24, w, 64);
+    ctx.strokeStyle = pal.ground;
+    ctx.lineWidth = 22;
+    ctx.beginPath();
+    ctx.moveTo(0, horizonY - 40);
+    ctx.quadraticCurveTo(w * 0.5, horizonY + 45, w, horizonY - 40);
+    ctx.stroke();
+  } else if (opts.theme === 'golden_pyramids_dusk') {
+    ctx.fillStyle = pal.silhouetteMid;
+    ctx.beginPath();
+    ctx.moveTo(w * 0.14, horizonY); ctx.lineTo(w * 0.42, h * 0.28); ctx.lineTo(w * 0.7, horizonY); ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = pal.silhouetteFar;
+    ctx.beginPath();
+    ctx.moveTo(w * 0.52, horizonY); ctx.lineTo(w * 0.74, h * 0.4); ctx.lineTo(w * 0.96, horizonY); ctx.closePath();
+    ctx.fill();
+  } else if (opts.theme === 'sakura_temple_stairs') {
+    ctx.fillStyle = '#d92638';
+    ctx.fillRect(w * 0.38, h * 0.3, 28, horizonY - h * 0.3);
+    ctx.fillRect(w * 0.62 - 28, h * 0.3, 28, horizonY - h * 0.3);
+    ctx.fillRect(w * 0.32, h * 0.28, w * 0.36, 26);
+    ctx.fillStyle = 'rgba(249, 168, 212, 0.78)';
+    for (let i = 0; i < 6; i++) {
+      ctx.beginPath();
+      ctx.arc(w * (i < 3 ? 0.08 + i * 0.09 : 0.74 + (i - 3) * 0.09), h * 0.16, 110, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (opts.theme === 'steampunk_airship_dock') {
+    ctx.fillStyle = pal.silhouetteMid;
+    ctx.beginPath(); ctx.ellipse(w * 0.64, h * 0.34, 210, 74, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillRect(w * 0.54, h * 0.41, 140, 26);
+    ctx.fillRect(w * 0.18, h * 0.26, 76, horizonY - h * 0.26);
+  } else if (opts.theme === 'gothic_moon_castle') {
+    ctx.fillStyle = pal.ground;
+    const towers = [0.24, 0.36, 0.5, 0.64, 0.76];
+    for (let i = 0; i < towers.length; i++) {
+      const tx = w * towers[i];
+      const th = h * (i === 2 ? 0.52 : 0.36);
+      ctx.fillRect(tx - 34, horizonY - th, 68, th);
+      ctx.beginPath();
+      ctx.moveTo(tx - 44, horizonY - th); ctx.lineTo(tx, horizonY - th - 110); ctx.lineTo(tx + 44, horizonY - th);
+      ctx.closePath(); ctx.fill();
+    }
+  } else if (opts.theme === 'vintage_library_vault') {
+    ctx.fillStyle = '#29170f';
+    ctx.fillRect(0, 0, w, horizonY);
+    ctx.strokeStyle = '#d49d35';
+    ctx.lineWidth = 6;
+    for (let i = 0; i < 4; i++) {
+      ctx.strokeRect(w * (0.06 + i * 0.23), h * 0.12, w * 0.19, horizonY - h * 0.16);
+    }
+  } else if (opts.theme === 'minimal_explainer_grid') {
+    ctx.strokeStyle = 'rgba(255,255,255,0.16)';
+    ctx.lineWidth = 2;
+    for (let x = 0; x < w; x += 80) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+    }
+    for (let y = 0; y < h; y += 80) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+    }
+  } else if (opts.theme === 'broadcast_studio_backdrop') {
+    for (let i = 0; i < 9; i++) {
+      ctx.fillStyle = i % 2 === 0 ? 'rgba(56, 189, 248, 0.22)' : 'rgba(244, 63, 94, 0.14)';
+      ctx.fillRect(w * (0.06 + i * 0.11), 0, 26, horizonY);
+    }
   }
   ctx.restore();
 
@@ -948,6 +1359,111 @@ export function generateProceduralPropDataUrl(opts: ProceduralPropOptions): {
     ctx.beginPath();
     ctx.arc(cx, cy + 42, 48, 0.15 * Math.PI, 0.85 * Math.PI);
     ctx.stroke();
+  } else if (opts.preset === 'hologram_cube') {
+    ctx.strokeStyle = tint;
+    ctx.lineWidth = 10;
+    ctx.strokeRect(cx - 108, cy - 108, 216, 216);
+    ctx.strokeRect(cx - 64, cy - 64, 128, 128);
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.arc(cx, cy, 26, 0, Math.PI * 2); ctx.fill();
+  } else if (opts.preset === 'neon_katana') {
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(-0.68);
+    ctx.fillStyle = tint; ctx.fillRect(-10, -210, 20, 290);
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(-4, -204, 8, 280);
+    ctx.fillStyle = '#1e293b'; ctx.fillRect(-34, 76, 68, 16); ctx.fillRect(-12, 92, 24, 96);
+    ctx.restore();
+  } else if (opts.preset === 'detective_dossier') {
+    ctx.fillStyle = '#d6b98c';
+    ctx.beginPath(); ctx.roundRect(cx - 132, cy - 154, 264, 308, 14); ctx.fill();
+    ctx.strokeStyle = tint; ctx.lineWidth = 10;
+    ctx.strokeRect(cx - 92, cy - 38, 184, 72);
+    ctx.fillStyle = tint;
+    ctx.fillRect(cx - 72, cy - 8, 144, 16);
+  } else if (opts.preset === 'antique_globe') {
+    ctx.fillStyle = tint; ctx.beginPath(); ctx.arc(cx, cy - 22, 122, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#eab308'; ctx.lineWidth = 12;
+    ctx.beginPath(); ctx.arc(cx, cy - 22, 142, -Math.PI * 0.4, Math.PI * 0.6); ctx.stroke();
+    ctx.fillStyle = '#78350f'; ctx.fillRect(cx - 18, cy + 120, 36, 56); ctx.fillRect(cx - 88, cy + 166, 176, 24);
+  } else if (opts.preset === 'enchanted_hourglass') {
+    ctx.fillStyle = '#eab308';
+    ctx.fillRect(cx - 108, cy - 166, 216, 24);
+    ctx.fillRect(cx - 108, cy + 142, 216, 24);
+    ctx.fillStyle = tint;
+    ctx.beginPath();
+    ctx.moveTo(cx - 82, cy - 142); ctx.lineTo(cx + 82, cy - 142); ctx.lineTo(cx, cy);
+    ctx.lineTo(cx + 82, cy + 142); ctx.lineTo(cx - 82, cy + 142); ctx.lineTo(cx, cy); ctx.closePath();
+    ctx.fill();
+  } else if (opts.preset === 'crystal_potion') {
+    ctx.fillStyle = tint;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - 72); ctx.lineTo(cx + 104, cy + 36); ctx.lineTo(cx, cy + 152); ctx.lineTo(cx - 104, cy + 36);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#f8fafc'; ctx.lineWidth = 10; ctx.stroke();
+    ctx.fillStyle = '#d97706'; ctx.fillRect(cx - 32, cy - 144, 64, 58);
+  } else if (opts.preset === 'floating_crown') {
+    ctx.fillStyle = tint;
+    ctx.beginPath();
+    ctx.moveTo(cx - 144, cy + 84); ctx.lineTo(cx - 156, cy - 72); ctx.lineTo(cx - 64, cy + 8);
+    ctx.lineTo(cx, cy - 124); ctx.lineTo(cx + 64, cy + 8); ctx.lineTo(cx + 156, cy - 72);
+    ctx.lineTo(cx + 144, cy + 84); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.arc(cx, cy + 28, 22, 0, Math.PI * 2); ctx.fill();
+  } else if (opts.preset === 'brass_astrolabe') {
+    ctx.strokeStyle = tint; ctx.lineWidth = 12;
+    ctx.beginPath(); ctx.arc(cx, cy, 148, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx, cy, 98, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx - 148, cy); ctx.lineTo(cx + 148, cy); ctx.moveTo(cx, cy - 148); ctx.lineTo(cx, cy + 148); ctx.stroke();
+  } else if (opts.preset === 'vintage_typewriter') {
+    ctx.fillStyle = '#f8fafc'; ctx.fillRect(cx - 88, cy - 168, 176, 120);
+    ctx.fillStyle = '#1e293b'; ctx.beginPath(); ctx.roundRect(cx - 148, cy - 52, 296, 178, 22); ctx.fill();
+    ctx.fillStyle = '#cbd5e1';
+    for (let r = 0; r < 3; r++) {
+      for (let c = 0; c < 7; c++) {
+        ctx.beginPath(); ctx.arc(cx - 102 + c * 34, cy + 16 + r * 34, 10, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+  } else if (opts.preset === 'studio_mic') {
+    ctx.fillStyle = '#cbd5e1'; ctx.beginPath(); ctx.roundRect(cx - 64, cy - 148, 128, 188, 64); ctx.fill();
+    ctx.strokeStyle = tint; ctx.lineWidth = 10; ctx.stroke();
+    ctx.fillStyle = '#334155'; ctx.fillRect(cx - 14, cy + 40, 28, 128); ctx.fillRect(cx - 88, cy + 156, 176, 24);
+  } else if (opts.preset === 'starship_shuttle') {
+    ctx.fillStyle = '#e2e8f0';
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - 178); ctx.lineTo(cx + 148, cy + 112); ctx.lineTo(cx, cy + 56); ctx.lineTo(cx - 148, cy + 112);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = tint;
+    ctx.beginPath(); ctx.ellipse(cx, cy - 28, 26, 62, 0, 0, Math.PI * 2); ctx.fill();
+  } else if (opts.preset === 'ancient_relic_mask') {
+    ctx.fillStyle = '#1d4ed8';
+    ctx.beginPath(); ctx.moveTo(cx - 156, cy + 132); ctx.lineTo(cx - 112, cy - 142); ctx.lineTo(cx + 112, cy - 142); ctx.lineTo(cx + 156, cy + 132); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = tint;
+    ctx.beginPath(); ctx.ellipse(cx, cy - 12, 84, 112, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#0f172a'; ctx.fillRect(cx - 54, cy - 32, 34, 14); ctx.fillRect(cx + 20, cy - 32, 34, 14);
+  } else if (opts.preset === 'golden_scales') {
+    ctx.strokeStyle = tint; ctx.lineWidth = 14;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - 148); ctx.lineTo(cx, cy + 148);
+    ctx.moveTo(cx - 142, cy - 92); ctx.lineTo(cx + 142, cy - 92);
+    ctx.moveTo(cx - 82, cy + 148); ctx.lineTo(cx + 82, cy + 148);
+    ctx.stroke();
+    ctx.fillStyle = tint;
+    ctx.beginPath(); ctx.arc(cx - 126, cy + 28, 48, 0, Math.PI); ctx.arc(cx + 126, cy + 28, 48, 0, Math.PI); ctx.fill();
+  } else if (opts.preset === 'sealed_wax_letter') {
+    ctx.fillStyle = '#f5e7c8';
+    ctx.beginPath(); ctx.roundRect(cx - 156, cy - 108, 312, 216, 14); ctx.fill();
+    ctx.strokeStyle = '#92400e'; ctx.lineWidth = 8;
+    ctx.beginPath(); ctx.moveTo(cx - 156, cy - 108); ctx.lineTo(cx, cy + 20); ctx.lineTo(cx + 156, cy - 108); ctx.stroke();
+    ctx.fillStyle = tint; ctx.beginPath(); ctx.arc(cx, cy + 20, 36, 0, Math.PI * 2); ctx.fill();
+  } else if (opts.preset === 'cyber_visor_deck') {
+    ctx.fillStyle = '#0f172a'; ctx.beginPath(); ctx.roundRect(cx - 156, cy - 88, 312, 176, 20); ctx.fill();
+    ctx.strokeStyle = tint; ctx.lineWidth = 10; ctx.stroke();
+    ctx.fillStyle = tint; ctx.fillRect(cx - 122, cy - 46, 244, 42);
+    for (let i = 0; i < 6; i++) ctx.fillRect(cx - 118 + i * 42, cy + 22, 28, 28);
+  } else if (opts.preset === 'bonsai_lantern') {
+    ctx.fillStyle = '#5c3317'; ctx.fillRect(cx - 72, cy + 96, 144, 52);
+    ctx.strokeStyle = '#451a03'; ctx.lineWidth = 22;
+    ctx.beginPath(); ctx.moveTo(cx, cy + 96); ctx.quadraticCurveTo(cx - 48, cy + 8, cx + 22, cy - 52); ctx.stroke();
+    ctx.fillStyle = tint;
+    ctx.beginPath(); ctx.arc(cx + 22, cy - 72, 82, 0, Math.PI * 2); ctx.arc(cx - 56, cy - 28, 62, 0, Math.PI * 2); ctx.fill();
   }
   ctx.restore();
 

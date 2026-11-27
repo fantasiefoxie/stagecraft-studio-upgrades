@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   ShieldCheck,
   FileJson,
+  Search,
 } from 'lucide-react';
 import {
   ARCHETYPE_CATALOG,
@@ -70,8 +71,16 @@ import {
 import { drawStageBackdrop } from './renderAssets';
 import { composeStyledScene } from './styleEngines';
 import { collectLedgerCastFingerprints, loadPublishLedger } from './monetizationShield';
+import {
+  SPRITE_PRESET_CATEGORIES,
+  SPRITE_WORKSHOP_PRESETS,
+  SpritePresetCategory,
+  SpriteWorkshopPreset,
+  buildCastMemberFromSpritePreset,
+} from './spriteWorkshopPresets';
+import { AssetThumb } from './AssetThumb';
 
-type WorkshopTab = 'body' | 'face' | 'hair' | 'outfit' | 'traits';
+type WorkshopTab = 'presets' | 'body' | 'face' | 'hair' | 'outfit' | 'traits';
 type PreviewView = 'full' | 'closeup' | 'split';
 
 interface EntityWorkshopModalProps {
@@ -234,6 +243,29 @@ export const EntityWorkshopModal: React.FC<EntityWorkshopModalProps> = ({
   const [jsonOpen, setJsonOpen] = useState(false);
   const [jsonText, setJsonText] = useState('');
   const [copiedDna, setCopiedDna] = useState(false);
+  const [presetCategory, setPresetCategory] = useState<'All' | SpritePresetCategory>('All');
+  const [presetQuery, setPresetQuery] = useState('');
+
+  const filteredSpritePresets = useMemo(() => {
+    const q = presetQuery.trim().toLowerCase();
+    return SPRITE_WORKSHOP_PRESETS.filter((p) => {
+      if (presetCategory !== 'All' && p.category !== presetCategory) return false;
+      if (!q) return true;
+      return (
+        p.name.toLowerCase().includes(q) ||
+        p.tagline.toLowerCase().includes(q) ||
+        p.category.toLowerCase().includes(q) ||
+        p.archetype.toLowerCase().includes(q)
+      );
+    });
+  }, [presetCategory, presetQuery]);
+
+  const handleLoadSpritePreset = (preset: SpriteWorkshopPreset) => {
+    setName(preset.name);
+    setArchetype(preset.archetype);
+    setDna(structuredClone(preset.dna));
+    flash(`Loaded sprite preset "${preset.name}" (${preset.category}).`);
+  };
 
   const stageCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -801,10 +833,11 @@ export const EntityWorkshopModal: React.FC<EntityWorkshopModalProps> = ({
 
           {/* RIGHT MODULAR BUILDER PANE */}
           <div className="lg:w-[46%] flex flex-col min-h-0 bg-[#0e1222]">
-            {/* 5 Category Tabs */}
+            {/* 6 Category Tabs */}
             <div className="px-3 py-2 border-b border-white/10 bg-[#0b0e19] flex items-center gap-1 shrink-0 overflow-x-auto">
               {(
                 [
+                  ['presets', `Presets (${SPRITE_WORKSHOP_PRESETS.length})`],
                   ['body', 'Body'],
                   ['face', 'Face'],
                   ['hair', 'Hair & Head'],
@@ -829,6 +862,99 @@ export const EntityWorkshopModal: React.FC<EntityWorkshopModalProps> = ({
 
             {/* Scrollable Editor Content */}
             <div className="flex-1 overflow-y-auto p-4 space-y-5">
+              {/* TAB 0: 32 CURATED MULTI-GENRE SPRITE PRESETS */}
+              {activeTab === 'presets' && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <div className="text-xs font-semibold text-white">
+                        Load Curated Sprite DNA Preset
+                      </div>
+                      <div className="text-[10px] text-[#8e97b0]">
+                        1-click multi-genre cast blueprints ready to customize or spawn.
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-mono-tabular text-[#f2c85b]">
+                      {filteredSpritePresets.length}/{SPRITE_WORKSHOP_PRESETS.length}
+                    </span>
+                  </div>
+
+                  <div className="relative">
+                    <Search className="w-3.5 h-3.5 text-[#7f89a6] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <input
+                      type="text"
+                      value={presetQuery}
+                      onChange={(e) => setPresetQuery(e.target.value)}
+                      placeholder="Search detective, wizard, cyber, fox, astronaut..."
+                      className="w-full h-8 pl-8 pr-7 rounded-md bg-[#13182b] border border-white/12 text-xs text-white focus:outline-none focus:border-[#f2c85b]"
+                    />
+                    {presetQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setPresetQuery('')}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-[#8e97b0] hover:text-white cursor-pointer"
+                        aria-label="Clear search"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap gap-1">
+                    {(['All', ...SPRITE_PRESET_CATEGORIES] as const).map((cat) => {
+                      const active = presetCategory === cat;
+                      return (
+                        <button
+                          key={cat}
+                          type="button"
+                          onClick={() => setPresetCategory(cat)}
+                          className={`px-2 py-1 rounded text-[10px] font-semibold border transition-colors cursor-pointer ${
+                            active
+                              ? 'bg-[#1c2440] border-[#f2c85b] text-[#f2c85b]'
+                              : 'bg-[#13182b] border-white/10 text-[#9aa3bd] hover:text-white'
+                          }`}
+                        >
+                          {cat}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {filteredSpritePresets.map((preset) => {
+                      const previewMember = buildCastMemberFromSpritePreset(preset, 0);
+                      const isSelected = name === preset.name && archetype === preset.archetype;
+                      return (
+                        <button
+                          key={preset.id}
+                          type="button"
+                          onClick={() => handleLoadSpritePreset(preset)}
+                          className={`p-2 rounded-lg border text-left transition-colors cursor-pointer ${
+                            isSelected
+                              ? 'bg-[#1c2440] border-[#f2c85b]'
+                              : 'bg-[#13182b] border-white/10 hover:border-[#f2c85b]/60'
+                          }`}
+                        >
+                          <AssetThumb
+                            kind="member"
+                            id={previewMember.id}
+                            member={previewMember}
+                            mood={mood}
+                          />
+                          <div className="mt-1.5 text-[11px] font-semibold text-white truncate">
+                            {preset.name}
+                          </div>
+                          <div className="text-[9px] text-[#8e97b0] truncate">{preset.tagline}</div>
+                          <div className="mt-1 text-[9px] font-semibold text-[#f2c85b]/80 truncate">
+                            {preset.category}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {/* TAB 1: BODY CHASSIS, ARCHETYPE SEED, MORPH SLIDERS & GAIT */}
               {activeTab === 'body' && (
                 <>

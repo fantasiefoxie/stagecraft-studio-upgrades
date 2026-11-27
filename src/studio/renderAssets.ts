@@ -36,6 +36,12 @@ import {
   drawWorldStageBackdrop,
   drawWorldStoryProp,
 } from './renderAssetsWorld';
+import {
+  drawUniversalActorCloseUp,
+  drawUniversalActorFullBody,
+  drawUniversalStageBackdrop,
+  drawUniversalStoryProp,
+} from './renderAssetsUniversal';
 import { drawModularEntityCloseUp, drawModularEntityFullBody } from './modularEntityRenderer';
 import {
   drawUnifiedEyePair,
@@ -153,6 +159,102 @@ export const MOOD_PALETTES: Record<MoodId, MoodPalette> = {
     accent: '#ffd04d',
     shadowTint: '#0a2d3d',
   },
+  cyber_magenta: {
+    skyTop: '#0a041c',
+    skyMid: '#24093d',
+    skyLow: '#4a1163',
+    farSil: '#140624',
+    ground: '#0b0518',
+    path: '#2e104d',
+    moon: '#ffd1fa',
+    rimLight: '#ff2bd6',
+    accent: '#00f0ff',
+    shadowTint: '#1a082e',
+  },
+  noir_monochrome: {
+    skyTop: '#08090c',
+    skyMid: '#181b22',
+    skyLow: '#2b303a',
+    farSil: '#0e1015',
+    ground: '#0a0b0f',
+    path: '#242830',
+    moon: '#f1f5f9',
+    rimLight: '#cbd5e1',
+    accent: '#f8fafc',
+    shadowTint: '#14171d',
+  },
+  arctic_aurora: {
+    skyTop: '#041322',
+    skyMid: '#0c2c44',
+    skyLow: '#144c5e',
+    farSil: '#0a2033',
+    ground: '#0b1e2e',
+    path: '#2b4f69',
+    moon: '#e8fffb',
+    rimLight: '#5eead4',
+    accent: '#38bdf8',
+    shadowTint: '#0f283b',
+  },
+  sunlit_morning: {
+    skyTop: '#1d4d82',
+    skyMid: '#4f8ec9',
+    skyLow: '#f2c785',
+    farSil: '#2e4e70',
+    ground: '#365446',
+    path: '#c49b6c',
+    moon: '#fff8db',
+    rimLight: '#ffe082',
+    accent: '#f97316',
+    shadowTint: '#2b4766',
+  },
+  volcanic_inferno: {
+    skyTop: '#1a0605',
+    skyMid: '#4a120a',
+    skyLow: '#8a2711',
+    farSil: '#260907',
+    ground: '#1c0a08',
+    path: '#541a10',
+    moon: '#ffd6a5',
+    rimLight: '#ff6b2b',
+    accent: '#facc15',
+    shadowTint: '#360d09',
+  },
+  deep_abyss: {
+    skyTop: '#020b17',
+    skyMid: '#061d33',
+    skyLow: '#0b3452',
+    farSil: '#041424',
+    ground: '#041321',
+    path: '#0f3652',
+    moon: '#b8f2ff',
+    rimLight: '#38bdf8',
+    accent: '#2dd4bf',
+    shadowTint: '#061a2e',
+  },
+  sakura_dawn: {
+    skyTop: '#241436',
+    skyMid: '#632c5c',
+    skyLow: '#e695b3',
+    farSil: '#331c3d',
+    ground: '#291a2e',
+    path: '#87556d',
+    moon: '#fff0f6',
+    rimLight: '#f9a8d4',
+    accent: '#fb7185',
+    shadowTint: '#3b1f40',
+  },
+  sepia_archive: {
+    skyTop: '#1f160f',
+    skyMid: '#3d2c1e',
+    skyLow: '#6b5036',
+    farSil: '#291d14',
+    ground: '#21170f',
+    path: '#5e462e',
+    moon: '#f7ebd2',
+    rimLight: '#e0c088',
+    accent: '#d97706',
+    shadowTint: '#302217',
+  },
 };
 
 export function snap24(t: number): number {
@@ -206,7 +308,16 @@ export function drawStageBackdrop(
     stage === 'royal_durbar' ||
     stage === 'royal_bedchamber' ||
     stage === 'royal_dungeon' ||
-    stage === 'cave_den';
+    stage === 'cave_den' ||
+    stage === 'orbital_starship_bridge' ||
+    stage === 'modern_news_studio' ||
+    stage === 'cozy_bookshop_cafe' ||
+    stage === 'high_tech_lab' ||
+    stage === 'courtroom_hall' ||
+    stage === 'nordic_fjord_hall' ||
+    stage === 'gothic_cathedral' ||
+    stage === 'steampunk_clocktower' ||
+    stage === 'vintage_train_car';
 
   // Crisp twinkling starfield on nocturnal outdoor moods
   if (
@@ -214,7 +325,10 @@ export function drawStageBackdrop(
     (mood === 'midnight_banyan' ||
       mood === 'twilight_temple' ||
       mood === 'moonlit_marble' ||
-      mood === 'mystic_teal')
+      mood === 'mystic_teal' ||
+      mood === 'cyber_magenta' ||
+      mood === 'arctic_aurora' ||
+      mood === 'deep_abyss')
   ) {
     ctx.save();
     for (let i = 0; i < 20; i++) {
@@ -263,6 +377,9 @@ export function drawStageBackdrop(
     return;
   }
   if (drawWorldStageBackdrop(ctx, w, h, stage, pal, t)) {
+    return;
+  }
+  if (drawUniversalStageBackdrop(ctx, w, h, stage, pal, t)) {
     return;
   }
 
@@ -1001,6 +1118,10 @@ export function drawActorCloseUp(
     drawCastIdentityOverlays(ctx, cast, lightSide);
     return;
   }
+  if (drawUniversalActorCloseUp(ctx, cast, expression, viseme, speechEnergy, lightSide, t)) {
+    drawCastIdentityOverlays(ctx, cast, lightSide);
+    return;
+  }
 
   const ts = snap24(t);
   const lightRight = lightSide === 'right';
@@ -1327,6 +1448,10 @@ export function drawActorFullBody(
     return;
   }
   if (drawWorldActorFullBody(ctx, cast, pose, expression, viseme, speechEnergy, stride, ts)) {
+    ctx.restore();
+    return;
+  }
+  if (drawUniversalActorFullBody(ctx, cast, pose, expression, viseme, speechEnergy, stride, ts)) {
     ctx.restore();
     return;
   }
@@ -1932,7 +2057,9 @@ export function drawStoryProp(
     ctx.fillRect(-46, -46, 92, 68);
   } else if (!drawExpandedStoryProp(ctx, prop, t)) {
     if (!drawEncyclopedicStoryProp(ctx, prop, t)) {
-      drawWorldStoryProp(ctx, prop, t);
+      if (!drawWorldStoryProp(ctx, prop, t)) {
+        drawUniversalStoryProp(ctx, prop, t);
+      }
     }
   }
 

@@ -1,18 +1,23 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   ImagePlus,
   Layers,
   Plus,
   RefreshCw,
+  Search,
   Sparkles,
   Wand2,
+  X,
 } from 'lucide-react';
 import {
   ARCHETYPE_CATALOG,
+  ArchetypeGroup,
   ArchetypeId,
   EpisodeScript,
   PROP_CATALOG,
+  PropId,
   STAGE_CATALOG,
+  StageId,
   StoryBeat,
 } from './types';
 import {
@@ -23,9 +28,86 @@ import {
   CUSTOM_PROP_PRESETS,
   CustomPropPresetId,
 } from './backdropGenerator';
+import {
+  SPRITE_PRESET_CATEGORIES,
+  SPRITE_WORKSHOP_PRESETS,
+  SpritePresetCategory,
+  SpriteWorkshopPreset,
+  buildCastMemberFromSpritePreset,
+} from './spriteWorkshopPresets';
 import { AssetThumb } from './AssetThumb';
 
 export type AssetCatalogTab = 'cast' | 'stages' | 'props';
+
+const ALL_ARCHETYPE_GROUPS: readonly ArchetypeGroup[] = [
+  'Epic & Divine',
+  'Royalty & Folk',
+  'Fable Fauna',
+  'World Legends',
+  'Modern & Sci-Fi',
+  'Fantasy & Creatures',
+];
+
+const MODERN_SCIFI_STAGES = new Set<StageId>([
+  'neon_cyber_alley',
+  'orbital_starship_bridge',
+  'mars_colony_dome',
+  'noir_rainy_street',
+  'modern_news_studio',
+  'cozy_bookshop_cafe',
+  'high_tech_lab',
+  'courtroom_hall',
+  'vintage_train_car',
+]);
+
+const FANTASY_HISTORIC_STAGES = new Set<StageId>([
+  'ancient_egypt_temple',
+  'roman_colosseum',
+  'nordic_fjord_hall',
+  'gothic_cathedral',
+  'steampunk_clocktower',
+  'pirate_galleon_deck',
+  'underwater_atlantis',
+  'volcanic_citadel',
+  'snowy_mountain_pass',
+  'cherry_blossom_shrine',
+  'astral_observatory',
+]);
+
+const MODERN_SCIFI_PROPS = new Set<PropId>([
+  'magnifying_glass',
+  'holo_tablet',
+  'energy_blade',
+  'neon_drone',
+  'vintage_camera',
+  'microphone_stand',
+  'briefcase',
+  'newspaper_frontpage',
+  'coffee_mug',
+  'laptop_screen',
+  'electric_guitar',
+  'golden_trophy',
+  'judge_gavel',
+  'microscope',
+  'rocket_model',
+]);
+
+const FANTASY_MAGIC_PROPS = new Set<PropId>([
+  'potion_flask',
+  'spellbook_tome',
+  'wizard_staff',
+  'crystal_amulet',
+  'brass_compass',
+  'antique_pocketwatch',
+  'violin_bow',
+  'pirate_map',
+  'key_ornate',
+  'treasure_chest',
+]);
+
+type StageCategoryFilter = 'All' | 'Modern & Sci-Fi' | 'Fantasy & Historic' | 'Folklore & World';
+type PropCategoryFilter = 'All' | 'Modern & Sci-Fi' | 'Fantasy & Magic' | 'Folklore & Historic';
+type CastCategoryFilter = 'All' | 'Quick Sprites' | ArchetypeGroup;
 
 interface WorkbenchAssetsTabProps {
   assetCat: AssetCatalogTab;
@@ -50,6 +132,7 @@ interface WorkbenchAssetsTabProps {
   onGenerateProceduralProp: () => void;
   onOpenWorkshopForNewEntity: () => void;
   onAddArchetypeToEpisode: (archetype: ArchetypeId, label: string) => void;
+  onAddSpritePresetToEpisode?: (preset: SpriteWorkshopPreset) => void;
   onUpdateSelectedBeat: (patch: Partial<StoryBeat>) => void;
 }
 
@@ -77,31 +160,146 @@ export const WorkbenchAssetsTab: React.FC<WorkbenchAssetsTabProps> = React.memo(
     onGenerateProceduralProp,
     onOpenWorkshopForNewEntity,
     onAddArchetypeToEpisode,
+    onAddSpritePresetToEpisode,
     onUpdateSelectedBeat,
   }) => {
+    const [searchQuery, setSearchQuery] = useState('');
+    const [castFilter, setCastFilter] = useState<CastCategoryFilter>('All');
+    const [spriteGenre, setSpriteGenre] = useState<'All' | SpritePresetCategory>('All');
+    const [stageFilter, setStageFilter] = useState<StageCategoryFilter>('All');
+    const [propFilter, setPropFilter] = useState<PropCategoryFilter>('All');
+
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+
+    const filteredSpritePresets = useMemo(() => {
+      return SPRITE_WORKSHOP_PRESETS.filter((p) => {
+        if (spriteGenre !== 'All' && p.category !== spriteGenre) return false;
+        if (!normalizedQuery) return true;
+        return (
+          p.name.toLowerCase().includes(normalizedQuery) ||
+          p.tagline.toLowerCase().includes(normalizedQuery) ||
+          p.category.toLowerCase().includes(normalizedQuery) ||
+          p.archetype.toLowerCase().includes(normalizedQuery)
+        );
+      });
+    }, [spriteGenre, normalizedQuery]);
+
+    const filteredArchetypesByGroup = useMemo(() => {
+      const groupsToShow =
+        castFilter === 'All'
+          ? ALL_ARCHETYPE_GROUPS
+          : castFilter === 'Quick Sprites'
+          ? []
+          : [castFilter];
+      return groupsToShow
+        .map((group) => ({
+          group,
+          items: ARCHETYPE_CATALOG.filter((a) => {
+            if (a.group !== group) return false;
+            if (!normalizedQuery) return true;
+            return (
+              a.label.toLowerCase().includes(normalizedQuery) ||
+              a.stories.toLowerCase().includes(normalizedQuery) ||
+              a.id.toLowerCase().includes(normalizedQuery) ||
+              a.group.toLowerCase().includes(normalizedQuery)
+            );
+          }),
+        }))
+        .filter((g) => g.items.length > 0);
+    }, [castFilter, normalizedQuery]);
+
+    const filteredStages = useMemo(() => {
+      return STAGE_CATALOG.filter((st) => {
+        if (stageFilter === 'Modern & Sci-Fi' && !MODERN_SCIFI_STAGES.has(st.id)) return false;
+        if (stageFilter === 'Fantasy & Historic' && !FANTASY_HISTORIC_STAGES.has(st.id))
+          return false;
+        if (
+          stageFilter === 'Folklore & World' &&
+          (MODERN_SCIFI_STAGES.has(st.id) || FANTASY_HISTORIC_STAGES.has(st.id))
+        ) {
+          return false;
+        }
+        if (!normalizedQuery) return true;
+        return (
+          st.label.toLowerCase().includes(normalizedQuery) ||
+          st.useCase.toLowerCase().includes(normalizedQuery) ||
+          st.id.toLowerCase().includes(normalizedQuery)
+        );
+      });
+    }, [stageFilter, normalizedQuery]);
+
+    const filteredProps = useMemo(() => {
+      return PROP_CATALOG.filter((p) => {
+        if (p.id === 'none') return false;
+        if (propFilter === 'Modern & Sci-Fi' && !MODERN_SCIFI_PROPS.has(p.id)) return false;
+        if (propFilter === 'Fantasy & Magic' && !FANTASY_MAGIC_PROPS.has(p.id)) return false;
+        if (
+          propFilter === 'Folklore & Historic' &&
+          (MODERN_SCIFI_PROPS.has(p.id) || FANTASY_MAGIC_PROPS.has(p.id))
+        ) {
+          return false;
+        }
+        if (!normalizedQuery) return true;
+        return (
+          p.label.toLowerCase().includes(normalizedQuery) ||
+          p.note.toLowerCase().includes(normalizedQuery) ||
+          p.id.toLowerCase().includes(normalizedQuery)
+        );
+      });
+    }, [propFilter, normalizedQuery]);
+
     return (
       <div className="flex-1 flex flex-col min-h-0">
-        <div className="p-3 border-b border-white/10 flex items-center gap-1.5 shrink-0">
-          {(
-            [
-              ['cast', `Cast (${ARCHETYPE_CATALOG.length})`],
-              ['stages', `Stages (${STAGE_CATALOG.length})`],
-              ['props', `Props (${PROP_CATALOG.length - 1})`],
-            ] as const
-          ).map(([id, label]) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => onSelectAssetCat(id)}
-              className={`flex-1 h-8 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
-                assetCat === id
-                  ? 'bg-white/15 text-white'
-                  : 'text-[#8e97b0] hover:text-white'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
+        <div className="p-3 border-b border-white/10 space-y-2 shrink-0">
+          <div className="flex items-center gap-1.5">
+            {(
+              [
+                ['cast', `Cast (${ARCHETYPE_CATALOG.length})`],
+                ['stages', `Stages (${STAGE_CATALOG.length})`],
+                ['props', `Props (${PROP_CATALOG.length - 1})`],
+              ] as const
+            ).map(([id, label]) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => onSelectAssetCat(id)}
+                className={`flex-1 h-8 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
+                  assetCat === id
+                    ? 'bg-white/15 text-white'
+                    : 'text-[#8e97b0] hover:text-white'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          <div className="relative">
+            <Search className="w-3.5 h-3.5 text-[#7f89a6] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={
+                assetCat === 'cast'
+                  ? 'Search 60 archetypes & 32 DNA sprites...'
+                  : assetCat === 'stages'
+                  ? 'Search 50 stages (cyber, mars, shrine, temple...)'
+                  : 'Search 64 story props (blade, laptop, potion...)'
+              }
+              className="w-full h-8 pl-8 pr-7 rounded-md bg-[#111629] border border-white/12 text-xs text-white placeholder:text-[#6f7894] focus:outline-none focus:border-[#f2c85b]"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-[#8e97b0] hover:text-white cursor-pointer"
+                aria-label="Clear search"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-3">
@@ -121,33 +319,161 @@ export const WorkbenchAssetsTab: React.FC<WorkbenchAssetsTabProps> = React.memo(
                     Build Custom Character, Animal or Spirit
                   </div>
                   <div className="text-[10px] text-[#9aa3bd] mt-0.5">
-                    Open the Sims-style Entity DNA Workshop (6 body chassis · modular parts · morph sliders)
+                    Open Entity DNA Workshop (6 chassis · 32 curated presets · morph sliders)
                   </div>
                 </div>
                 <Plus className="w-4 h-4 text-[#f2c85b] shrink-0" />
               </button>
 
-              {(['Epic & Divine', 'Royalty & Folk', 'Fable Fauna', 'World Legends'] as const).map((group) => (
+              {/* Category filter strip */}
+              <div className="flex flex-wrap gap-1">
+                {(['All', 'Quick Sprites', ...ALL_ARCHETYPE_GROUPS] as const).map((cat) => {
+                  const active = castFilter === cat;
+                  return (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => setCastFilter(cat)}
+                      className={`px-2 py-1 rounded text-[10px] font-semibold border transition-colors cursor-pointer ${
+                        active
+                          ? 'bg-[#1c2440] border-[#f2c85b] text-[#f2c85b]'
+                          : 'bg-[#13182b] border-white/10 text-[#9aa3bd] hover:text-white'
+                      }`}
+                    >
+                      {cat === 'Quick Sprites'
+                        ? `Quick Sprites (${SPRITE_WORKSHOP_PRESETS.length})`
+                        : cat}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Quick Sprite DNA Gallery (32 curated multi-genre sprites) */}
+              {(castFilter === 'Quick Sprites' ||
+                (castFilter === 'All' && normalizedQuery.length > 0)) && (
+                <div className="space-y-2.5 p-2.5 rounded-lg bg-[#11172a] border border-cyan-400/20">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-cyan-300">
+                      Quick Sprite DNA Gallery ({filteredSpritePresets.length})
+                    </div>
+                    <span className="text-[9px] text-[#848da8]">1-click spawn</span>
+                  </div>
+
+                  {castFilter === 'Quick Sprites' && (
+                    <div className="flex flex-wrap gap-1">
+                      {(['All', ...SPRITE_PRESET_CATEGORIES] as const).map((genre) => (
+                        <button
+                          key={genre}
+                          type="button"
+                          onClick={() => setSpriteGenre(genre)}
+                          className={`px-2 py-0.5 rounded text-[9px] font-semibold border cursor-pointer ${
+                            spriteGenre === genre
+                              ? 'bg-cyan-500/20 border-cyan-400/50 text-cyan-200'
+                              : 'bg-[#13182b] border-white/10 text-[#8e97b0] hover:text-white'
+                          }`}
+                        >
+                          {genre}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {filteredSpritePresets.length === 0 ? (
+                    <div className="text-[11px] text-[#848da8] py-2">
+                      No sprite presets match &ldquo;{searchQuery}&rdquo;.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-2">
+                      {filteredSpritePresets.map((preset) => {
+                        const thumbMember = buildCastMemberFromSpritePreset(preset, 0);
+                        return (
+                          <button
+                            key={preset.id}
+                            type="button"
+                            onClick={() => {
+                              if (onAddSpritePresetToEpisode) {
+                                onAddSpritePresetToEpisode(preset);
+                              } else {
+                                onAddArchetypeToEpisode(preset.archetype, preset.name);
+                              }
+                            }}
+                            className="p-2 rounded-lg bg-[#13182b] border border-white/10 hover:border-cyan-400/60 text-left transition-colors cursor-pointer"
+                          >
+                            <AssetThumb
+                              kind="member"
+                              id={thumbMember.id}
+                              member={thumbMember}
+                              mood={selectedBeat?.mood}
+                            />
+                            <div className="mt-1.5 text-xs font-semibold text-white truncate">
+                              {preset.name}
+                            </div>
+                            <div className="text-[10px] text-[#848da8] truncate">
+                              {preset.tagline}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Quick access card to open 32-Sprite Gallery when viewing All without search */}
+              {castFilter === 'All' && !normalizedQuery && (
+                <button
+                  type="button"
+                  onClick={() => setCastFilter('Quick Sprites')}
+                  className="w-full p-2.5 rounded-lg bg-[#11192e] hover:bg-[#17223f] border border-cyan-400/30 flex items-center justify-between gap-2 text-left transition-colors cursor-pointer"
+                >
+                  <div className="min-w-0">
+                    <div className="text-[11px] font-bold text-cyan-200 inline-flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-cyan-300" />
+                      <span>Quick Sprite DNA Gallery ({SPRITE_WORKSHOP_PRESETS.length} Multi-Genre Sprites)</span>
+                    </div>
+                    <div className="text-[10px] text-[#8e97b0] mt-0.5 truncate">
+                      Sci-Fi, Noir, Fantasy RPG, Modern Explainer, History &amp; Creatures — 1-click spawn
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-semibold text-cyan-300 shrink-0">Browse</span>
+                </button>
+              )}
+
+              {/* Archetype groups */}
+              {filteredArchetypesByGroup.map(({ group, items }) => (
                 <div key={group}>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-[#f2c85b]/80 mb-2">
-                    {group}
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#f2c85b]/80">
+                      {group}
+                    </span>
+                    <span className="text-[10px] font-mono-tabular text-[#6f7894]">
+                      {items.length}
+                    </span>
                   </div>
                   <div className="grid grid-cols-2 gap-2.5">
-                    {ARCHETYPE_CATALOG.filter((a) => a.group === group).map((a) => (
+                    {items.map((a) => (
                       <button
                         key={a.id}
                         type="button"
                         onClick={() => onAddArchetypeToEpisode(a.id, a.label)}
                         className="p-2 rounded-lg bg-[#13182b] border border-white/10 hover:border-[#f2c85b]/60 text-left transition-colors cursor-pointer"
                       >
-                        <AssetThumb kind="archetype" id={a.id} />
-                        <div className="mt-1.5 text-xs font-semibold text-white truncate">{a.label}</div>
+                        <AssetThumb kind="archetype" id={a.id} mood={selectedBeat?.mood} />
+                        <div className="mt-1.5 text-xs font-semibold text-white truncate">
+                          {a.label}
+                        </div>
                         <div className="text-[10px] text-[#848da8] truncate">{a.stories}</div>
                       </button>
                     ))}
                   </div>
                 </div>
               ))}
+
+              {castFilter !== 'Quick Sprites' && filteredArchetypesByGroup.length === 0 && (
+                <div className="text-xs text-[#848da8] py-4 text-center">
+                  No cast archetypes match &ldquo;{searchQuery}&rdquo;.
+                </div>
+              )}
             </div>
           )}
 
@@ -202,12 +528,12 @@ export const WorkbenchAssetsTab: React.FC<WorkbenchAssetsTabProps> = React.memo(
                 <div className="flex items-center justify-between gap-2">
                   <div className="text-[11px] font-semibold text-cyan-200 inline-flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 text-cyan-300" />
-                    <span>Procedural Backdrop Studio (1080p)</span>
+                    <span>Procedural Backdrop Studio ({BACKDROP_THEMES.length} Themes)</span>
                   </div>
                   <button
                     type="button"
                     onClick={onCycleProcBackdropSeed}
-                    title="Randomize composition seed"
+                    title="Cycle composition seed"
                     className="h-6 px-2 rounded bg-[#1b2442] hover:bg-[#243058] border border-white/10 text-[10px] font-semibold text-[#d6dcf0] inline-flex items-center gap-1 cursor-pointer"
                   >
                     <RefreshCw className="w-3 h-3" />
@@ -248,7 +574,7 @@ export const WorkbenchAssetsTab: React.FC<WorkbenchAssetsTabProps> = React.memo(
               <div className="p-2.5 rounded-lg bg-[#161529] border border-amber-400/25 space-y-2">
                 <div className="text-[11px] font-semibold text-amber-200 inline-flex items-center gap-1.5">
                   <Layers className="w-3.5 h-3.5 text-amber-300" />
-                  <span>4-Act Visual Arc (Long-Form Variety)</span>
+                  <span>4-Act Visual Arc ({ACT_ARC_PRESETS.length} Presets)</span>
                 </div>
                 <select
                   value={actArcPreset}
@@ -271,33 +597,61 @@ export const WorkbenchAssetsTab: React.FC<WorkbenchAssetsTabProps> = React.memo(
                 </button>
               </div>
 
-              <div className="grid grid-cols-2 gap-2.5">
-                {STAGE_CATALOG.map((st) => {
-                  const active = !selectedBeat?.customBackdropDataUrl && selectedBeat?.stage === st.id;
-                  return (
+              {/* Stage category filter strip */}
+              <div className="flex flex-wrap gap-1">
+                {(['All', 'Modern & Sci-Fi', 'Fantasy & Historic', 'Folklore & World'] as const).map(
+                  (cat) => (
                     <button
-                      key={st.id}
+                      key={cat}
                       type="button"
-                      onClick={() =>
-                        onUpdateSelectedBeat({
-                          stage: st.id,
-                          customBackdropDataUrl: undefined,
-                          customBackdropLabel: undefined,
-                        })
-                      }
-                      className={`p-2 rounded-lg text-left border transition-colors cursor-pointer ${
-                        active
-                          ? 'bg-[#1c2440] border-[#f2c85b]'
-                          : 'bg-[#13182b] border-white/10 hover:border-[#f2c85b]/60'
+                      onClick={() => setStageFilter(cat)}
+                      className={`px-2 py-1 rounded text-[10px] font-semibold border transition-colors cursor-pointer ${
+                        stageFilter === cat
+                          ? 'bg-[#1c2440] border-[#f2c85b] text-[#f2c85b]'
+                          : 'bg-[#13182b] border-white/10 text-[#9aa3bd] hover:text-white'
                       }`}
                     >
-                      <AssetThumb kind="stage" id={st.id} mood={selectedBeat?.mood} />
-                      <div className="mt-1.5 text-xs font-semibold text-white truncate">{st.label}</div>
-                      <div className="text-[10px] text-[#848da8] truncate">{st.useCase}</div>
+                      {cat}
                     </button>
-                  );
-                })}
+                  )
+                )}
               </div>
+
+              {filteredStages.length === 0 ? (
+                <div className="text-xs text-[#848da8] py-4 text-center">
+                  No stages match &ldquo;{searchQuery}&rdquo;.
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2.5">
+                  {filteredStages.map((st) => {
+                    const active = !selectedBeat?.customBackdropDataUrl && selectedBeat?.stage === st.id;
+                    return (
+                      <button
+                        key={st.id}
+                        type="button"
+                        onClick={() =>
+                          onUpdateSelectedBeat({
+                            stage: st.id,
+                            customBackdropDataUrl: undefined,
+                            customBackdropLabel: undefined,
+                          })
+                        }
+                        className={`p-2 rounded-lg text-left border transition-colors cursor-pointer ${
+                          active
+                            ? 'bg-[#1c2440] border-[#f2c85b]'
+                            : 'bg-[#13182b] border-white/10 hover:border-[#f2c85b]/60'
+                        }`}
+                      >
+                        <AssetThumb kind="stage" id={st.id} mood={selectedBeat?.mood} />
+                        <div className="mt-1.5 text-xs font-semibold text-white truncate">
+                          {st.label}
+                        </div>
+                        <div className="text-[10px] text-[#848da8] truncate">{st.useCase}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
 
@@ -307,7 +661,7 @@ export const WorkbenchAssetsTab: React.FC<WorkbenchAssetsTabProps> = React.memo(
                 <div className="flex items-center justify-between gap-2">
                   <div className="text-[11px] font-semibold text-cyan-200 inline-flex items-center gap-1.5">
                     <Wand2 className="w-3.5 h-3.5 text-cyan-300" />
-                    <span>Procedural Prop Cutout (PNG)</span>
+                    <span>Procedural Prop Cutout ({CUSTOM_PROP_PRESETS.length} Presets)</span>
                   </div>
                   <button
                     type="button"
@@ -355,33 +709,61 @@ export const WorkbenchAssetsTab: React.FC<WorkbenchAssetsTabProps> = React.memo(
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2.5">
-                {PROP_CATALOG.filter((p) => p.id !== 'none').map((p) => {
-                  const active = !selectedBeat?.customPropDataUrl && selectedBeat?.prop === p.id;
-                  return (
+              {/* Prop category filter strip */}
+              <div className="flex flex-wrap gap-1">
+                {(['All', 'Modern & Sci-Fi', 'Fantasy & Magic', 'Folklore & Historic'] as const).map(
+                  (cat) => (
                     <button
-                      key={p.id}
+                      key={cat}
                       type="button"
-                      onClick={() =>
-                        onUpdateSelectedBeat({
-                          prop: p.id,
-                          customPropDataUrl: undefined,
-                          customPropLabel: undefined,
-                        })
-                      }
-                      className={`p-2 rounded-lg text-left border transition-colors cursor-pointer ${
-                        active
-                          ? 'bg-[#1c2440] border-[#f2c85b]'
-                          : 'bg-[#13182b] border-white/10 hover:border-[#f2c85b]/60'
+                      onClick={() => setPropFilter(cat)}
+                      className={`px-2 py-1 rounded text-[10px] font-semibold border transition-colors cursor-pointer ${
+                        propFilter === cat
+                          ? 'bg-[#1c2440] border-[#f2c85b] text-[#f2c85b]'
+                          : 'bg-[#13182b] border-white/10 text-[#9aa3bd] hover:text-white'
                       }`}
                     >
-                      <AssetThumb kind="prop" id={p.id} />
-                      <div className="mt-1.5 text-xs font-semibold text-white truncate">{p.label}</div>
-                      <div className="text-[10px] text-[#848da8] truncate">{p.note}</div>
+                      {cat}
                     </button>
-                  );
-                })}
+                  )
+                )}
               </div>
+
+              {filteredProps.length === 0 ? (
+                <div className="text-xs text-[#848da8] py-4 text-center">
+                  No story props match &ldquo;{searchQuery}&rdquo;.
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2.5">
+                  {filteredProps.map((p) => {
+                    const active = !selectedBeat?.customPropDataUrl && selectedBeat?.prop === p.id;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() =>
+                          onUpdateSelectedBeat({
+                            prop: p.id,
+                            customPropDataUrl: undefined,
+                            customPropLabel: undefined,
+                          })
+                        }
+                        className={`p-2 rounded-lg text-left border transition-colors cursor-pointer ${
+                          active
+                            ? 'bg-[#1c2440] border-[#f2c85b]'
+                            : 'bg-[#13182b] border-white/10 hover:border-[#f2c85b]/60'
+                        }`}
+                      >
+                        <AssetThumb kind="prop" id={p.id} />
+                        <div className="mt-1.5 text-xs font-semibold text-white truncate">
+                          {p.label}
+                        </div>
+                        <div className="text-[10px] text-[#848da8] truncate">{p.note}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
         </div>
