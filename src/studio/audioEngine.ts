@@ -9,6 +9,12 @@ import {
 import { getVoiceSpeechProfile, SpeechWindow } from './voiceEnvelope';
 import { computeSpatialPanForBeat, createSpatialRoute } from './spatialAudio';
 import { planBeatFoleyEvents, scheduleFoleyEventOnContext } from './proceduralFoley';
+import {
+  BeatMusicArcPlan,
+  computeBoundaryCrossfadeGain,
+  computeEpisodeMusicArc,
+  computeLiveBeatTensionFallback,
+} from './musicTension';
 
 const RAAG_SCALES: Record<RaagId, number[]> = {
   // Indian Classical Raags
@@ -365,14 +371,20 @@ function scheduleRegionalStepOnContext(
   step: number,
   energy: number,
   atTime: number,
-  gainScale = 1
+  gainScale = 1,
+  tensionMod?: { octaveLift?: number; percussionEmphasis?: number }
 ): void {
   if (gainScale <= 0.01) return;
   const now = Math.max(0, atTime);
   const eVol = (0.14 * energy + 0.06) * gainScale;
+  const octLift = tensionMod?.octaveLift ? 1 : 0;
+  const percScale =
+    typeof tensionMod?.percussionEmphasis === 'number' && Number.isFinite(tensionMod.percussionEmphasis)
+      ? Math.max(0.5, Math.min(1.5, tensionMod.percussionEmphasis))
+      : 1;
 
   const pluck = (r: RaagId, deg: number, oct = 0, vol = 0.2, dur = 0.52) => {
-    const f = calcRaagFreq(baseFreq, r, deg, oct);
+    const f = calcRaagFreq(baseFreq, r, deg, oct + octLift);
     const osc = ctx.createOscillator();
     osc.type = 'triangle';
     osc.frequency.setValueAtTime(f, now);
@@ -486,7 +498,7 @@ function scheduleRegionalStepOnContext(
     }
     const g = ctx.createGain();
     g.gain.setValueAtTime(0.0001, now);
-    g.gain.linearRampToValueAtTime(vol * gainScale, now + 0.008);
+    g.gain.linearRampToValueAtTime(vol * gainScale * percScale, now + 0.008);
     g.gain.exponentialRampToValueAtTime(0.0008, now + dur);
     osc.connect(g);
     g.connect(dest);
@@ -833,10 +845,14 @@ export async function renderEpisodeAudioOffline(
   const baseFreq = 293.6648;
   const synthGainScale = musicStem ? 0.14 : 1.0;
 
+  const episodeArc = computeEpisodeMusicArc(episode);
   let cursor = 0;
   let lastStep = -1;
 
-  for (const beat of episode.beats) {
+  for (let beatIdx = 0; beatIdx < episode.beats.length; beatIdx++) {
+    const beat = episode.beats[beatIdx];
+    const arcPlan = episodeArc.beats[beatIdx];
+    const nextArcPlan = beatIdx + 1 < episodeArc.beats.length ? episodeArc.beats[beatIdx + 1] : null;
     const dur = Math.max(1.2, beat.duration || 4);
     const beatStart = cursor;
     const beatEnd = cursor + dur;
@@ -931,14 +947,16 @@ export async function renderEpisodeAudioOffline(
       scheduleFoleyEventOnContext(ctx, sfxBus, fEv, beatStart + fEv.offsetSec, beat.stage, spatialAudio);
     }
 
-    // Schedule Procedural Regional Music Steps across this beat
+    // Schedule Procedural Regional Music Steps across this beat modulated by Episode Harmonic Tension Arc
     const baseStepDur =
       beat.raag === 'kora_griot' || beat.raag === 'gamelan_wayang'
         ? 0.2
         : beat.raag === 'guqin_bamboo' || beat.raag === 'cedar_flute'
           ? 0.26
           : 0.23;
-    const stepDur = baseStepDur - beat.musicEnergy * 0.03;
+    const density = arcPlan ? arcPlan.phraseDensity : 1;
+    const effEnergy = arcPlan ? arcPlan.effectiveEnergy : beat.musicEnergy;
+    const stepDur = Math.max(0.13, (baseStepDur - effEnergy * 0.03) / Math.max(0.75, Math.min(1.35, density)));
 
     const startStep = Math.ceil(beatStart / stepDur);
     const endStep = Math.floor(beatEnd / stepDur);
@@ -947,15 +965,24 @@ export async function renderEpisodeAudioOffline(
       lastStep = st;
       const tNote = st * stepDur;
       if (tNote >= beatStart && tNote < totalDur) {
+        const xfadeGain = computeBoundaryCrossfadeGain(
+          tNote - beatStart,
+          dur,
+          arcPlan?.crossfadeInSec ?? 0,
+          nextArcPlan?.crossfadeInSec ?? 0
+        );
         scheduleRegionalStepOnContext(
           ctx,
           musicBus,
           baseFreq,
           beat.raag,
           st,
-          beat.musicEnergy,
+          effEnergy,
           tNote,
-          synthGainScale
+          synthGainScale * xfadeGain,
+          arcPlan
+            ? { octaveLift: arcPlan.octaveLift, percussionEmphasis: arcPlan.percussionEmphasis }
+            : undefined
         );
       }
     }
@@ -1009,6 +1036,9 @@ export class KathaAudioEngine {
 
   private lastStep = -1;
   private lastBeatId = '';
+  private lastRaag: RaagId | null = null;
+  private lastMood: StoryBeat['mood'] | null = null;
+  private beatMusicArcById = new Map<string, BeatMusicArcPlan>();
   private sfxFiredBeatId = '';
   private preTriggeredVoiceBeatId: string | null = null;
   private delayedVoiceTriggeredBeatId: string | null = null;
@@ -1019,6 +1049,14 @@ export class KathaAudioEngine {
 
   public setSpatialAudio(enabled: boolean): void {
     this.spatialAudio = enabled;
+  }
+
+  public setEpisodeMusicArc(episode: EpisodeScript): void {
+    const arc = computeEpisodeMusicArc(episode);
+    this.beatMusicArcById.clear();
+    for (const plan of arc.beats) {
+      this.beatMusicArcById.set(plan.beatId, plan);
+    }
   }
 
   public unlock(): boolean {
@@ -1720,30 +1758,55 @@ export class KathaAudioEngine {
       this.musicBus.gain.setTargetAtTime(targetGain, this.ctx.currentTime, timeConst);
     }
 
-    // Regional phrase sequencer scaled by beat.musicEnergy (attenuates softly when custom acoustic stem plays)
+    // Regional phrase sequencer scaled by Episode Harmonic Tension Arc + beat-boundary crossfades
     if (!this.muted && this.musicBus) {
+      const arcPlan =
+        this.beatMusicArcById.get(beat.id) ||
+        computeLiveBeatTensionFallback(beat, this.lastRaag, this.lastMood);
+      const nextArcPlan = nextBeat ? this.beatMusicArcById.get(nextBeat.id) : null;
+      const nextCrossfadeSec =
+        nextArcPlan?.crossfadeInSec ??
+        (nextBeat && nextBeat.raag !== beat.raag
+          ? 0.42
+          : nextBeat && nextBeat.mood !== beat.mood
+            ? 0.28
+            : 0);
+
       const baseStepDur =
         beat.raag === 'kora_griot' || beat.raag === 'gamelan_wayang'
           ? 0.2
           : beat.raag === 'guqin_bamboo' || beat.raag === 'cedar_flute'
             ? 0.26
             : 0.23;
-      const stepDur = baseStepDur - beat.musicEnergy * 0.03;
+      const effEnergy = arcPlan.effectiveEnergy;
+      const stepDur = Math.max(
+        0.13,
+        (baseStepDur - effEnergy * 0.03) / Math.max(0.75, Math.min(1.35, arcPlan.phraseDensity))
+      );
       const step = Math.floor(globalT / stepDur);
       if (step !== this.lastStep) {
         this.lastStep = step;
         const synthScale = this.musicStemBuffer ? 0.12 : 1.0;
+        const xfadeGain = computeBoundaryCrossfadeGain(
+          beatLocalT,
+          Math.max(1.2, beat.duration || 4),
+          arcPlan.crossfadeInSec,
+          nextCrossfadeSec
+        );
         scheduleRegionalStepOnContext(
           this.ctx,
           this.musicBus,
           this.baseFreq,
           beat.raag,
           step,
-          beat.musicEnergy,
+          effEnergy,
           this.ctx.currentTime,
-          synthScale
+          synthScale * xfadeGain,
+          { octaveLift: arcPlan.octaveLift, percussionEmphasis: arcPlan.percussionEmphasis }
         );
       }
+      this.lastRaag = beat.raag;
+      this.lastMood = beat.mood;
     }
   }
 }

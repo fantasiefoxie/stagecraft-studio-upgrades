@@ -568,6 +568,25 @@ export const WorkbenchLookTab: React.FC<WorkbenchLookTabProps> = React.memo(
               />
             </label>
 
+            {/* Upgrade 11: Volumetric Light Shafts & Stage Rim Atmosphere */}
+            <label className="block">
+              <div className="flex items-center justify-between text-[11px] text-[#9aa3bd] mb-1">
+                <span>Volumetric Light Shafts &amp; Dust Motes</span>
+                <span className="font-mono-tabular text-white">
+                  {Math.round((resolvedStyle.lightShafts ?? 0.4) * 100)}%
+                </span>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.05}
+                value={resolvedStyle.lightShafts ?? 0.4}
+                onChange={(e) => onUpdateVisualStyle({ lightShafts: Number(e.target.value) })}
+                className="w-full accent-[#f2c85b] cursor-pointer"
+              />
+            </label>
+
             {/* Upgrade 2: Deterministic Stereo Spatial Audio & Room Acoustics */}
             <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-white/8">
               <div>

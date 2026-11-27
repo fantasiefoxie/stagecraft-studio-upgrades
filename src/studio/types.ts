@@ -440,7 +440,9 @@ export type CaptionStyleId =
   | 'classic_cinema'
   | 'gold_manuscript'
   | 'shorts_bold_pop'
-  | 'minimal_clean';
+  | 'minimal_clean'
+  | 'comic_speech_pop'
+  | 'minimal_editorial';
 
 export type FrameBorderId = 'clean_letterbox' | 'gold_filigree' | 'manuscript_margin' | 'full_bleed';
 
@@ -479,6 +481,7 @@ export interface EpisodeVisualStyle {
   karaokeCaptions?: boolean; // Word-by-word kinetic active caption highlighting (Latin, Indic, RTL & CJK)
   autoTrackSpeaker?: boolean; // Automatically frame active speaker in 9:16 vertical Shorts (default true)
   depthOfField?: number; // 0 .. 1 subtle 2.5D multi-plane rack focus / backdrop defocus (default 0.35)
+  lightShafts?: number; // 0 .. 1 volumetric light shafts & dust-mote atmosphere (default 0.4)
   spatialAudio?: boolean; // Deterministic stereo panning & stage room acoustics (default true)
 }
 
@@ -586,6 +589,16 @@ export interface ActorPlacement {
   offsetY?: number;
 }
 
+export type LocationCardPosition = 'top_left' | 'bottom_left' | 'top_right';
+export type LocationCardStyle = 'cinematic_bar' | 'scroll_ribbon' | 'minimal_tag';
+
+export interface LocationCardConfig {
+  title: string;
+  subtitle?: string;
+  position?: LocationCardPosition;
+  style?: LocationCardStyle;
+}
+
 export interface StoryBeat {
   id: string;
   title: string;
@@ -633,6 +646,8 @@ export interface StoryBeat {
   actionCues?: BeatActionCue[];
   /** Optional kinetic motion-graphics card content when shot === 'motion_card' */
   motionCard?: MotionCardConfig;
+  /** Optional animated location / time-jump lower-third banner */
+  locationCard?: LocationCardConfig;
   speakerId: string;
   speakerLabel: string;
   dialogue: string;
@@ -1332,6 +1347,7 @@ export const DEFAULT_VISUAL_STYLE: EpisodeVisualStyle = {
   karaokeCaptions: true,
   autoTrackSpeaker: true,
   depthOfField: 0.35,
+  lightShafts: 0.4,
   spatialAudio: true,
 };
 
@@ -1448,6 +1464,8 @@ export const CAPTION_STYLE_CATALOG: Array<{ id: CaptionStyleId; label: string }>
   { id: 'gold_manuscript', label: 'Gold Manuscript Plate' },
   { id: 'shorts_bold_pop', label: 'Shorts Bold Pop' },
   { id: 'minimal_clean', label: 'Minimal Clean' },
+  { id: 'comic_speech_pop', label: 'Comic Speech Pop' },
+  { id: 'minimal_editorial', label: 'Minimal Editorial' },
 ];
 
 export const FRAME_BORDER_CATALOG: Array<{ id: FrameBorderId; label: string }> = [
@@ -1538,6 +1556,10 @@ export function resolveVisualStyle(partial?: Partial<EpisodeVisualStyle>): Episo
       typeof partial.depthOfField === 'number' && Number.isFinite(partial.depthOfField)
         ? Math.max(0, Math.min(1, partial.depthOfField))
         : DEFAULT_VISUAL_STYLE.depthOfField,
+    lightShafts:
+      typeof partial.lightShafts === 'number' && Number.isFinite(partial.lightShafts)
+        ? Math.max(0, Math.min(1, partial.lightShafts))
+        : DEFAULT_VISUAL_STYLE.lightShafts,
     spatialAudio:
       typeof partial.spatialAudio === 'boolean'
         ? partial.spatialAudio
@@ -2213,6 +2235,31 @@ export function validateEpisodeScript(raw: unknown): { ok: true; script: Episode
       ...(expressionCues.length > 0 ? { expressionCues } : {}),
       ...(actionCues.length > 0 ? { actionCues } : {}),
       ...(motionCard ? { motionCard } : {}),
+      ...(() => {
+        if (!item.locationCard || typeof item.locationCard !== 'object') return {};
+        const lc = item.locationCard as Record<string, unknown>;
+        const title = typeof lc.title === 'string' ? lc.title.trim().slice(0, 80) : '';
+        if (!title) return {};
+        const subtitle =
+          typeof lc.subtitle === 'string' && lc.subtitle.trim().length > 0
+            ? lc.subtitle.trim().slice(0, 90)
+            : undefined;
+        const position: LocationCardPosition | undefined =
+          lc.position === 'top_left' || lc.position === 'bottom_left' || lc.position === 'top_right'
+            ? lc.position
+            : undefined;
+        const style: LocationCardStyle | undefined =
+          lc.style === 'cinematic_bar' || lc.style === 'scroll_ribbon' || lc.style === 'minimal_tag'
+            ? lc.style
+            : undefined;
+        const locationCard: LocationCardConfig = {
+          title,
+          ...(subtitle ? { subtitle } : {}),
+          ...(position ? { position } : {}),
+          ...(style ? { style } : {}),
+        };
+        return { locationCard };
+      })(),
       speakerId: typeof item.speakerId === 'string' ? item.speakerId : 'narrator',
       speakerLabel: typeof item.speakerLabel === 'string' ? item.speakerLabel : 'Narrator',
       dialogue: typeof item.dialogue === 'string' ? item.dialogue : '',
@@ -2302,6 +2349,10 @@ export function validateEpisodeScript(raw: unknown): { ok: true; script: Episode
       depthOfField:
         typeof vs.depthOfField === 'number' && Number.isFinite(vs.depthOfField)
           ? Math.max(0, Math.min(1, vs.depthOfField))
+          : undefined,
+      lightShafts:
+        typeof vs.lightShafts === 'number' && Number.isFinite(vs.lightShafts)
+          ? Math.max(0, Math.min(1, vs.lightShafts))
           : undefined,
       spatialAudio:
         typeof vs.spatialAudio === 'boolean' ? vs.spatialAudio : undefined,

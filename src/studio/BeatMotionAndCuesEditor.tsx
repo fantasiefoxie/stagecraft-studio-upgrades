@@ -5,6 +5,8 @@ import {
   CastMember,
   FX_LIST,
   FxId,
+  LocationCardPosition,
+  LocationCardStyle,
   MOTION_LIST,
   MotionCardConfig,
   MotionCardLayoutId,
@@ -28,6 +30,7 @@ interface BeatMotionAndCuesEditorProps {
   cast: CastMember[];
   onUpdateBeat: (patch: Partial<StoryBeat>, historyLabel?: string) => void;
   onPreviewSfx: (sfx: SfxId) => void;
+  onAutoTagStageChanges?: () => void;
 }
 
 const MOTION_CARD_LAYOUTS: Array<{ id: MotionCardLayoutId; label: string }> = [
@@ -37,7 +40,7 @@ const MOTION_CARD_LAYOUTS: Array<{ id: MotionCardLayoutId; label: string }> = [
 ];
 
 export const BeatMotionAndCuesEditor: React.FC<BeatMotionAndCuesEditorProps> = React.memo(
-  ({ beat, cast, onUpdateBeat, onPreviewSfx }) => {
+  ({ beat, cast, onUpdateBeat, onPreviewSfx, onAutoTagStageChanges }) => {
     const cues = beat.actionCues || [];
     const [cuesExpanded, setCuesExpanded] = useState(cues.length > 0);
     const [selectedMacroId, setSelectedMacroId] = useState<ActingMacroId>('dramatic_realization');
@@ -720,6 +723,121 @@ export const BeatMotionAndCuesEditor: React.FC<BeatMotionAndCuesEditorProps> = R
           beatDuration={Math.max(1.2, beat.duration || 4)}
           onChange={(nextKfs) => onUpdateBeat({ cameraKeyframes: nextKfs }, 'Edit Camera Spline')}
         />
+
+        {/* Upgrade 17: Animated Location & Time-Jump Lower-Third Banner */}
+        <div className="p-2.5 rounded-lg bg-[#0d1222] border border-white/10 space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[11px] font-semibold text-[#cbd3e8]">
+              Location / Time-Jump Banner
+            </span>
+            <div className="flex items-center gap-1">
+              {onAutoTagStageChanges && (
+                <button
+                  type="button"
+                  onClick={onAutoTagStageChanges}
+                  title="Auto-attach Location Banners whenever the stage backdrop changes across this episode"
+                  className="h-6 px-2 rounded bg-[#18213a] hover:bg-[#233054] border border-[#f2c85b]/35 text-[10px] font-semibold text-[#f2c85b] cursor-pointer"
+                >
+                  Auto-Tag Stage Changes
+                </button>
+              )}
+              {beat.locationCard && (
+                <button
+                  type="button"
+                  onClick={() => onUpdateBeat({ locationCard: undefined }, 'Clear Location Banner')}
+                  className="h-6 px-1.5 rounded bg-white/5 hover:bg-[#3a1622] text-[10px] text-[#fda4af] cursor-pointer"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-1.5">
+            <input
+              type="text"
+              placeholder="Location title (e.g. Royal Court)"
+              value={beat.locationCard?.title || ''}
+              onChange={(e) => {
+                const title = e.target.value;
+                if (!title.trim() && !beat.locationCard?.subtitle) {
+                  onUpdateBeat({ locationCard: undefined }, 'Clear Location Banner');
+                  return;
+                }
+                onUpdateBeat(
+                  {
+                    locationCard: {
+                      ...(beat.locationCard || {}),
+                      title,
+                    },
+                  },
+                  'Edit Location Banner'
+                );
+              }}
+              className="h-7 px-2 rounded bg-[#14192b] border border-white/10 text-[10px] text-white placeholder-[#6f7894]"
+            />
+            <input
+              type="text"
+              placeholder="Subtitle (e.g. Midnight · Act II)"
+              value={beat.locationCard?.subtitle || ''}
+              onChange={(e) => {
+                const subtitle = e.target.value;
+                onUpdateBeat(
+                  {
+                    locationCard: {
+                      title: beat.locationCard?.title || beat.title || 'Scene Location',
+                      ...(beat.locationCard || {}),
+                      subtitle: subtitle || undefined,
+                    },
+                  },
+                  'Edit Location Banner'
+                );
+              }}
+              className="h-7 px-2 rounded bg-[#14192b] border border-white/10 text-[10px] text-white placeholder-[#6f7894]"
+            />
+            <select
+              value={beat.locationCard?.position || 'top_left'}
+              disabled={!beat.locationCard?.title}
+              onChange={(e) =>
+                beat.locationCard &&
+                onUpdateBeat(
+                  {
+                    locationCard: {
+                      ...beat.locationCard,
+                      position: e.target.value as LocationCardPosition,
+                    },
+                  },
+                  'Edit Location Banner Position'
+                )
+              }
+              className="h-7 px-1.5 rounded bg-[#14192b] border border-white/10 text-[10px] text-white disabled:opacity-40"
+            >
+              <option value="top_left">Pos: Top Left</option>
+              <option value="bottom_left">Pos: Bottom Left</option>
+              <option value="top_right">Pos: Top Right</option>
+            </select>
+            <select
+              value={beat.locationCard?.style || 'cinematic_bar'}
+              disabled={!beat.locationCard?.title}
+              onChange={(e) =>
+                beat.locationCard &&
+                onUpdateBeat(
+                  {
+                    locationCard: {
+                      ...beat.locationCard,
+                      style: e.target.value as LocationCardStyle,
+                    },
+                  },
+                  'Edit Location Banner Style'
+                )
+              }
+              className="h-7 px-1.5 rounded bg-[#14192b] border border-white/10 text-[10px] text-white disabled:opacity-40"
+            >
+              <option value="cinematic_bar">Style: Cinematic Bar</option>
+              <option value="scroll_ribbon">Style: Scroll Ribbon</option>
+              <option value="minimal_tag">Style: Minimal Tag</option>
+            </select>
+          </div>
+        </div>
       </div>
     );
   }

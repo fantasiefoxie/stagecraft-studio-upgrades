@@ -35,6 +35,15 @@ import {
 import { resolvePhonemeViseme } from './facialExpressions';
 import { applyPooledBackdropDof, computeBeatDepthOfFieldSpec } from './depthOfField';
 import { composeCameraWithKeyframes } from './cameraKeyframes';
+import { drawVolumetricLightShafts } from './volumetricLighting';
+import { computePropPhysics } from './propPhysics';
+import {
+  computeKineticWordPop,
+  parseEmphasisTokens,
+  resolveSpeakerAccentColor,
+  stripEmphasisMarkup,
+} from './kineticCaptions';
+import { drawLocationLowerThird } from './lowerThirds';
 import {
   SfxChoreographyState,
   applyParallaxCamera,
@@ -1856,7 +1865,8 @@ function drawCaptions(
   karaokeEnabled: boolean,
   motionProfile?: MotionProfileId,
   renderStyle?: RenderStyleId,
-  speechWindow?: SpeechWindow | null
+  speechWindow?: SpeechWindow | null,
+  cast?: CastMember[]
 ): void {
   if (!beat.dialogue.trim()) return;
   if (beat.frame === 'chapter_title' || beat.frame === 'moral_card' || beat.frame === 'end_screen') return;
@@ -1866,14 +1876,31 @@ function drawCaptions(
   const padX = isVert ? w * 0.08 : w * 0.12;
   const maxW = w - padX * 2;
   const fontSize = Math.round(
-    (isVert ? w * 0.044 : h * 0.042) * (captionStyle === 'shorts_bold_pop' ? 1.12 : 1.0)
+    (isVert ? w * 0.044 : h * 0.042) *
+      (captionStyle === 'shorts_bold_pop' || captionStyle === 'comic_speech_pop' ? 1.1 : captionStyle === 'minimal_editorial' ? 0.94 : 1.0)
   );
   const labelSize = Math.round(fontSize * 0.56);
 
   const fontFamily =
-    captionStyle === 'gold_manuscript' ? lang.displayFontFamily : lang.fontFamily;
-  const fontWeight = captionStyle === 'shorts_bold_pop' ? '900' : '700';
-  const rtl = isRtlText(beat.dialogue, lang.code);
+    captionStyle === 'gold_manuscript' || captionStyle === 'minimal_editorial'
+      ? lang.displayFontFamily
+      : lang.fontFamily;
+  const fontWeight =
+    captionStyle === 'shorts_bold_pop' || captionStyle === 'comic_speech_pop'
+      ? '900'
+      : captionStyle === 'minimal_editorial'
+        ? '600'
+        : '700';
+
+  const emphasisTokens = parseEmphasisTokens(beat.dialogue);
+  const cleanDialogue = stripEmphasisMarkup(beat.dialogue);
+  const speakerAccent = resolveSpeakerAccentColor(
+    beat,
+    cast,
+    beat.speakerId === 'narrator' ? '#c8d7f5' : '#ffd04d'
+  );
+
+  const rtl = isRtlText(cleanDialogue, lang.code);
   const profileSpec = resolveMotionProfileSpec(motionProfile, renderStyle);
   const lowerThird = computeCaptionLowerThirdMotion(
     localT,
@@ -1901,8 +1928,8 @@ function drawCaptions(
   }
 
   ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
-  const tokens = karaokeEnabled ? tokenizeKineticWords(beat.dialogue, lang) : [];
-  const spaceGap = lang.scriptType === 'cjk' && !/\s/.test(beat.dialogue.trim())
+  const tokens = karaokeEnabled ? tokenizeKineticWords(cleanDialogue, lang) : [];
+  const spaceGap = lang.scriptType === 'cjk' && !/\s/.test(cleanDialogue.trim())
     ? 0
     : ctx.measureText(' ').width;
   const kineticLines = karaokeEnabled && tokens.length > 0
@@ -1910,7 +1937,7 @@ function drawCaptions(
     : [];
   const shown = karaokeEnabled && kineticLines.length > 0
     ? kineticLines.map((ln) => ln.map((t) => t.word).join(spaceGap > 0 ? ' ' : ''))
-    : wrapCanvasLines(ctx, beat.dialogue, maxW, 3);
+    : wrapCanvasLines(ctx, cleanDialogue, maxW, 3);
 
   const lineH = fontSize * (lang.scriptType === 'indic' || lang.scriptType === 'arabic' ? 1.34 : 1.24);
   const bottomY = h - (isVert ? h * 0.075 : h * 0.062);
@@ -1928,23 +1955,76 @@ function drawCaptions(
     ctx.lineWidth = 2.2 * s;
     ctx.strokeRect(bx, by, boxW, boxH);
     ctx.restore();
+  } else if (captionStyle === 'comic_speech_pop') {
+    const boxW = Math.min(w * 0.88, maxW + 44 * s);
+    const boxH = shown.length * lineH + fontSize * 1.55;
+    const bx = (w - boxW) / 2;
+    const by = startY - fontSize * 1.5;
+    ctx.save();
+    ctx.fillStyle = 'rgba(8, 10, 18, 0.9)';
+    ctx.beginPath();
+    ctx.roundRect(bx + 5 * s, by + 5 * s, boxW, boxH, 14 * s);
+    ctx.fill();
+    ctx.fillStyle = '#fffdf5';
+    ctx.beginPath();
+    ctx.roundRect(bx, by, boxW, boxH, 14 * s);
+    ctx.fill();
+    ctx.strokeStyle = '#090b16';
+    ctx.lineWidth = Math.max(3, 3.2 * s);
+    ctx.stroke();
+    ctx.restore();
+  } else if (captionStyle === 'minimal_editorial') {
+    const boxW = Math.min(w * 0.84, maxW + 32 * s);
+    const boxH = shown.length * lineH + fontSize * 1.5;
+    const bx = (w - boxW) / 2;
+    const by = startY - fontSize * 1.48;
+    ctx.save();
+    ctx.fillStyle = 'rgba(9, 12, 20, 0.76)';
+    ctx.fillRect(bx, by, boxW, boxH);
+    ctx.fillStyle = speakerAccent;
+    ctx.fillRect(bx, by, Math.max(3, 4 * s), boxH);
+    ctx.restore();
   }
 
   ctx.textAlign = 'center';
   ctx.textBaseline = 'alphabetic';
   ctx.font = `700 ${labelSize}px ${lang.fontFamily}`;
-  ctx.strokeStyle = 'rgba(5, 7, 18, 0.92)';
-  ctx.lineWidth = Math.max(3.5, labelSize * 0.2);
-  ctx.lineJoin = 'round';
   const speakerBadge = safeUppercase(beat.speakerLabel, lang);
-  ctx.strokeText(speakerBadge, w / 2, startY - fontSize * 0.92, maxW);
-  ctx.fillStyle = beat.speakerId === 'narrator' ? '#c8d7f5' : '#ffd04d';
-  ctx.fillText(speakerBadge, w / 2, startY - fontSize * 0.92, maxW);
+  if (captionStyle === 'comic_speech_pop') {
+    const badgeW = Math.min(maxW, ctx.measureText(speakerBadge).width + 22 * s);
+    const badgeH = labelSize * 1.55;
+    const badgeX = w / 2 - badgeW / 2;
+    const badgeY = startY - fontSize * 1.82;
+    ctx.save();
+    ctx.fillStyle = speakerAccent;
+    ctx.beginPath();
+    ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 6 * s);
+    ctx.fill();
+    ctx.strokeStyle = '#090b16';
+    ctx.lineWidth = Math.max(2, 2.2 * s);
+    ctx.stroke();
+    ctx.fillStyle = '#090b16';
+    ctx.fillText(speakerBadge, w / 2, badgeY + badgeH * 0.74, maxW);
+    ctx.restore();
+  } else {
+    ctx.strokeStyle = 'rgba(5, 7, 18, 0.92)';
+    ctx.lineWidth = Math.max(3.5, labelSize * 0.2);
+    ctx.lineJoin = 'round';
+    ctx.strokeText(speakerBadge, w / 2, startY - fontSize * 0.92, maxW);
+    ctx.fillStyle = speakerAccent;
+    ctx.fillText(speakerBadge, w / 2, startY - fontSize * 0.92, maxW);
+  }
 
   ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
 
   if (karaokeEnabled && kineticLines.length > 0) {
     const activeIdx = computeActiveWordIndex(tokens, localT, beat.duration, speechWindow);
+    const effStart = speechWindow ? speechWindow.startSec : 0.14;
+    const effEnd = speechWindow ? speechWindow.endSec : Math.max(effStart + 0.4, beat.duration - 0.18);
+    const wordSpanSec = Math.max(0.12, (effEnd - effStart) / Math.max(1, tokens.length));
+    const activeWordStart = effStart + Math.max(0, activeIdx) * wordSpanSec;
+    const wordLocalU = clamp((localT - activeWordStart) / wordSpanSec, 0, 1);
+
     for (let i = 0; i < kineticLines.length; i++) {
       const lineTokens = kineticLines[i];
       const ly = startY + i * lineH;
@@ -1958,28 +2038,26 @@ function drawCaptions(
         const cx = rtl ? cursorX - tok.width / 2 : cursorX + tok.width / 2;
         const isActive = tok.wordIdx === activeIdx;
         const isSpoken = tok.wordIdx < activeIdx;
+        const isEmphasized = Boolean(emphasisTokens[tok.wordIdx]?.isEmphasized);
+        const pop = computeKineticWordPop(wordLocalU, isEmphasized, isActive);
 
         ctx.save();
         ctx.textAlign = 'center';
+        if (pop.scaleX !== 1 || pop.scaleY !== 1 || pop.liftPx !== 0) {
+          ctx.translate(cx, ly - pop.liftPx * s);
+          ctx.scale(pop.scaleX, pop.scaleY);
+          ctx.translate(-cx, -ly);
+        }
+
         if (captionStyle === 'shorts_bold_pop') {
           if (isActive) {
             const padW = 7 * s;
             const boxH = fontSize * 1.18;
             const bx = cx - tok.width / 2 - padW;
             const by = ly - fontSize * 0.9;
-            ctx.fillStyle = '#f2c85b';
+            ctx.fillStyle = speakerAccent;
             ctx.beginPath();
-            const rr = 6 * s;
-            ctx.moveTo(bx + rr, by);
-            ctx.lineTo(bx + tok.width + padW * 2 - rr, by);
-            ctx.quadraticCurveTo(bx + tok.width + padW * 2, by, bx + tok.width + padW * 2, by + rr);
-            ctx.lineTo(bx + tok.width + padW * 2, by + boxH - rr);
-            ctx.quadraticCurveTo(bx + tok.width + padW * 2, by + boxH, bx + tok.width + padW * 2 - rr, by + boxH);
-            ctx.lineTo(bx + rr, by + boxH);
-            ctx.quadraticCurveTo(bx, by + boxH, bx, by + boxH - rr);
-            ctx.lineTo(bx, by + rr);
-            ctx.quadraticCurveTo(bx, by, bx + rr, by);
-            ctx.closePath();
+            ctx.roundRect(bx, by, tok.width + padW * 2, boxH, 6 * s);
             ctx.fill();
             ctx.fillStyle = '#090b16';
             ctx.fillText(tok.word, cx, ly);
@@ -1988,36 +2066,66 @@ function drawCaptions(
             ctx.lineWidth = Math.max(6, fontSize * 0.22);
             ctx.lineJoin = 'round';
             ctx.strokeText(tok.word, cx, ly);
-            ctx.fillStyle = isSpoken ? '#ffffff' : 'rgba(255, 255, 255, 0.72)';
+            ctx.fillStyle = isEmphasized
+              ? speakerAccent
+              : isSpoken
+                ? '#ffffff'
+                : 'rgba(255, 255, 255, 0.72)';
             ctx.fillText(tok.word, cx, ly);
+          }
+        } else if (captionStyle === 'comic_speech_pop') {
+          if (isActive || isEmphasized) {
+            ctx.fillStyle = isActive ? speakerAccent : 'rgba(242, 200, 91, 0.35)';
+            ctx.beginPath();
+            ctx.roundRect(cx - tok.width / 2 - 4 * s, ly - fontSize * 0.86, tok.width + 8 * s, fontSize * 1.08, 4 * s);
+            ctx.fill();
+          }
+          ctx.fillStyle = '#0b0e19';
+          ctx.fillText(tok.word, cx, ly);
+        } else if (captionStyle === 'minimal_editorial') {
+          ctx.fillStyle = isActive
+            ? speakerAccent
+            : isEmphasized
+              ? '#ffffff'
+              : isSpoken
+                ? '#eef2f9'
+                : 'rgba(232, 236, 244, 0.66)';
+          ctx.fillText(tok.word, cx, ly);
+          if (isActive) {
+            ctx.fillStyle = speakerAccent;
+            ctx.fillRect(cx - tok.width / 2, ly + 4 * s, tok.width, Math.max(2, 2.4 * s));
           }
         } else if (captionStyle === 'minimal_clean') {
           ctx.strokeStyle = 'rgba(5, 7, 16, 0.94)';
           ctx.lineWidth = Math.max(4, fontSize * 0.14);
           ctx.lineJoin = 'round';
           ctx.strokeText(tok.word, cx, ly);
-          if (isActive) {
-            ctx.shadowColor = 'rgba(255, 214, 92, 0.55)';
-            ctx.shadowBlur = 10 * s;
+          if (isActive || isEmphasized) {
+            ctx.shadowColor = speakerAccent;
+            ctx.shadowBlur = (isActive ? 10 : 6) * s;
           }
           ctx.fillStyle = isActive
-            ? '#ffe066'
-            : isSpoken
-              ? '#fbf8f1'
-              : 'rgba(251, 248, 241, 0.74)';
+            ? speakerAccent
+            : isEmphasized
+              ? '#ffe799'
+              : isSpoken
+                ? '#fbf8f1'
+                : 'rgba(251, 248, 241, 0.74)';
           ctx.fillText(tok.word, cx, ly);
         } else {
           ctx.fillStyle = 'rgba(4, 6, 14, 0.94)';
           ctx.fillText(tok.word, cx + 2.2, ly + 2.2);
-          if (isActive) {
-            ctx.shadowColor = 'rgba(255, 214, 92, 0.5)';
-            ctx.shadowBlur = 10 * s;
+          if (isActive || isEmphasized) {
+            ctx.shadowColor = speakerAccent;
+            ctx.shadowBlur = (isActive ? 10 : 5) * s;
           }
           ctx.fillStyle = isActive
-            ? '#ffe066'
-            : isSpoken
-              ? (captionStyle === 'gold_manuscript' ? '#fdf4df' : '#ffffff')
-              : 'rgba(245, 244, 240, 0.74)';
+            ? speakerAccent
+            : isEmphasized
+              ? '#ffe58f'
+              : isSpoken
+                ? (captionStyle === 'gold_manuscript' ? '#fdf4df' : '#ffffff')
+                : 'rgba(245, 244, 240, 0.74)';
           ctx.fillText(tok.word, cx, ly);
         }
         ctx.restore();
@@ -2035,7 +2143,13 @@ function drawCaptions(
         ctx.lineWidth = Math.max(6, fontSize * 0.22);
         ctx.lineJoin = 'round';
         ctx.strokeText(shown[i], w / 2, ly);
-        ctx.fillStyle = i === 0 ? '#ffe47a' : '#ffffff';
+        ctx.fillStyle = i === 0 ? speakerAccent : '#ffffff';
+        ctx.fillText(shown[i], w / 2, ly);
+      } else if (captionStyle === 'comic_speech_pop') {
+        ctx.fillStyle = '#0b0e19';
+        ctx.fillText(shown[i], w / 2, ly);
+      } else if (captionStyle === 'minimal_editorial') {
+        ctx.fillStyle = '#f3f6fc';
         ctx.fillText(shown[i], w / 2, ly);
       } else if (captionStyle === 'minimal_clean') {
         // Crisp dark ink contour guarantees 100% readability even on pale sumi-e & cotton-paper engines
@@ -2270,19 +2384,58 @@ export function renderEpisodeFrame(
         applyParallaxCamera(fCtx, w, h, cam, fgDepthFactor);
 
         // Stage-grounded props render behind actors; hand-held props render in front of actor's live wrist!
+        const propCarrier =
+          beat.propAnchor === 'actor_right_hand'
+            ? effectiveActors[1] || effectiveActors[0]
+            : beat.propAnchor === 'actor_left_hand'
+              ? effectiveActors[0]
+              : undefined;
+        const propPhys = computePropPhysics(
+          beat,
+          animT,
+          motionU,
+          s,
+          propCarrier,
+          actionState.propPulse
+        );
         if ((beat.prop !== 'none' || beat.customPropDataUrl) && !propSpec.isHeld) {
-          const pulseScale = propSpec.scale * (1 + actionState.propPulse * 0.22);
+          const pxPhys = propSpec.px + propPhys.offsetX;
+          const pyPhys = propSpec.py + propPhys.offsetY;
+          const pulseScale = propSpec.scale * propPhys.scalePulse * (1 + actionState.propPulse * 0.22);
+          if (propPhys.glowBoost > 0.12) {
+            fCtx.save();
+            const haloRad = (48 + propPhys.glowBoost * 24) * s;
+            const halo = fCtx.createRadialGradient(pxPhys, pyPhys, 0, pxPhys, pyPhys, haloRad);
+            halo.addColorStop(0, pal.accent);
+            halo.addColorStop(1, 'rgba(0,0,0,0)');
+            fCtx.globalCompositeOperation = 'screen';
+            fCtx.globalAlpha = propPhys.glowBoost * 0.34;
+            fCtx.fillStyle = halo;
+            fCtx.beginPath();
+            fCtx.arc(pxPhys, pyPhys, haloRad, 0, Math.PI * 2);
+            fCtx.fill();
+            fCtx.restore();
+          }
           if (actionState.propPulse > 0.04) {
             fCtx.save();
             fCtx.strokeStyle = pal.accent;
             fCtx.globalAlpha = actionState.propPulse * 0.72;
             fCtx.lineWidth = 3.5 * s;
             fCtx.beginPath();
-            fCtx.arc(propSpec.px, propSpec.py, (44 + (1 - actionState.propPulse) * 48) * s, 0, Math.PI * 2);
+            fCtx.arc(pxPhys, pyPhys, (44 + (1 - actionState.propPulse) * 48) * s, 0, Math.PI * 2);
             fCtx.stroke();
             fCtx.restore();
           }
-          drawCustomOrHeroProp(fCtx, beat, propSpec.px, propSpec.py, pulseScale, animT, motionU, propSpec.rotation);
+          drawCustomOrHeroProp(
+            fCtx,
+            beat,
+            pxPhys,
+            pyPhys,
+            pulseScale,
+            animT,
+            motionU,
+            propSpec.rotation + propPhys.rotationRad
+          );
         }
 
         // Draw Actors with Archetype Kinematics, 12-Principles Envelopes, Tapered Motion Arcs & 2-Bone Arms
@@ -2340,8 +2493,33 @@ export function renderEpisodeFrame(
         }
 
         if ((beat.prop !== 'none' || beat.customPropDataUrl) && propSpec.isHeld) {
-          const pulseScale = propSpec.scale * (1 + actionState.propPulse * 0.22);
-          drawCustomOrHeroProp(fCtx, beat, propSpec.px, propSpec.py, pulseScale, animT, u, propSpec.rotation);
+          const pxPhys = propSpec.px + propPhys.offsetX;
+          const pyPhys = propSpec.py + propPhys.offsetY;
+          const pulseScale = propSpec.scale * propPhys.scalePulse * (1 + actionState.propPulse * 0.22);
+          if (propPhys.glowBoost > 0.14) {
+            fCtx.save();
+            const haloRad = (42 + propPhys.glowBoost * 20) * s;
+            const halo = fCtx.createRadialGradient(pxPhys, pyPhys, 0, pxPhys, pyPhys, haloRad);
+            halo.addColorStop(0, pal.accent);
+            halo.addColorStop(1, 'rgba(0,0,0,0)');
+            fCtx.globalCompositeOperation = 'screen';
+            fCtx.globalAlpha = propPhys.glowBoost * 0.3;
+            fCtx.fillStyle = halo;
+            fCtx.beginPath();
+            fCtx.arc(pxPhys, pyPhys, haloRad, 0, Math.PI * 2);
+            fCtx.fill();
+            fCtx.restore();
+          }
+          drawCustomOrHeroProp(
+            fCtx,
+            beat,
+            pxPhys,
+            pyPhys,
+            pulseScale,
+            animT,
+            u,
+            propSpec.rotation + propPhys.rotationRad
+          );
         }
         fCtx.restore();
 
@@ -2744,15 +2922,33 @@ export function renderEpisodeFrame(
         }
 
         if (beat.prop !== 'none' || beat.customPropDataUrl) {
-          const zoom = lerp(1.0, 1.12, smoothstep(u)) * (1 + actionState.propPulse * 0.2);
+          const spotPhys = computePropPhysics(beat, animT, u, s, actor0, actionState.propPulse);
+          const pxSpot = w * 0.6 + spotPhys.offsetX;
+          const pySpot = h * (isVert ? 0.56 : 0.62) + spotPhys.offsetY;
+          const zoom = lerp(1.0, 1.12, smoothstep(u)) * spotPhys.scalePulse * (1 + actionState.propPulse * 0.2);
+          if (spotPhys.glowBoost > 0.12) {
+            fCtx.save();
+            const haloRad = (62 + spotPhys.glowBoost * 28) * s;
+            const halo = fCtx.createRadialGradient(pxSpot, pySpot, 0, pxSpot, pySpot, haloRad);
+            halo.addColorStop(0, pal.accent);
+            halo.addColorStop(1, 'rgba(0,0,0,0)');
+            fCtx.globalCompositeOperation = 'screen';
+            fCtx.globalAlpha = spotPhys.glowBoost * 0.36;
+            fCtx.fillStyle = halo;
+            fCtx.beginPath();
+            fCtx.arc(pxSpot, pySpot, haloRad, 0, Math.PI * 2);
+            fCtx.fill();
+            fCtx.restore();
+          }
           drawCustomOrHeroProp(
             fCtx,
             beat,
-            w * 0.6,
-            h * (isVert ? 0.56 : 0.62),
+            pxSpot,
+            pySpot,
             s * 1.25 * zoom,
             animT,
-            u
+            u,
+            spotPhys.rotationRad
           );
         }
         fCtx.restore();
@@ -3034,6 +3230,9 @@ export function renderEpisodeFrame(
   // Step 9: Dynamic Environmental Relighting (warm firelight flicker & aquatic caustic shimmer)
   drawDynamicSceneRelighting(ctx, w, h, lighting, beat, animT, s);
 
+  // Volumetric Light Shafts & Stage Rim Atmosphere (zero allocations, unified across all 20 engines)
+  drawVolumetricLightShafts(ctx, w, h, beat, style, animT, activeRenderStyle);
+
   // Subtle deterministic lamp/neon exposure warmth modulation (borrowed from Prototype M)
   const sceneFlicker = computeDeterministicFlicker(animT, activeRenderStyle, beat.mood);
   if (Math.abs(sceneFlicker - 1) > 0.008) {
@@ -3068,6 +3267,9 @@ export function renderEpisodeFrame(
     drawBrandWatermark(ctx, w, h, loadBrandKit(), aspect, lang);
   }
 
+  // Animated Location & Time-Jump Lower-Third Banner
+  drawLocationLowerThird(ctx, w, h, beat, localT, pal.accent, isVert);
+
   // Captions (Styled via EpisodeVisualStyle.captionStyle + optional kinetic word-by-word karaoke + 12-Principles lower-third timing)
   if (showCaptions) {
     drawCaptions(
@@ -3082,7 +3284,8 @@ export function renderEpisodeFrame(
       style.karaokeCaptions !== false,
       motionProfile,
       activeRenderStyle,
-      speechWindow
+      speechWindow,
+      episode.cast
     );
   }
 

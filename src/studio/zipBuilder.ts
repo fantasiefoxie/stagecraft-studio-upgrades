@@ -100,9 +100,22 @@ import studioCameraKeyframesTs from './cameraKeyframes.ts?raw';
 import studioCameraCurveMiniEditorTsx from './CameraCurveMiniEditor.tsx?raw';
 import studioDubSyncPackagerTs from './dubSyncPackager.ts?raw';
 import studioLookPresetsTs from './lookPresets.ts?raw';
+import studioVolumetricLightingTs from './volumetricLighting.ts?raw';
+import studioPropPhysicsTs from './propPhysics.ts?raw';
+import studioKineticCaptionsTs from './kineticCaptions.ts?raw';
+import studioMusicTensionTs from './musicTension.ts?raw';
+import studioTeleprompterUtilsTs from './teleprompterUtils.ts?raw';
+import studioTeleprompterModalTsx from './TeleprompterModal.tsx?raw';
+import studioPacingAnalyzerTs from './pacingAnalyzer.ts?raw';
+import studioLowerThirdsTs from './lowerThirds.ts?raw';
+import studioEpisodeDiffTs from './episodeDiff.ts?raw';
+import studioVersionDiffModalTsx from './VersionDiffModal.tsx?raw';
+import studioShortcutsTs from './studioShortcuts.ts?raw';
+import studioCommandPaletteModalTsx from './CommandPaletteModal.tsx?raw';
 import studioZipBuilderTs from './zipBuilder.ts?raw';
 import batchRenderScriptMjs from '../../scripts/render-batch.mjs?raw';
 import determinismAuditScriptMjs from '../../scripts/determinism-audit.mjs?raw';
+import studioStressTestScriptMjs from '../../scripts/studio-stress-test.mjs?raw';
 import compileEpisodeScriptTs from '../../scripts/compile-episode.ts?raw';
 import runTestsScriptTs from '../../scripts/run-tests.ts?raw';
 
@@ -647,6 +660,54 @@ export function collectAllMachinimaEntries(): ZipEntryInput[] {
       content: studioLookPresetsTs,
     },
     {
+      path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/volumetricLighting.ts`,
+      content: studioVolumetricLightingTs,
+    },
+    {
+      path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/propPhysics.ts`,
+      content: studioPropPhysicsTs,
+    },
+    {
+      path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/kineticCaptions.ts`,
+      content: studioKineticCaptionsTs,
+    },
+    {
+      path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/musicTension.ts`,
+      content: studioMusicTensionTs,
+    },
+    {
+      path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/teleprompterUtils.ts`,
+      content: studioTeleprompterUtilsTs,
+    },
+    {
+      path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/TeleprompterModal.tsx`,
+      content: studioTeleprompterModalTsx,
+    },
+    {
+      path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/pacingAnalyzer.ts`,
+      content: studioPacingAnalyzerTs,
+    },
+    {
+      path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/lowerThirds.ts`,
+      content: studioLowerThirdsTs,
+    },
+    {
+      path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/episodeDiff.ts`,
+      content: studioEpisodeDiffTs,
+    },
+    {
+      path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/VersionDiffModal.tsx`,
+      content: studioVersionDiffModalTsx,
+    },
+    {
+      path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/studioShortcuts.ts`,
+      content: studioShortcutsTs,
+    },
+    {
+      path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/CommandPaletteModal.tsx`,
+      content: studioCommandPaletteModalTsx,
+    },
+    {
       path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/zipBuilder.ts`,
       content: studioZipBuilderTs,
     },
@@ -657,6 +718,10 @@ export function collectAllMachinimaEntries(): ZipEntryInput[] {
     {
       path: `${root}/03_katha_studio_indian_folklore_engine/scripts/determinism-audit.mjs`,
       content: determinismAuditScriptMjs,
+    },
+    {
+      path: `${root}/03_katha_studio_indian_folklore_engine/scripts/studio-stress-test.mjs`,
+      content: studioStressTestScriptMjs,
     },
     {
       path: `${root}/03_katha_studio_indian_folklore_engine/scripts/compile-episode.ts`,

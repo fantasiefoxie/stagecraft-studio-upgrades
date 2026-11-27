@@ -73,6 +73,7 @@ export interface WorkbenchBeatInspectorProps {
   onToggleAutoDuck: () => void;
   onPreviewSfx: (sfx: SfxId) => void;
   onCustomPropUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onAutoTagStageChanges?: () => void;
 }
 
 export const WorkbenchBeatInspector: React.FC<WorkbenchBeatInspectorProps> = React.memo(
@@ -101,6 +102,7 @@ export const WorkbenchBeatInspector: React.FC<WorkbenchBeatInspectorProps> = Rea
     onToggleAutoDuck,
     onPreviewSfx,
     onCustomPropUpload,
+    onAutoTagStageChanges,
   }) => {
     const beatStart = beatStarts[selectedBeatIdx] ?? 0;
     const beatLocalT =
@@ -505,6 +507,7 @@ export const WorkbenchBeatInspector: React.FC<WorkbenchBeatInspectorProps> = Rea
               cast={episode.cast}
               onUpdateBeat={onUpdateSelectedBeat}
               onPreviewSfx={onPreviewSfx}
+              onAutoTagStageChanges={onAutoTagStageChanges}
             />
           </div>
 

@@ -1,15 +1,18 @@
 import React, { useMemo, useRef, useState } from 'react';
 import {
+  Activity,
   Film,
   LayoutGrid,
   Plus,
   Scissors,
+  Sparkles,
   Tv,
   ZoomIn,
   ZoomOut,
 } from 'lucide-react';
 import { EpisodeScript, RENDER_STYLE_CATALOG, STUDIO_FPS } from './types';
 import { EpisodeChapterSlice, formatLongDuration } from './longFormEngine';
+import { analyzeEpisodePacing } from './pacingAnalyzer';
 
 interface StoryboardTimelineStripProps {
   episode: EpisodeScript;
@@ -28,6 +31,7 @@ interface StoryboardTimelineStripProps {
   onSeekTime?: (timeSec: number) => void;
   onResizeBeatDuration?: (idx: number, newDuration: number) => void;
   onApplyCinematicJCuts?: () => void;
+  onBoostFlatBeats?: () => void;
   onDragStartBeat: (idx: number) => void;
   onDragOverBeat: (idx: number) => void;
   onDragLeaveBeat: (idx: number) => void;
@@ -62,6 +66,7 @@ export const StoryboardTimelineStrip: React.FC<StoryboardTimelineStripProps> = R
     onSeekTime,
     onResizeBeatDuration,
     onApplyCinematicJCuts,
+    onBoostFlatBeats,
     onDragStartBeat,
     onDragOverBeat,
     onDragLeaveBeat,
@@ -71,7 +76,9 @@ export const StoryboardTimelineStrip: React.FC<StoryboardTimelineStripProps> = R
     onAddEndScreenBeat,
   }) => {
     const [viewMode, setViewMode] = useState<'cards' | 'timeline'>('cards');
+    const [showHeatmap, setShowHeatmap] = useState<boolean>(false);
     const [pxPerSec, setPxPerSec] = useState<number>(28);
+    const pacingReport = useMemo(() => analyzeEpisodePacing(episode), [episode]);
     const [resizingState, setResizingState] = useState<{
       idx: number;
       previewDur: number;
@@ -293,7 +300,83 @@ export const StoryboardTimelineStrip: React.FC<StoryboardTimelineStripProps> = R
               </button>
             </div>
           )}
+
+          {/* Upgrade 16: Retention & Pacing Heatmap Toggle + 1-Click Boost Flat Beats */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => setShowHeatmap((v) => !v)}
+              title={`Toggle Retention & Pacing Heatmap (Overall Score ${pacingReport.overallScore}/100 · ${pacingReport.dropOffZones.length} drop-off zone${pacingReport.dropOffZones.length === 1 ? '' : 's'})`}
+              className={`h-6 px-2 rounded text-[10px] font-semibold inline-flex items-center gap-1 border cursor-pointer transition-colors ${
+                showHeatmap
+                  ? 'bg-[#1a223d] border-[#f2c85b]/60 text-[#f2c85b]'
+                  : 'bg-[#101425] border-white/10 text-[#9aa3bd] hover:text-white'
+              }`}
+            >
+              <Activity className="w-3 h-3" />
+              <span>Retention {pacingReport.overallScore}</span>
+              {pacingReport.dropOffZones.length > 0 && (
+                <span className="px-1 rounded bg-[#ff4d6d]/20 text-[#fda4af] font-mono">
+                  {pacingReport.dropOffZones.length}!
+                </span>
+              )}
+            </button>
+            {onBoostFlatBeats && pacingReport.flatBeatIndices.length > 0 && (
+              <button
+                type="button"
+                onClick={onBoostFlatBeats}
+                title={`Auto-boost ${pacingReport.flatBeatIndices.length} flat beat(s) with camera moves, reaction cuts & SFX (preserves voice durations)`}
+                className="h-6 px-2 rounded bg-[#231e12] hover:bg-[#332a17] border border-[#f2c85b]/45 text-[10px] font-semibold text-[#f2c85b] inline-flex items-center gap-1 cursor-pointer"
+              >
+                <Sparkles className="w-3 h-3" />
+                <span>Boost Flat Beats ({pacingReport.flatBeatIndices.length})</span>
+              </button>
+            )}
+          </div>
         </div>
+
+        {/* Toggleable Retention Sparkline Bar (clickable to jump straight to any beat or drop-off zone) */}
+        {showHeatmap && pacingReport.beatScores.length > 0 && (
+          <div className="px-2 py-1.5 rounded-lg bg-[#0a0d18] border border-white/10 space-y-1">
+            <div className="flex items-center justify-between text-[10px] text-[#8e97b0]">
+              <span>
+                Retention Heatmap · Overall{' '}
+                <strong className="text-white">{pacingReport.overallScore}/100</strong>
+                {pacingReport.dropOffZones.length > 0
+                  ? ` · ${pacingReport.dropOffZones.length} drop-off zone (>12s low energy)`
+                  : ' · Crisp pacing (0 drop-off zones)'}
+              </span>
+              <span className="text-[9px]">Click any bar to jump</span>
+            </div>
+            <div className="flex items-end gap-0.5 h-8">
+              {pacingReport.beatScores.map((bs) => {
+                const isSel = bs.beatIndex === selectedBeatIdx;
+                const barColor =
+                  bs.score >= 76
+                    ? 'bg-[#22c55e]'
+                    : bs.score >= 60
+                      ? 'bg-[#f2c85b]'
+                      : 'bg-[#ff4d6d]';
+                return (
+                  <button
+                    key={bs.beatId}
+                    type="button"
+                    onClick={() => onSelectBeat(bs.beatIndex)}
+                    title={`Scene ${bs.beatIndex + 1} (${bs.durationSec.toFixed(1)}s): Score ${bs.score}/100${bs.reasons.length ? ` — ${bs.reasons.join(', ')}` : ''}`}
+                    className={`flex-1 min-w-[6px] h-full flex items-end cursor-pointer rounded-sm transition-opacity ${
+                      isSel ? 'ring-1 ring-white opacity-100' : 'opacity-80 hover:opacity-100'
+                    }`}
+                  >
+                    <div
+                      className={`w-full rounded-t-sm ${barColor}`}
+                      style={{ height: `${Math.max(18, bs.score)}%` }}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {viewMode === 'cards' ? (
           /* Horizontal Beat Storyboard Strip (Drag-and-drop reorderable) */

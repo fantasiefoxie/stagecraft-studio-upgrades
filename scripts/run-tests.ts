@@ -19,6 +19,7 @@ import path from 'node:path';
 
 import { PRESET_EPISODES } from '../src/studio/presets';
 import {
+  CAPTION_STYLE_CATALOG,
   EpisodeScript,
   MOTION_CADENCE_CATALOG,
   MOTION_PROFILE_CATALOG,
@@ -37,6 +38,42 @@ import {
   timeToFrameIndex,
   validateEpisodeScript,
 } from '../src/studio/types';
+import {
+  computeVolumetricLightPlan,
+  resolveVolumetricBeamKind,
+} from '../src/studio/volumetricLighting';
+import { computePropPhysics, resolvePropPhysicsMode } from '../src/studio/propPhysics';
+import {
+  computeKineticWordPop,
+  parseEmphasisTokens,
+  resolveSpeakerAccentColor,
+  stripEmphasisMarkup,
+} from '../src/studio/kineticCaptions';
+import {
+  computeBoundaryCrossfadeGain,
+  computeEpisodeMusicArc,
+} from '../src/studio/musicTension';
+import {
+  buildTeleprompterCueSheet,
+  computeTeleprompterProgress,
+  evaluateTakePacing,
+  formatTakeFileName,
+} from '../src/studio/teleprompterUtils';
+import { analyzeEpisodePacing, boostFlatBeats } from '../src/studio/pacingAnalyzer';
+import {
+  autoTagStageChangeLocationCards,
+  computeLowerThirdTiming,
+} from '../src/studio/lowerThirds';
+import {
+  computeEpisodeDiff,
+  restoreSingleBeatFromCheckpoint,
+} from '../src/studio/episodeDiff';
+import {
+  NLE_SHORTCUT_CATALOG,
+  buildStudioCommandRegistry,
+  filterStudioCommands,
+  isEditableEventTarget,
+} from '../src/studio/studioShortcuts';
 import { analyzeEpisodeVisualQa, autoFixEpisodeVisualQa } from '../src/studio/storyboardQa';
 import {
   computeVoiceEnvelopeFromPcm,
@@ -1504,6 +1541,324 @@ test('26. Upgrade 10: scripts/determinism-audit.mjs covers all 20 art engines wi
   assert.equal(/\bexec\s*\(/.test(src), false, 'Audit CLI must never use shell string exec()');
   for (const engine of RENDER_STYLE_CATALOG) {
     assert.ok(src.includes(`'${engine.id}'`), `Audit CLI must include art engine ${engine.id}`);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Test 27 (Upgrade 11): Volumetric Light Shafts & Stage Rim Atmosphere
+// ---------------------------------------------------------------------------
+test('27. Upgrade 11: Deterministic volumetric light shafts classify stages, skip slates & validate lightShafts', () => {
+  assert.equal(resolveVolumetricBeamKind('kali_temple', 'twilight_temple'), 'temple_godrays');
+  assert.equal(resolveVolumetricBeamKind('royal_durbar', 'golden_durbar'), 'window_sunbeams');
+  assert.equal(resolveVolumetricBeamKind('cave_den', 'sandstone_dusk'), 'hearth_glow');
+  assert.equal(resolveVolumetricBeamKind('banyan_clearing', 'midnight_banyan'), 'moonlight_shafts');
+
+  const beat = clone(PRESET_EPISODES[0].beats[0]);
+  beat.frame = 'main';
+  beat.shot = 'wide_stage';
+  const style = resolveVisualStyle({});
+  assert.equal(style.lightShafts, 0.4, 'Default lightShafts must be 0.4');
+
+  const planA = computeVolumetricLightPlan(beat, style, 1.75, 'chiaroscuro');
+  const planB = computeVolumetricLightPlan(beat, style, 1.75, 'chiaroscuro');
+  assert.deepEqual(planA, planB, 'Volumetric light plan must be 100% deterministic');
+  assert.equal(planA.enabled, true);
+  assert.ok(planA.beams.length >= 2 && planA.motes.length >= 10);
+
+  // Disabled at lightShafts=0 or on chapter_title / motion_card slates
+  assert.equal(computeVolumetricLightPlan(beat, { lightShafts: 0 }, 1.0).enabled, false);
+  assert.equal(
+    computeVolumetricLightPlan({ ...beat, frame: 'chapter_title' }, style, 1.0).enabled,
+    false
+  );
+  assert.equal(
+    computeVolumetricLightPlan({ ...beat, shot: 'motion_card' }, style, 1.0).enabled,
+    false
+  );
+
+  // Validator clamps lightShafts cleanly
+  const ep = clone(PRESET_EPISODES[0]);
+  ep.visualStyle = { ...(ep.visualStyle || {}), lightShafts: 5.5 };
+  const val = validateEpisodeScript(ep);
+  assert.equal(val.ok, true);
+  if (val.ok) assert.equal(val.script.visualStyle?.lightShafts, 1);
+});
+
+// ---------------------------------------------------------------------------
+// Test 28 (Upgrade 12): Deterministic Prop Physics & Follow-Through Arcs
+// ---------------------------------------------------------------------------
+test('28. Upgrade 12: Prop physics computes deterministic mystic levitation, pendulum carry & kinetic weapon arcs', () => {
+  const baseBeat = clone(PRESET_EPISODES[0].beats[0]);
+
+  assert.equal(resolvePropPhysicsMode('sudarshana_chakra', 'stage'), 'mystic_float');
+  assert.equal(resolvePropPhysicsMode('khanda_sword', 'actor_right_hand'), 'kinetic_weapon');
+  assert.equal(resolvePropPhysicsMode('royal_scroll', 'actor_left_hand'), 'pendulum_carry');
+  assert.equal(resolvePropPhysicsMode('peacock_throne', 'stage'), 'grounded_settle');
+
+  // Mystic levitation has glowBoost & non-zero bob
+  const mysticBeat = { ...baseBeat, prop: 'sudarshana_chakra' as const, propAnchor: 'stage' as const };
+  const mA = computePropPhysics(mysticBeat, 1.2, 0.3, 1.0);
+  const mB = computePropPhysics(mysticBeat, 1.2, 0.3, 1.0);
+  assert.deepEqual(mA, mB, 'Mystic prop physics must be deterministic');
+  assert.equal(mA.mode, 'mystic_float');
+  assert.ok(mA.glowBoost > 0.3, `Expected mystic glowBoost > 0.3, got ${mA.glowBoost}`);
+
+  // Kinetic weapon swing under attack pose produces meaningful rotation arc
+  const attackActor = { ...baseBeat.actors[0], pose: 'attack' as const, facing: 'right' as const };
+  const weaponBeat = { ...baseBeat, prop: 'khanda_sword' as const, propAnchor: 'actor_left_hand' as const };
+  const wPhys = computePropPhysics(weaponBeat, 0.8, 0.2, 1.0, attackActor, 0.5);
+  assert.equal(wPhys.mode, 'kinetic_weapon');
+  assert.ok(Math.abs(wPhys.rotationRad) > 0.1, 'Attack weapon swing must rotate');
+  assert.ok(wPhys.scalePulse > 1.0, 'Kinetic weapon swing should pulse scale');
+});
+
+// ---------------------------------------------------------------------------
+// Test 29 (Upgrade 13): Expressive Kinetic Captions & Speaker-Colored Emphasis
+// ---------------------------------------------------------------------------
+test('29. Upgrade 13: Kinetic captions parse emphasis tokens, pop active words & support 2 new caption styles', () => {
+  const tokens = parseEmphasisTokens('STOP! Listen *very carefully* to the truth?');
+  assert.equal(tokens.length, 7);
+  assert.equal(tokens[0].emphasis, 'all_caps');
+  assert.equal(tokens[2].emphasis, 'asterisk');
+  assert.equal(tokens[2].text, 'very');
+  assert.equal(tokens[3].emphasis, 'asterisk');
+  assert.equal(tokens[3].text, 'carefully');
+  assert.equal(tokens[6].emphasis, 'punch_punct');
+  assert.equal(stripEmphasisMarkup('Listen *very* closely!'), 'Listen very closely!');
+
+  const activePop = computeKineticWordPop(0.18, true, true);
+  const restPop = computeKineticWordPop(0.18, false, false);
+  assert.ok(activePop.scaleY > 1.15, `Expected active emphasized word pop > 1.15, got ${activePop.scaleY}`);
+  assert.equal(restPop.scaleY, 1);
+
+  const ep = clone(PRESET_EPISODES[0]);
+  const accent = resolveSpeakerAccentColor(
+    { speakerId: ep.cast[0].id },
+    ep.cast,
+    '#ffffff'
+  );
+  assert.equal(accent, ep.cast[0].accentColor || ep.cast[0].primaryColor);
+  assert.equal(resolveSpeakerAccentColor({ speakerId: 'narrator' }, ep.cast, '#abc123'), '#abc123');
+
+  // New caption styles exist in catalog & validate cleanly
+  const styleIds = CAPTION_STYLE_CATALOG.map((c) => c.id);
+  assert.ok(styleIds.includes('comic_speech_pop'));
+  assert.ok(styleIds.includes('minimal_editorial'));
+  ep.visualStyle = { ...(ep.visualStyle || {}), captionStyle: 'comic_speech_pop' };
+  const val = validateEpisodeScript(ep);
+  assert.equal(val.ok, true);
+  if (val.ok) assert.equal(val.script.visualStyle?.captionStyle, 'comic_speech_pop');
+});
+
+// ---------------------------------------------------------------------------
+// Test 30 (Upgrade 14): Episode Harmonic Tension Arc & Beat Music Crossfades
+// ---------------------------------------------------------------------------
+test('30. Upgrade 14: Episode music tension arc computes octave lift, phrase density & raag/mood crossfade ramps', () => {
+  const ep = clone(PRESET_EPISODES[0]);
+  // Ensure a raag change and a climactic crimson beat
+  if (ep.beats.length >= 3) {
+    ep.beats[0].raag = 'yaman';
+    ep.beats[0].mood = 'emerald_jungle';
+    ep.beats[0].musicEnergy = 0.4;
+    ep.beats[1].raag = 'bhairavi';
+    ep.beats[1].mood = 'crimson_wrath';
+    ep.beats[1].musicEnergy = 0.95;
+    ep.beats[1].fx = 'crimson_impact';
+  }
+
+  const arcA = computeEpisodeMusicArc(ep);
+  const arcB = computeEpisodeMusicArc(ep);
+  assert.deepEqual(arcA, arcB, 'Music arc must be deterministic');
+  assert.equal(arcA.beats.length, ep.beats.length);
+  assert.ok(arcA.peakBeatIndex >= 0 && arcA.peakTension > 0.7);
+  if (ep.beats.length >= 2) {
+    assert.equal(arcA.beats[1].hasHarmonicShift, true, 'Raag/mood shift must flag hasHarmonicShift');
+    assert.ok(arcA.beats[1].crossfadeInSec >= 0.4, 'Raag change should trigger >= 0.4s crossfade');
+    assert.equal(arcA.beats[1].octaveLift, 1, 'High-tension beat should activate octave lift');
+    assert.ok(arcA.beats[1].percussionEmphasis > 1.1, 'High-tension beat should boost percussion');
+  }
+
+  // Boundary crossfade ramps smoothly from ~0.25 at beat entry to 1.0 mid-beat
+  const entryGain = computeBoundaryCrossfadeGain(0.0, 4.0, 0.42, 0);
+  const midGain = computeBoundaryCrossfadeGain(2.0, 4.0, 0.42, 0);
+  assert.ok(entryGain < 0.35 && midGain === 1, `Expected smooth ramp (${entryGain} -> ${midGain})`);
+});
+
+// ---------------------------------------------------------------------------
+// Test 31 (Upgrade 15): Voiceover Booth Teleprompter & Multi-Take Utilities
+// ---------------------------------------------------------------------------
+test('31. Upgrade 15: Teleprompter cue sheet, pacing evaluator & countdown progress work deterministically', () => {
+  const ep = clone(PRESET_EPISODES[0]);
+  const sheet = buildTeleprompterCueSheet(ep);
+  assert.equal(sheet.length, ep.beats.length);
+  assert.equal(sheet[0].beatId, ep.beats[0].id);
+  assert.ok(sheet[0].targetDurationSec >= 1.2);
+  if (sheet.length > 1) {
+    assert.ok(typeof sheet[0].nextPreview === 'string' && sheet[0].nextPreview.length > 0);
+    assert.equal(sheet[sheet.length - 1].nextPreview, null);
+  }
+
+  assert.equal(evaluateTakePacing(4.0, 4.2), 'on_target');
+  assert.equal(evaluateTakePacing(2.0, 4.5), 'short');
+  assert.equal(evaluateTakePacing(6.5, 4.0), 'long');
+
+  const prog = computeTeleprompterProgress(2.5, 5.0);
+  assert.equal(prog.progressFrac, 0.5);
+  assert.equal(prog.remainingSec, 2.5);
+  assert.equal(prog.isOvertime, false);
+  assert.equal(computeTeleprompterProgress(6.0, 5.0).isOvertime, true);
+
+  assert.equal(formatTakeFileName(0, 'beat_intro', 2), '01_beat_intro_take2.wav');
+});
+
+// ---------------------------------------------------------------------------
+// Test 32 (Upgrade 16): Retention & Pacing Heatmap + Boost Flat Beats
+// ---------------------------------------------------------------------------
+test('32. Upgrade 16: Pacing analyzer flags >12s drop-off zones and boostFlatBeats repairs them preserving durations', () => {
+  const ep = clone(PRESET_EPISODES[0]);
+  // Construct a deliberate 3-beat flat stretch (19.5s total)
+  ep.beats = ep.beats.slice(0, 3).map((b, i) => ({
+    ...b,
+    id: `flat_${i}`,
+    frame: 'main',
+    shot: 'wide_stage',
+    cameraMove: 'still',
+    fx: 'none',
+    sfx: 'none',
+    duration: 6.5,
+    musicEnergy: 0.32,
+    actionCues: [],
+    expressionCues: [],
+    actors: b.actors.map((a) => ({
+      ...a,
+      pose: 'stand',
+      motion: 'still',
+      expression: 'calm',
+      expressionTrack: undefined,
+    })),
+  }));
+
+  const report = analyzeEpisodePacing(ep);
+  assert.ok(report.dropOffZones.length >= 1, 'Expected at least 1 >12s flat drop-off zone');
+  assert.ok(report.flatBeatIndices.length >= 2);
+
+  const boosted = boostFlatBeats(ep);
+  assert.ok(boosted.boostedIndices.length >= 2);
+  assert.ok(
+    boosted.afterScore > boosted.beforeScore,
+    `Expected pacing score improvement (${boosted.beforeScore} -> ${boosted.afterScore})`
+  );
+  // Strictly preserves durations and dialogue
+  for (let i = 0; i < ep.beats.length; i++) {
+    assert.equal(boosted.episode.beats[i].duration, ep.beats[i].duration);
+    assert.equal(boosted.episode.beats[i].dialogue, ep.beats[i].dialogue);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Test 33 (Upgrade 17): Animated Location & Time-Jump Lower-Third Banners
+// ---------------------------------------------------------------------------
+test('33. Upgrade 17: Lower-third banners ease deterministically, auto-tag stage changes & sanitize in validator', () => {
+  // Timing checks: hidden at 0.05s, visible mid-beat, hidden after exit
+  assert.equal(computeLowerThirdTiming(0.05, 4.0).visible, false);
+  const mid = computeLowerThirdTiming(1.5, 4.0);
+  assert.equal(mid.visible, true);
+  assert.equal(mid.alpha, 1);
+  assert.equal(mid.slideFrac, 0);
+  assert.equal(computeLowerThirdTiming(3.95, 4.0).visible, false);
+
+  const ep = clone(PRESET_EPISODES[0]);
+  ep.beats.forEach((b) => {
+    delete b.locationCard;
+  });
+  const tagged = autoTagStageChangeLocationCards(ep);
+  assert.ok(tagged.taggedCount >= 1, 'Auto-tag should tag at least the opening stage');
+
+  // Validator preserves valid locationCard and drops empty-title cards
+  tagged.episode.beats[0].locationCard = {
+    title: 'Ujjain Royal Court',
+    subtitle: 'Midnight · Act I',
+    position: 'bottom_left',
+    style: 'scroll_ribbon',
+  };
+  const val = validateEpisodeScript(tagged.episode);
+  assert.equal(val.ok, true);
+  if (val.ok) {
+    assert.equal(val.script.beats[0].locationCard?.title, 'Ujjain Royal Court');
+    assert.equal(val.script.beats[0].locationCard?.style, 'scroll_ribbon');
+    assert.equal(val.script.beats[0].locationCard?.position, 'bottom_left');
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Test 34 (Upgrade 18): Episode Diff & Selective Beat Snapshot Restore
+// ---------------------------------------------------------------------------
+test('34. Upgrade 18: Episode diff detects modified/added/removed/reordered beats & selective beat restore works', () => {
+  const base = clone(PRESET_EPISODES[0]);
+  const target = clone(base);
+
+  assert.equal(computeEpisodeDiff(base, target).hasChanges, false);
+
+  const originalDialogue0 = base.beats[0].dialogue;
+  target.beats[0].dialogue = 'Modified dramatic opening line!';
+  target.beats[0].duration = base.beats[0].duration + 1.5;
+  target.beats.push({ ...clone(base.beats[0]), id: 'new_bonus_beat', title: 'Bonus Epilogue' });
+  target.visualStyle = { ...(target.visualStyle || {}), lightShafts: 0.85 };
+
+  const diff = computeEpisodeDiff(base, target);
+  assert.equal(diff.hasChanges, true);
+  assert.equal(diff.summary.modified, 1);
+  assert.equal(diff.summary.added, 1);
+  assert.ok(diff.summary.visualStyleChanges >= 1);
+  assert.ok(diff.durationDeltaSec > 0);
+
+  // Cherry-pick restore beat 0 while keeping the newly added beat intact
+  const restored = restoreSingleBeatFromCheckpoint(target, base, base.beats[0].id);
+  assert.equal(restored.beats[0].dialogue, originalDialogue0);
+  assert.ok(restored.beats.some((b) => b.id === 'new_bonus_beat'), 'Selective restore must preserve other beats');
+});
+
+// ---------------------------------------------------------------------------
+// Test 35 (Upgrade 19): Command Palette Registry & NLE Shortcut Guard
+// ---------------------------------------------------------------------------
+test('35. Upgrade 19: Command Palette indexes scenes, all 20 art engines & acting macros with fuzzy search + input guard', () => {
+  const ep = clone(PRESET_EPISODES[0]);
+  const registry = buildStudioCommandRegistry(ep);
+  assert.ok(registry.length >= ep.beats.length + 20 + 12, 'Registry must include scenes, 20 engines & 12 macros');
+
+  const styleMatches = filterStudioCommands(registry, 'woodblock');
+  assert.ok(styleMatches.some((c) => c.actionType === 'set_render_style' && c.payload === 'woodblock_print'));
+
+  const boothMatches = filterStudioCommands(registry, 'voice booth');
+  assert.ok(boothMatches.some((c) => c.actionType === 'open_voice_booth'));
+
+  assert.ok(NLE_SHORTCUT_CATALOG.length >= 10);
+  assert.equal(isEditableEventTarget({ tagName: 'INPUT' } as unknown as EventTarget), true);
+  assert.equal(isEditableEventTarget({ tagName: 'TEXTAREA' } as unknown as EventTarget), true);
+  assert.equal(isEditableEventTarget({ tagName: 'DIV', isContentEditable: true } as unknown as EventTarget), true);
+  assert.equal(isEditableEventTarget({ tagName: 'DIV', isContentEditable: false } as unknown as EventTarget), false);
+});
+
+// ---------------------------------------------------------------------------
+// Test 36 (Upgrade 20): Automated Fuzzing & Edge-Case Stress Test CLI Audit
+// ---------------------------------------------------------------------------
+test('36. Upgrade 20: scripts/studio-stress-test.mjs exists, uses seeded PRNG (zero Math.random), and covers all 9 APIs', () => {
+  const stressPath = path.join(process.cwd(), 'scripts/studio-stress-test.mjs');
+  assert.equal(fs.existsSync(stressPath), true, 'Expected scripts/studio-stress-test.mjs to exist');
+  const src = fs.readFileSync(stressPath, 'utf8');
+  assert.equal(/\bMath\.random\s*\(/.test(src), false, 'Stress test CLI must never call Math.random()');
+  for (const fnName of [
+    'validateEpisodeScript',
+    'healAndParseLlmJson',
+    'parseKathaArchiveBytes',
+    'trimAndNormalizePcm',
+    'measureAudioBufferLufs',
+    'computeDubTimingPlan',
+    'recommendTopShortSlices',
+    'computeEpisodeDiff',
+    'analyzeEpisodePacing',
+  ]) {
+    assert.ok(src.includes(fnName), `Stress test CLI must exercise ${fnName}`);
   }
 });
 

@@ -45,6 +45,8 @@ import {
   StepForward,
   Ghost,
   Scan,
+  Command,
+  GitCompare,
 } from 'lucide-react';
 import { LANGUAGE_CATALOG, LanguageCode, resolveEpisodeLanguage } from './studio/i18n';
 import { formatLongDuration, partitionEpisodeIntoChapters } from './studio/longFormEngine';
@@ -93,6 +95,18 @@ import {
 import { StoryboardTimelineStrip } from './studio/StoryboardTimelineStrip';
 import { StoryboardQaModal } from './studio/StoryboardQaModal';
 import { WorkbenchAssetsTab } from './studio/WorkbenchAssetsTab';
+import { TeleprompterModal } from './studio/TeleprompterModal';
+import { VersionDiffModal, HistoryCheckpointItem } from './studio/VersionDiffModal';
+import { CommandPaletteModal } from './studio/CommandPaletteModal';
+import {
+  StudioCommandItem,
+  buildStudioCommandRegistry,
+  isEditableEventTarget,
+} from './studio/studioShortcuts';
+import { boostFlatBeats } from './studio/pacingAnalyzer';
+import { autoTagStageChangeLocationCards } from './studio/lowerThirds';
+import { restoreSingleBeatFromCheckpoint } from './studio/episodeDiff';
+import { ActingMacroId, applyActingMacroToBeat } from './studio/actingMacros';
 import { WorkbenchScriptTab } from './studio/WorkbenchScriptTab';
 import { WorkbenchLookTab } from './studio/WorkbenchLookTab';
 import { WorkbenchBeatInspector } from './studio/WorkbenchBeatInspector';
@@ -259,6 +273,9 @@ export default function App() {
   const [stageMoveMode, setStageMoveMode] = useState(false);
   const [safeZones, setSafeZones] = useState(false);
   const [onionSkin, setOnionSkin] = useState(false);
+  const [voiceBoothOpen, setVoiceBoothOpen] = useState(false);
+  const [versionDiffOpen, setVersionDiffOpen] = useState(false);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [dragBeatIdx, setDragBeatIdx] = useState<number | null>(null);
   const [dragOverBeatIdx, setDragOverBeatIdx] = useState<number | null>(null);
 
@@ -2262,12 +2279,149 @@ export default function App() {
     };
   }, []);
 
-  // Keyboard shortcuts (ignored when typing in inputs/textareas/contenteditable)
+  // Sync live audio engine harmonic tension arc whenever episode updates (Upgrade 14)
+  useEffect(() => {
+    audioRef.current?.setEpisodeMusicArc(episode);
+  }, [episode]);
+
+  // Upgrade 16: 1-Click Boost Flat Retention Beats (preserves durations & dialogue)
+  const handleBoostFlatBeats = useCallback(() => {
+    const res = boostFlatBeats(episodeRef.current);
+    if (res.boostedIndices.length === 0) {
+      setExportNotice('Retention pacing is already strong — no flat beats detected.');
+      return;
+    }
+    pendingHistoryLabelRef.current = `Boost ${res.boostedIndices.length} Flat Beat${res.boostedIndices.length === 1 ? '' : 's'}`;
+    setEpisode(res.episode);
+    setJsonDraft(JSON.stringify(res.episode, null, 2));
+    setExportNotice(
+      `Boosted ${res.boostedIndices.length} flat beat${res.boostedIndices.length === 1 ? '' : 's'} (Retention ${res.beforeScore} → ${res.afterScore}/100).`
+    );
+  }, []);
+
+  // Upgrade 17: 1-Click Auto-Tag Stage Changes with Animated Location Banners
+  const handleAutoTagStageChanges = useCallback(() => {
+    const res = autoTagStageChangeLocationCards(episodeRef.current);
+    if (res.taggedCount === 0) {
+      setExportNotice('All stage changes already have Location Banners.');
+      return;
+    }
+    pendingHistoryLabelRef.current = 'Auto-Tag Location Banners';
+    setEpisode(res.episode);
+    setJsonDraft(JSON.stringify(res.episode, null, 2));
+    setExportNotice(
+      `Tagged ${res.taggedCount} stage change${res.taggedCount === 1 ? '' : 's'} with animated Location Banners.`
+    );
+  }, []);
+
+  // Upgrade 18: Selective Single-Beat Snapshot Restore from History Checkpoint (with Undo support)
+  const handleRestoreSingleBeat = useCallback(
+    (checkpoint: HistoryCheckpointItem, beatId: string) => {
+      pendingHistoryLabelRef.current = `Restore Beat from "${checkpoint.label}"`;
+      setEpisode((prev) => {
+        const updated = restoreSingleBeatFromCheckpoint(prev, checkpoint.episode, beatId);
+        setJsonDraft(JSON.stringify(updated, null, 2));
+        return updated;
+      });
+      setExportNotice(`Restored scene snapshot from "${checkpoint.label}" (Ctrl+Z to undo).`);
+    },
+    []
+  );
+
+  // Upgrade 19: Command Palette Registry & Executor
+  const studioCommands = useMemo(() => buildStudioCommandRegistry(episode), [episode]);
+  const handleExecuteCommand = useCallback(
+    (cmd: StudioCommandItem) => {
+      switch (cmd.actionType) {
+        case 'jump_beat': {
+          const idx = typeof cmd.payload === 'number' ? cmd.payload : 0;
+          const clamped = Math.max(0, Math.min(episodeRef.current.beats.length - 1, idx));
+          setSelectedBeatIdx(clamped);
+          jumpToTime(beatStarts[clamped] ?? 0);
+          break;
+        }
+        case 'set_render_style': {
+          if (typeof cmd.payload === 'string') {
+            handleSelectRenderStyle(cmd.payload as RenderStyleId);
+          }
+          break;
+        }
+        case 'apply_acting_macro': {
+          if (typeof cmd.payload === 'string') {
+            const curBeat = episodeRef.current.beats[selectedBeatIdx];
+            if (curBeat) {
+              const patch = applyActingMacroToBeat(curBeat, cmd.payload as ActingMacroId);
+              updateSelectedBeat(patch, `Acting Macro: ${cmd.payload}`);
+            }
+          }
+          break;
+        }
+        case 'toggle_safe_zones':
+          setSafeZones((v) => !v);
+          break;
+        case 'toggle_onion_skin':
+          setOnionSkin((v) => !v);
+          break;
+        case 'toggle_move_mode':
+          setStageMoveMode((v) => !v);
+          break;
+        case 'open_fast_render':
+          setFastRenderOverride(null);
+          setFastRenderOpen(true);
+          break;
+        case 'open_shorts':
+          setShortsModalOpen(true);
+          break;
+        case 'open_qa':
+          setQaModalOpen(true);
+          break;
+        case 'open_voice_booth':
+          setVoiceBoothOpen(true);
+          break;
+        case 'open_version_diff':
+          setVersionDiffOpen(true);
+          break;
+        case 'apply_j_cuts':
+          handleApplyCinematicJCuts();
+          break;
+        case 'apply_animation_polish':
+          handlePolishAnimationPrinciples();
+          break;
+        case 'boost_flat_beats':
+          handleBoostFlatBeats();
+          break;
+        case 'auto_tag_locations':
+          handleAutoTagStageChanges();
+          break;
+        case 'split_beat':
+          handleSplitSelectedBeat();
+          break;
+      }
+    },
+    [
+      beatStarts,
+      handleApplyCinematicJCuts,
+      handleAutoTagStageChanges,
+      handleBoostFlatBeats,
+      handlePolishAnimationPrinciples,
+      handleSelectRenderStyle,
+      handleSplitSelectedBeat,
+      jumpToTime,
+      selectedBeatIdx,
+      updateSelectedBeat,
+    ]
+  );
+
+  // Keyboard shortcuts (Ctrl/Cmd+K Command Palette + safe non-input-blocking NLE transport shortcuts)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement | null;
-      const tag = target?.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target?.isContentEditable) {
+      // Ctrl/Cmd+K opens Command Palette from anywhere
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setCommandPaletteOpen((open) => !open);
+        return;
+      }
+      if (isEditableEventTarget(e.target)) {
         return;
       }
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
@@ -2284,13 +2438,55 @@ export default function App() {
         handleRedo();
         return;
       }
+      const lower = e.key.toLowerCase();
       if (e.code === 'Space') {
         e.preventDefault();
         setIsPlaying((p) => !p);
-      } else if (e.key === 'r' || e.key === 'R') {
+      } else if (lower === 'j' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        e.preventDefault();
+        jumpToTime(Math.max(0, timeRef.current - 1));
+      } else if (lower === 'k' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        e.preventDefault();
+        setIsPlaying(false);
+        isPlayingRef.current = false;
+        audioRef.current?.setPlaying(false);
+      } else if (lower === 'l' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        e.preventDefault();
+        ensureAudio();
+        setIsPlaying(true);
+      } else if (e.key === '[' || e.key === ']') {
+        const ep = episodeRef.current;
+        if (!ep.beats.length) return;
+        e.preventDefault();
+        const ev = evaluateEpisodeAtTime(ep, timeRef.current, null);
+        const nextIdx =
+          e.key === ']'
+            ? Math.min(ep.beats.length - 1, ev.beatIndex + 1)
+            : Math.max(0, ev.beatIndex - 1);
+        let startSec = 0;
+        for (let i = 0; i < nextIdx; i++) {
+          startSec += Math.max(1.2, ep.beats[i].duration);
+        }
+        setSelectedBeatIdx(nextIdx);
+        jumpToTime(startSec + 0.05);
+      } else if (lower === 'g' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        e.preventDefault();
+        setSafeZones((v) => !v);
+      } else if (lower === 'o' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        e.preventDefault();
+        setOnionSkin((v) => !v);
+      } else if (lower === 'm' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        e.preventDefault();
+        if (e.shiftKey) {
+          toggleSound();
+        } else {
+          setStageMoveMode((v) => !v);
+        }
+      } else if (lower === 's' && e.shiftKey && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        e.preventDefault();
+        handleSplitSelectedBeat();
+      } else if (lower === 'r' && !e.metaKey && !e.ctrlKey && !e.altKey) {
         handleReplay();
-      } else if (e.key === 'm' || e.key === 'M') {
-        toggleSound();
       } else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
         const ep = episodeRef.current;
         if (!ep.beats.length) return;
@@ -2315,7 +2511,16 @@ export default function App() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [handleRedo, handleReplay, handleUndo, jumpToTime, stepFrame, toggleSound]);
+  }, [
+    ensureAudio,
+    handleRedo,
+    handleReplay,
+    handleSplitSelectedBeat,
+    handleUndo,
+    jumpToTime,
+    stepFrame,
+    toggleSound,
+  ]);
 
   const updateScrub = (clientX: number) => {
     const el = scrubberRef.current;
@@ -2462,11 +2667,22 @@ export default function App() {
 
             {historyOpen && pastRef.current.length > 0 && (
               <div className="absolute right-0 top-11 z-50 w-72 rounded-xl bg-[#111526] border border-white/15 shadow-2xl overflow-hidden">
-                <div className="px-3 py-2 border-b border-white/10 flex items-center justify-between bg-[#151a2e]">
+                <div className="px-3 py-2 border-b border-white/10 flex items-center justify-between gap-2 bg-[#151a2e]">
                   <span className="text-[11px] font-bold text-[#f2c85b]">
-                    History Checkpoints ({pastRef.current.length})
+                    History ({pastRef.current.length})
                   </span>
-                  <span className="text-[10px] text-[#8e97b0]">Click to restore</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setHistoryOpen(false);
+                      setVersionDiffOpen(true);
+                    }}
+                    className="h-6 px-2 rounded bg-[#212b4c] hover:bg-[#2c3a66] border border-[#f2c85b]/45 text-[10px] font-semibold text-[#f7e7bc] inline-flex items-center gap-1 cursor-pointer"
+                    title="Inspect scene-by-scene diff & selectively restore individual beats"
+                  >
+                    <GitCompare className="w-3 h-3" />
+                    <span>Compare</span>
+                  </button>
                 </div>
                 <div className="max-h-72 overflow-y-auto divide-y divide-white/5">
                   {[...pastRef.current]
@@ -2501,6 +2717,16 @@ export default function App() {
               </div>
             )}
           </div>
+
+          <button
+            type="button"
+            onClick={() => setCommandPaletteOpen(true)}
+            title="Open Studio Command Palette (Ctrl/Cmd+K)"
+            className="h-9 px-2.5 rounded-md bg-[#14182a] hover:bg-[#1e2540] border border-white/10 text-[11px] font-semibold text-[#cbd3e8] inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
+          >
+            <Command className="w-3.5 h-3.5 text-[#f2c85b]" />
+            <span className="hidden lg:inline">⌘K</span>
+          </button>
 
           <ProjectVaultMenu
             currentTitle={episode.title}
@@ -2994,6 +3220,7 @@ export default function App() {
               onSeekTime={(tSec) => jumpToTime(tSec)}
               onResizeBeatDuration={handleResizeBeatDuration}
               onApplyCinematicJCuts={handleApplyCinematicJCuts}
+              onBoostFlatBeats={handleBoostFlatBeats}
               onDragStartBeat={(idx) => setDragBeatIdx(idx)}
               onDragOverBeat={(idx) => setDragOverBeatIdx(idx)}
               onDragLeaveBeat={() => setDragOverBeatIdx(null)}
@@ -3114,6 +3341,7 @@ export default function App() {
                 audioRef.current?.playSfx(sfx, true);
               }}
               onCustomPropUpload={handleCustomPropUpload}
+              onAutoTagStageChanges={handleAutoTagStageChanges}
             />
           )}
 
@@ -3216,6 +3444,7 @@ export default function App() {
               onUploadMusicStem={handleUploadMusicStem}
               onClearMusicStem={handleClearMusicStem}
               onTightenAllVoices={handleTightenAllVoices}
+              onOpenVoiceBooth={() => setVoiceBoothOpen(true)}
             />
           )}
         </aside>
@@ -3338,6 +3567,37 @@ export default function App() {
           setSelectedBeatIdx((idx) => Math.min(idx, Math.max(0, fixedEp.beats.length - 1)));
         }}
       />
+
+      {/* Upgrade 15: Voiceover Booth Teleprompter & Multi-Take Recorder Modal */}
+      {voiceBoothOpen && (
+        <TeleprompterModal
+          episode={episode}
+          initialBeatIdx={selectedBeatIdx}
+          voiceMeta={voiceMeta}
+          onBindVoiceBlob={handleBindVoiceBlob}
+          onClose={() => setVoiceBoothOpen(false)}
+        />
+      )}
+
+      {/* Upgrade 18: History Checkpoint Diff & Selective Beat Snapshot Restore Modal */}
+      {versionDiffOpen && (
+        <VersionDiffModal
+          currentEpisode={episode}
+          checkpoints={pastRef.current}
+          onRestoreBeatFromCheckpoint={handleRestoreSingleBeat}
+          onRestoreEntireCheckpoint={handleRestoreCheckpoint}
+          onClose={() => setVersionDiffOpen(false)}
+        />
+      )}
+
+      {/* Upgrade 19: Studio Command Palette (Ctrl/Cmd+K) & NLE Shortcut Cheat-Sheet */}
+      {commandPaletteOpen && (
+        <CommandPaletteModal
+          commands={studioCommands}
+          onExecute={handleExecuteCommand}
+          onClose={() => setCommandPaletteOpen(false)}
+        />
+      )}
     </div>
   );
 }

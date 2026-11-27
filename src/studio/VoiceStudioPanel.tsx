@@ -32,6 +32,7 @@ import {
 import { partitionEpisodeIntoChapters } from './longFormEngine';
 import { buildExpressiveTtsProsody } from './facialExpressions';
 import { trimAndNormalizeVoiceBlob } from './voiceEnvelope';
+import { TeleprompterModal } from './TeleprompterModal';
 
 export const CAST_VOICES_STORAGE_KEY = 'katha_studio_cast_voices_v1';
 
@@ -82,6 +83,7 @@ interface VoiceStudioPanelProps {
   onUploadMusicStem?: (file: File) => Promise<void>;
   onClearMusicStem?: () => void;
   onTightenAllVoices?: () => Promise<{ trimmedCount: number; savedSec: number }>;
+  onOpenVoiceBooth?: () => void;
 }
 
 const PROVIDER_MODELS: Record<CloudTtsProviderId, string[]> = {
@@ -130,8 +132,10 @@ export const VoiceStudioPanel: React.FC<VoiceStudioPanelProps> = ({
   onUploadMusicStem,
   onClearMusicStem,
   onTightenAllVoices,
+  onOpenVoiceBooth,
 }) => {
   const stemInputRef = useRef<HTMLInputElement>(null);
+  const [boothOpen, setBoothOpen] = useState(false);
   const [settings, setSettings] = useState<VoiceStudioSettings>({
     source: 'cloud_tts',
     cloudProvider: 'gemini',
@@ -696,16 +700,43 @@ export const VoiceStudioPanel: React.FC<VoiceStudioPanelProps> = ({
             {boundCount} / {episode.beats.length} scenes have audio bound
           </div>
         </div>
-        <button
-          type="button"
-          onClick={handleExportVoiceScript}
-          title="Export numbered voiceover script for external recording or TTS"
-          className="h-8 px-2.5 rounded-md bg-[#161b2e] hover:bg-[#202742] border border-white/12 text-[11px] font-semibold text-[#d6dcf0] inline-flex items-center gap-1 whitespace-nowrap cursor-pointer"
-        >
-          <Download className="w-3.5 h-3.5" />
-          <span>Script .txt</span>
-        </button>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            type="button"
+            onClick={() => {
+              if (onOpenVoiceBooth) {
+                onOpenVoiceBooth();
+              } else {
+                setBoothOpen(true);
+              }
+            }}
+            title="Launch full-focus Voiceover Booth Teleprompter & Multi-Take Recorder"
+            className="h-8 px-2.5 rounded-md bg-[#231d12] hover:bg-[#332917] border border-[#f2c85b]/45 text-[11px] font-semibold text-[#f2c85b] inline-flex items-center gap-1 whitespace-nowrap cursor-pointer"
+          >
+            <Mic className="w-3.5 h-3.5" />
+            <span>Voice Booth</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleExportVoiceScript}
+            title="Export numbered voiceover script for external recording or TTS"
+            className="h-8 px-2.5 rounded-md bg-[#161b2e] hover:bg-[#202742] border border-white/12 text-[11px] font-semibold text-[#d6dcf0] inline-flex items-center gap-1 whitespace-nowrap cursor-pointer"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Script .txt</span>
+          </button>
+        </div>
       </div>
+
+      {boothOpen && (
+        <TeleprompterModal
+          episode={episode}
+          initialBeatIdx={selectedBeatIdx}
+          voiceMeta={voiceMeta}
+          onBindVoiceBlob={onBindVoiceBlob}
+          onClose={() => setBoothOpen(false)}
+        />
+      )}
 
       {/* Source Mode Switcher */}
       <div className="grid grid-cols-2 gap-1.5">
