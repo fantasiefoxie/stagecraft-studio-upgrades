@@ -14,10 +14,29 @@
  */
 
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 
 import { PRESET_EPISODES } from '../src/studio/presets';
+import {
+  STAGECRAFT_QA_BUNDLE_SCHEMA,
+  buildStagecraftQaBundle,
+  computeDnaSilhouetteSignature,
+  hasGranularCharacterDna,
+  serializeStagecraftQaBundle,
+} from '../src/studio/shotInspectorBridge';
+import {
+  STAGECRAFT_PATCH_SCHEMA,
+  parseStagecraftPatchPayload,
+  previewAndApplyStagecraftPatch,
+} from '../src/studio/shotInspectorPatchApplier';
+import {
+  CUTSCENE_QA_BRIDGE_CHANNEL,
+  createShotInspectorHostBridge,
+  isAllowedBridgeOrigin,
+} from '../src/studio/shotInspectorHostClient';
 import {
   ARCHETYPE_CATALOG,
   ARCHETYPE_DEFAULT_COLORS,
@@ -3900,6 +3919,368 @@ test('66. Wave 7: Director SKILL.md documents all granular DNA catalogs & BM25 s
       `Expected BM25 query "${q}" to return ${expectedId}, got: ${hits.map((h) => h.id).join(', ')}`
     );
   }
+});
+
+// ---------------------------------------------------------------------------
+// Test 67 (Wave 8 · Upgrade 42): Deterministic Shot-Inspector QA Telemetry Bundle (v1)
+// ---------------------------------------------------------------------------
+test('67. Wave 8 Upgrade 42: buildStagecraftQaBundle is deterministic, 60fps-locked & emits full telemetry + Wave 7 DNA signatures', () => {
+  const ep = clone(PRESET_EPISODES[0]);
+  ep.visualStyle = {
+    ...(ep.visualStyle || {}),
+    renderStyle: 'anime_cel',
+    motionCadence: '24fps',
+    hitstopEnabled: true,
+    vfxIntensity: 0.85,
+  };
+  // Attach Wave 7 granular DNA to first cast member
+  const baseDna = createBaseDna('humanoid');
+  ep.cast[0] = {
+    ...ep.cast[0],
+    dna: {
+      ...baseDna,
+      faceMorph: { jawWidth: 1.15, eyeTilt: 0.12 },
+      bodyMarks: ['dragon_coil_tattoo'],
+      outfit: { ...baseDna.outfit, outerwear: 'leather_biker', footwear: 'combat_boots' },
+      accessories: {
+        eyewear: 'cyber_holo_visor',
+        earJewelry: 'cyber_comms_earpiece',
+        neckwear: 'dog_tags',
+        wristwear: 'holo_wristpad',
+        backGear: 'crossed_katanas',
+      },
+    },
+  };
+  ep.beats[0] = {
+    ...ep.beats[0],
+    duration: 4.5,
+    audioLeadSec: 0.25,
+    fx: 'crimson_impact',
+    sfx: 'sword_clash',
+    sfxOffsetSec: 0.6,
+    locationCard: {
+      title: 'Midnight Courtyard',
+      subtitle: 'Act I',
+      position: 'top_left',
+      style: 'cinematic_bar',
+    },
+  };
+
+  const bA = buildStagecraftQaBundle(ep, { aspect: '16:9' });
+  const bB = buildStagecraftQaBundle(ep, { aspect: '16:9' });
+  assert.equal(serializeStagecraftQaBundle(bA), serializeStagecraftQaBundle(bB), 'QA bundle serialization must be bit-exact deterministic');
+  assert.equal(bA.schema, STAGECRAFT_QA_BUNDLE_SCHEMA);
+  assert.equal(bA.fps, 60);
+  assert.equal(bA.aspect, '16:9');
+  assert.equal(bA.telemetry.effectiveCadenceFps, 24);
+  assert.equal(bA.telemetry.beatTimeline.length, ep.beats.length);
+  assert.equal(bA.telemetry.audioSummary?.targetLufs, -14);
+  assert.equal(bA.telemetry.audioSummary?.targetTruePeakDbtp, -1.5);
+
+  const beat0 = bA.telemetry.beatTimeline[0];
+  assert.equal(beat0.startSec, 0);
+  assert.equal(beat0.durationSec, 4.5);
+  assert.equal(beat0.audioLeadSec, 0.25);
+  assert.ok(beat0.hitstopWindows.length >= 1, 'Expected hitstop window on sword_clash / crimson_impact beat');
+  assert.ok(beat0.vfxBurstWindows.length >= 1, 'Expected VFX burst window when fx !== none and vfxIntensity > 0');
+  assert.ok(beat0.speechWindow && beat0.speechWindow.wordCount > 0 && beat0.speechWindow.estimatedCps > 0);
+  assert.equal(beat0.locationCard?.title, 'Midnight Courtyard');
+  assert.equal(beat0.locationCard?.position, 'top_left');
+
+  const leadActor = beat0.actors.find((a) => a.castId === ep.cast[0].id);
+  assert.ok(leadActor, 'Expected lead actor in beat 0 telemetry');
+  assert.equal(hasGranularCharacterDna(ep.cast[0]), true);
+  assert.equal(leadActor?.hasGranularDna, true);
+  assert.equal(leadActor?.dnaSilhouetteSignature, computeDnaSilhouetteSignature(ep.cast[0]));
+  assert.ok(/^dna_[0-9a-f]{8}$/.test(leadActor?.dnaSilhouetteSignature || ''));
+
+  // Contiguous 60fps timeline check
+  for (let i = 1; i < bA.telemetry.beatTimeline.length; i++) {
+    assert.equal(
+      bA.telemetry.beatTimeline[i].startSec,
+      bA.telemetry.beatTimeline[i - 1].endSec,
+      `Beat ${i} startSec must match previous beat endSec`
+    );
+  }
+  const lastBeat = bA.telemetry.beatTimeline[bA.telemetry.beatTimeline.length - 1];
+  assert.equal(bA.telemetry.totalDurationSec, lastBeat.endSec);
+});
+
+// ---------------------------------------------------------------------------
+// Test 68 (Wave 8 · Upgrade 43): Safe RFC 6902 Patch Parser & Atomic Applier
+// ---------------------------------------------------------------------------
+test('68. Wave 8 Upgrade 43: previewAndApplyStagecraftPatch applies valid beat/style ops & atomically rejects unsafe paths', () => {
+  const ep = clone(PRESET_EPISODES[0]);
+  ep.beats[0].locationCard = { title: 'Palace Gate', position: 'top_left', style: 'cinematic_bar' };
+
+  const envelope = {
+    schema: STAGECRAFT_PATCH_SCHEMA,
+    summary: 'Fix camera framing, reading pace, lower-third & J-cut',
+    beforeScore: 74,
+    afterScore: 91,
+    patch: [
+      { op: 'replace', path: '/beats/0/cameraFocusX', value: 0.22 },
+      { op: 'replace', path: '/beats/0/duration', value: 5.5 },
+      { op: 'replace', path: '/beats/0/locationCard/position', value: 'bottom_left' },
+      { op: 'replace', path: '/beats/0/audioLeadSec', value: 0.2 },
+      { op: 'replace', path: '/visualStyle/vfxIntensity', value: 0.65 },
+    ],
+  };
+
+  const parsed = parseStagecraftPatchPayload(JSON.stringify(envelope));
+  assert.equal(parsed.ok, true);
+  if (!parsed.ok) return;
+  assert.equal(parsed.beforeScore, 74);
+  assert.equal(parsed.afterScore, 91);
+
+  const origDuration = ep.beats[0].duration;
+  const applied = previewAndApplyStagecraftPatch(ep, parsed.patch);
+  assert.equal(applied.ok, true);
+  if (!applied.ok) return;
+  assert.equal(applied.appliedCount, 5);
+  assert.equal(applied.diffSummary.length, 5);
+  assert.equal(applied.nextEpisode.beats[0].cameraFocusX, 0.22);
+  assert.equal(applied.nextEpisode.beats[0].duration, 5.5);
+  assert.equal(applied.nextEpisode.beats[0].locationCard?.position, 'bottom_left');
+  assert.equal(applied.nextEpisode.beats[0].audioLeadSec, 0.2);
+  assert.equal(applied.nextEpisode.visualStyle?.vfxIntensity, 0.65);
+  // Original episode must remain completely untouched
+  assert.equal(ep.beats[0].duration, origDuration);
+
+  // Raw RFC 6902 array must also parse cleanly
+  const rawParsed = parseStagecraftPatchPayload([
+    { op: 'replace', path: '/beats/0/cameraFocusX', value: -0.1 },
+  ]);
+  assert.equal(rawParsed.ok, true);
+
+  // Security & integrity rejections (all must fail atomically)
+  const badCases: Array<[string, Array<{ op: 'add' | 'replace' | 'remove'; path: string; value?: unknown }>]> = [
+    ['__proto__ segment', [{ op: 'replace', path: '/beats/0/__proto__/polluted', value: true }]],
+    ['constructor segment', [{ op: 'replace', path: '/beats/0/constructor/x', value: 1 }]],
+    ['disallowed /cast root', [{ op: 'replace', path: '/cast/0/name', value: 'Hijacked' }]],
+    ['disallowed /id root', [{ op: 'replace', path: '/id', value: 'hacked_id' }]],
+    ['out-of-bounds beat index', [{ op: 'replace', path: '/beats/999/duration', value: 4 }]],
+    ['nested __proto__ value', [{ op: 'add', path: '/beats/0/locationCard', value: JSON.parse('{"title":"Ok","__proto__":{"x":1}}') }]],
+    ['invalid duration value', [{ op: 'replace', path: '/beats/0/duration', value: -3 }]],
+    ['invalid locationCard position', [{ op: 'replace', path: '/beats/0/locationCard/position', value: 'center_top' }]],
+  ];
+
+  for (const [label, ops] of badCases) {
+    const res = previewAndApplyStagecraftPatch(ep, ops);
+    assert.equal(res.ok, false, `Expected "${label}" patch to be rejected`);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Test 69 (Wave 8 · Upgrade 44): cutscene-qa-bridge/v1 Host Client Protocol & Origin Guard
+// ---------------------------------------------------------------------------
+test('69. Wave 8 Upgrade 44: cutscene-qa-bridge/v1 handles PING, RUN_AUDIT, SEEK, dryRun/commit APPLY_PATCH & rejects unauthorized origins', () => {
+  let currentEp = clone(PRESET_EPISODES[0]);
+  let seekedTo = -1;
+  let commitCount = 0;
+  const sent: Array<{ msg: Record<string, unknown>; targetOrigin: string }> = [];
+  const mockSource = {
+    postMessage(msg: unknown, targetOrigin: string) {
+      sent.push({ msg: msg as Record<string, unknown>, targetOrigin });
+    },
+  };
+
+  const bridge = createShotInspectorHostBridge({
+    getEpisode: () => currentEp,
+    getAspect: () => '16:9',
+    allowedOrigins: ['https://inspector.example.com'],
+    currentOrigin: 'https://studio.example.com',
+    attachWindow: false,
+    nowIso: () => '2026-06-01T12:00:00.000Z',
+    onSeekTime: (t) => {
+      seekedTo = t;
+    },
+    onCommitEpisode: (nextEp) => {
+      commitCount += 1;
+      currentEp = nextEp;
+    },
+  });
+
+  // Origin allowlist checks
+  assert.equal(isAllowedBridgeOrigin('http://localhost:5173'), true);
+  assert.equal(isAllowedBridgeOrigin('https://127.0.0.1:4173'), true);
+  assert.equal(isAllowedBridgeOrigin('https://evil.attacker.invalid'), false);
+  assert.equal(isAllowedBridgeOrigin('javascript:alert(1)'), false);
+
+  // Unauthorized origin must be rejected silently with zero replies
+  const unauth = bridge.handleIncomingMessage({
+    origin: 'https://evil.attacker.invalid',
+    source: mockSource,
+    data: { channel: CUTSCENE_QA_BRIDGE_CHANNEL, type: 'QA_PING' },
+  });
+  assert.equal(unauth.handled, false);
+  assert.ok(unauth.rejectedReason);
+  assert.equal(sent.length, 0);
+
+  // 1. QA_PING -> QA_PONG
+  const pingRes = bridge.handleIncomingMessage({
+    origin: 'http://localhost:5173',
+    source: mockSource,
+    data: { channel: CUTSCENE_QA_BRIDGE_CHANNEL, type: 'QA_PING' },
+  });
+  assert.equal(pingRes.handled, true);
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].msg.type, 'QA_PONG');
+  assert.equal(sent[0].msg.host, 'stagecraft-studio');
+  assert.deepEqual(sent[0].msg.capabilities, ['bundle-v1', 'rfc6902-patch', 'seek']);
+
+  // 2. QA_SEEK_TIME
+  bridge.handleIncomingMessage({
+    origin: 'https://inspector.example.com',
+    source: mockSource,
+    data: { channel: CUTSCENE_QA_BRIDGE_CHANNEL, type: 'QA_SEEK_TIME', timeSec: 6.25 },
+  });
+  assert.equal(seekedTo, 6.25);
+
+  // 3. QA_APPLY_PATCH (dryRun: true) -> validates & replies without committing
+  bridge.handleIncomingMessage({
+    origin: 'http://localhost:5173',
+    source: mockSource,
+    data: {
+      channel: CUTSCENE_QA_BRIDGE_CHANNEL,
+      type: 'QA_APPLY_PATCH',
+      txId: 'tx_dry_1',
+      dryRun: true,
+      findingIds: ['F-01'],
+      summary: 'Dry run camera nudge',
+      patch: [{ op: 'replace', path: '/beats/0/cameraFocusX', value: 0.18 }],
+    },
+  });
+  assert.equal(commitCount, 0, 'dryRun patch must not commit to active episode');
+  assert.equal(sent[1].msg.type, 'QA_PATCH_RESULT');
+  assert.equal(sent[1].msg.txId, 'tx_dry_1');
+  assert.equal(sent[1].msg.ok, true);
+  assert.equal(sent[1].msg.dryRun, true);
+  assert.equal(sent[1].msg.appliedCount, 1);
+
+  // 4. QA_APPLY_PATCH (dryRun: false) -> commits & returns updatedBundle
+  bridge.handleIncomingMessage({
+    origin: 'http://localhost:5173',
+    source: mockSource,
+    data: {
+      channel: CUTSCENE_QA_BRIDGE_CHANNEL,
+      type: 'QA_APPLY_PATCH',
+      txId: 'tx_commit_2',
+      dryRun: false,
+      findingIds: ['F-01'],
+      summary: 'Commit camera nudge',
+      patch: [{ op: 'replace', path: '/beats/0/cameraFocusX', value: 0.18 }],
+    },
+  });
+  assert.equal(commitCount, 1);
+  assert.equal(currentEp.beats[0].cameraFocusX, 0.18);
+  assert.equal(sent[2].msg.type, 'QA_PATCH_RESULT');
+  assert.equal(sent[2].msg.ok, true);
+  assert.equal(sent[2].msg.txId, 'tx_commit_2');
+  assert.ok(sent[2].msg.updatedBundle && (sent[2].msg.updatedBundle as { schema: string }).schema === STAGECRAFT_QA_BUNDLE_SCHEMA);
+
+  bridge.destroy();
+});
+
+// ---------------------------------------------------------------------------
+// Test 70 (Wave 8 · Upgrade 46): render-batch.mjs CLI --qa-bundle & Subprocess Safety Audit
+// ---------------------------------------------------------------------------
+test('70. Wave 8 Upgrade 46: scripts/render-batch.mjs emits valid stagecraft-shot-inspector/v1 --qa-bundle & uses safe execFileSync only', () => {
+  const batchPath = path.join(process.cwd(), 'scripts/render-batch.mjs');
+  const src = fs.readFileSync(batchPath, 'utf8');
+  assert.ok(src.includes('--qa-bundle'), 'render-batch.mjs must support --qa-bundle');
+  assert.ok(src.includes('--shot-inspector-dir'), 'render-batch.mjs must support --shot-inspector-dir');
+  assert.ok(src.includes('execFileSync'), 'render-batch.mjs must invoke subprocesses with execFileSync');
+  assert.equal(/\bexec\s*\(/.test(src), false, 'render-batch.mjs must never use shell string exec()');
+
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'stagecraft-qa-cli-'));
+  try {
+    const ep = clone(PRESET_EPISODES[0]);
+    const epPath = path.join(tmpDir, `${ep.id}.json`);
+    const outDir = path.join(tmpDir, 'out');
+    fs.writeFileSync(epPath, JSON.stringify(ep, null, 2), 'utf8');
+
+    execFileSync(process.execPath, [batchPath, epPath, '--out', outDir, '--qa-bundle'], {
+      cwd: process.cwd(),
+      stdio: 'pipe',
+      timeout: 30_000,
+    });
+
+    const bundleFile = path.join(outDir, `${ep.id}.qa-bundle.json`);
+    assert.equal(fs.existsSync(bundleFile), true, `Expected CLI to write ${bundleFile}`);
+    const parsed = JSON.parse(fs.readFileSync(bundleFile, 'utf8'));
+    assert.equal(parsed.schema, STAGECRAFT_QA_BUNDLE_SCHEMA);
+    assert.equal(parsed.fps, 60);
+    assert.equal(parsed.telemetry.beatTimeline.length, ep.beats.length);
+    assert.equal(parsed.telemetry.audioSummary.targetLufs, -14);
+    assert.equal(parsed.telemetry.audioSummary.targetTruePeakDbtp, -1.5);
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Test 71 (Wave 8): End-to-End Round-Trip (Bundle -> Shot-Inspector Fix Patch -> Re-Audit)
+// ---------------------------------------------------------------------------
+test('71. Wave 8 End-to-End: Export QA bundle -> simulate Shot-Inspector RFC 6902 fix patch -> apply -> rebuild bundle & verify resolution', () => {
+  const ep = clone(PRESET_EPISODES[0]);
+  // Seed a beat with tight reading pace, top-left location card colliding with framing, and zero audio lead
+  ep.beats[0] = {
+    ...ep.beats[0],
+    duration: 2.0,
+    audioLeadSec: 0,
+    cameraFocusX: 0,
+    dialogue:
+      'Every single warrior in the courtyard turned sharply toward the gilded throne as thunder echoed across the palace.',
+    locationCard: {
+      title: 'Royal Courtyard',
+      position: 'top_left',
+      style: 'cinematic_bar',
+    },
+  };
+
+  // Step 1: Export initial QA bundle
+  const beforeBundle = buildStagecraftQaBundle(ep, { aspect: '16:9' });
+  const beforeBeat0 = beforeBundle.telemetry.beatTimeline[0];
+  assert.ok((beforeBeat0.speechWindow?.estimatedCps ?? 0) > 25, 'Initial beat should exhibit high CPS reading pressure');
+  assert.equal(beforeBeat0.locationCard?.position, 'top_left');
+
+  // Step 2: Simulate Shot-Inspector emitting a stagecraft-patch/v1 auto-fix payload
+  const inspectorPatchJson = JSON.stringify({
+    schema: STAGECRAFT_PATCH_SCHEMA,
+    summary: 'Relax beat 1 reading pace, add 0.2s J-cut lead, nudge focus right & shift lower-third',
+    beforeScore: 71,
+    afterScore: 93,
+    patch: [
+      { op: 'replace', path: '/beats/0/duration', value: 6.0 },
+      { op: 'replace', path: '/beats/0/audioLeadSec', value: 0.2 },
+      { op: 'replace', path: '/beats/0/cameraFocusX', value: 0.16 },
+      { op: 'replace', path: '/beats/0/locationCard/position', value: 'bottom_left' },
+    ],
+  });
+
+  // Step 3: Parse, validate, and apply patch cleanly
+  const parsed = parseStagecraftPatchPayload(inspectorPatchJson);
+  assert.equal(parsed.ok, true);
+  if (!parsed.ok) return;
+  const applied = previewAndApplyStagecraftPatch(ep, parsed.patch);
+  assert.equal(applied.ok, true);
+  if (!applied.ok) return;
+
+  // Step 4: Validate resulting episode and rebuild QA bundle
+  const revalidated = validateEpisodeScript(applied.nextEpisode);
+  assert.equal(revalidated.ok, true);
+  const afterBundle = buildStagecraftQaBundle(applied.nextEpisode, { aspect: '16:9' });
+  const afterBeat0 = afterBundle.telemetry.beatTimeline[0];
+
+  assert.equal(afterBeat0.durationSec, 6);
+  assert.equal(afterBeat0.audioLeadSec, 0.2);
+  assert.equal(afterBeat0.locationCard?.position, 'bottom_left');
+  assert.ok(
+    (afterBeat0.speechWindow?.estimatedCps ?? 99) < (beforeBeat0.speechWindow?.estimatedCps ?? 0),
+    'Rebuilt QA bundle must confirm reading CPS dropped after patch'
+  );
+  assert.equal(applied.nextEpisode.beats[0].cameraFocusX, 0.16);
 });
 
 // ---------------------------------------------------------------------------

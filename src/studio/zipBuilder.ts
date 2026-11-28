@@ -134,6 +134,9 @@ import studioCatalogSearchIndexTs from './catalogSearchIndex.ts?raw';
 import studioStoryRemixEngineTs from './storyRemixEngine.ts?raw';
 import studioGranularCharacterLayersTs from './granularCharacterLayers.ts?raw';
 import studioLlmMasterGuideBuilderTs from './llmMasterGuideBuilder.ts?raw';
+import studioShotInspectorBridgeTs from './shotInspectorBridge.ts?raw';
+import studioShotInspectorPatchApplierTs from './shotInspectorPatchApplier.ts?raw';
+import studioShotInspectorHostClientTs from './shotInspectorHostClient.ts?raw';
 import studioZipBuilderTs from './zipBuilder.ts?raw';
 import stagecraftLlmInstructionsMd from '../../STAGECRAFT_LLM_INSTRUCTIONS.md?raw';
 import batchRenderScriptMjs from '../../scripts/render-batch.mjs?raw';
@@ -818,6 +821,18 @@ export function collectAllMachinimaEntries(): ZipEntryInput[] {
     {
       path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/llmMasterGuideBuilder.ts`,
       content: studioLlmMasterGuideBuilderTs,
+    },
+    {
+      path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/shotInspectorBridge.ts`,
+      content: studioShotInspectorBridgeTs,
+    },
+    {
+      path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/shotInspectorPatchApplier.ts`,
+      content: studioShotInspectorPatchApplierTs,
+    },
+    {
+      path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/shotInspectorHostClient.ts`,
+      content: studioShotInspectorHostClientTs,
     },
     {
       path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/zipBuilder.ts`,

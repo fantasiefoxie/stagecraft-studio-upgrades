@@ -174,6 +174,12 @@ All fields below are **optional** on `CharacterDNA` (`version: 1`). Omit any fie
 }
 ```
 
-## 6. Mandatory Quality & Verification Gate
+## 6. Shot-Inspector QA Bridge, Telemetry Bundle & RFC 6902 Patches (Wave 8)
+- **Deterministic QA Bundle (`stagecraft-shot-inspector/v1`)**: Export via Storyboard QA -> Shot-Inspector Bridge -> `Export QA Bundle` (or CLI `node scripts/render-batch.mjs <ep.json> --out ./renders --qa-bundle [--shot-inspector-dir ../shot-inspector]`).
+- Contains 60fps integer beat timings, `effectiveCadenceFps` (`12 | 24 | 60`), `hitstopWindows`, `vfxBurstWindows`, `speechWindow` (with `audioLeadSec` J/L-cut offsets & `estimatedCps`), `locationCard`, per-actor `hasGranularDna` & `dnaSilhouetteSignature`, and broadcast audio targets (`-14 LUFS`, `-1.5 dBTP`).
+- **Safe RFC 6902 Auto-Patch Format (`stagecraft-patch/v1`)**: Import either `{ "schema": "stagecraft-patch/v1", "summary": "...", "patch": [ ... ] }` or a raw RFC 6902 array (`add` / `replace` / `remove`). Only `/beats/<index>/...` and `/visualStyle/<field>` paths are permitted; prototype-pollution keys and out-of-bounds indices are rejected atomically before `validateEpisodeScript()`.
+- **Live Bidirectional Bridge (`cutscene-qa-bridge/v1`)**: Origin-verified `postMessage` host handling `QA_PING` -> `QA_PONG`, `QA_RUN_AUDIT` -> `QA_PUSH_STAGECRAFT_BUNDLE`, `QA_SEEK_TIME`, and `QA_APPLY_PATCH` (dry-run & Undo-preserving commit -> `QA_PATCH_RESULT`).
+
+## 7. Mandatory Quality & Verification Gate
 - Sync living docs: `npm run sync-docs && npm run sync-docs -- --check`
 - Lint + Test + Build: `npm run lint && npm test && npm run build`

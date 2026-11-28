@@ -119,6 +119,10 @@ import { WorkbenchLookTab } from './studio/WorkbenchLookTab';
 import { WorkbenchBeatInspector } from './studio/WorkbenchBeatInspector';
 import { useHeadlessDriver } from './studio/useHeadlessDriver';
 import {
+  ShotInspectorHostBridge,
+  createShotInspectorHostBridge,
+} from './studio/shotInspectorHostClient';
+import {
   getVoiceSpeechProfile,
   sampleVoiceProfileAtTime,
   trimAndNormalizeVoiceBlob,
@@ -2315,6 +2319,52 @@ export default function App() {
     setIsPlaying,
   });
 
+  // Wave 8 (Upgrade 44): Bidirectional cutscene-qa-bridge/v1 host client for Shot-Inspector
+  const [allowedBridgeOrigins, setAllowedBridgeOrigins] = useState<string[]>([]);
+  const shotInspectorBridgeRef = useRef<ShotInspectorHostBridge | null>(null);
+
+  useEffect(() => {
+    const bridge = createShotInspectorHostBridge({
+      getEpisode: () => episodeRef.current,
+      getAspect: () => aspectRef.current,
+      allowedOrigins: allowedBridgeOrigins,
+      onSeekTime: (timeSec) => {
+        jumpToTime(timeSec);
+      },
+      onCommitEpisode: (nextEp, summary) => {
+        pendingHistoryLabelRef.current = summary;
+        setEpisode(nextEp);
+        setJsonDraft(JSON.stringify(nextEp, null, 2));
+        setSelectedBeatIdx((idx) => Math.min(idx, Math.max(0, nextEp.beats.length - 1)));
+        setExportNotice(`${summary} (Undo with Ctrl/Cmd+Z)`);
+        window.setTimeout(() => setExportNotice(null), 2800);
+      },
+    });
+    shotInspectorBridgeRef.current = bridge;
+    return () => {
+      bridge.destroy();
+      shotInspectorBridgeRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jumpToTime]);
+
+  useEffect(() => {
+    shotInspectorBridgeRef.current?.setAllowedOrigins(allowedBridgeOrigins);
+  }, [allowedBridgeOrigins]);
+
+  const handlePushBridgeBundle = useCallback((targetOrigin: string): boolean => {
+    const bridge = shotInspectorBridgeRef.current;
+    if (!bridge || typeof window === 'undefined') return false;
+    const target =
+      window.opener && window.opener !== window
+        ? window.opener
+        : window.parent && window.parent !== window
+          ? window.parent
+          : null;
+    if (!target) return false;
+    return bridge.pushBundle(target, targetOrigin) !== null;
+  }, []);
+
   // Clean AudioContext & timer disposal on unmount
   useEffect(() => {
     return () => {
@@ -3641,6 +3691,9 @@ export default function App() {
           setJsonDraft(JSON.stringify(fixedEp, null, 2));
           setSelectedBeatIdx((idx) => Math.min(idx, Math.max(0, fixedEp.beats.length - 1)));
         }}
+        allowedBridgeOrigins={allowedBridgeOrigins}
+        onUpdateAllowedBridgeOrigins={setAllowedBridgeOrigins}
+        onPushBridgeBundle={handlePushBridgeBundle}
       />
 
       {/* Upgrade 15: Voiceover Booth Teleprompter & Multi-Take Recorder Modal */}

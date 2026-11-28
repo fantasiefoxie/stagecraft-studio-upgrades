@@ -330,6 +330,369 @@ function runOptionalShortsExpQa(mp4Path, shortsExpDir) {
   }
 }
 
+const CLI_STUDIO_FPS = 60;
+const CLI_IMPACT_SFX = new Set(['sword_clash', 'thunder_crack']);
+const CLI_IMPACT_FX = new Set(['crimson_impact', 'shock_burst', 'shatter_glass', 'comic_pow']);
+const CLI_STYLE_FPS = {
+  chiaroscuro: 24,
+  shadow_puppetry: 16,
+  lineless_vector: 30,
+  woodblock_print: 10,
+  stained_glass: 24,
+  papercraft_diorama: 12,
+  sumi_e_wash: 12,
+  greek_amphora: 12,
+  kente_tapestry: 15,
+  illuminated_codex: 24,
+  anime_cel: 24,
+  manga_screentone: 15,
+  blueprint_technical: 30,
+  gouache_storybook: 15,
+  neon_cybernoir: 60,
+  felt_puppet: 12,
+  risograph_print: 12,
+  backlit_sand: 15,
+  scratchboard_noir: 15,
+  byzantine_mosaic: 24,
+};
+
+function cliFnv1aHex(input) {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < input.length; i++) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return hash.toString(16).padStart(8, '0');
+}
+
+function cliHasGranularDna(castMember) {
+  const dna = castMember?.dna;
+  if (!dna || typeof dna !== 'object') return false;
+  if (dna.faceMorph && Object.keys(dna.faceMorph).length > 0) return true;
+  if (Array.isArray(dna.bodyMarks) && dna.bodyMarks.some((m) => m && m !== 'none')) return true;
+  if (dna.accessories && Object.values(dna.accessories).some((v) => typeof v === 'string' && v !== 'none')) {
+    return true;
+  }
+  if (
+    dna.head &&
+    ((dna.head.eyebrowStyle && dna.head.eyebrowStyle !== 'natural_arch') ||
+      (dna.head.pupilStyle && dna.head.pupilStyle !== 'round') ||
+      (dna.head.eyelashStyle && dna.head.eyelashStyle !== 'none') ||
+      (dna.head.mouthStyle && dna.head.mouthStyle !== 'classic') ||
+      (dna.head.secondaryFaceMark && dna.head.secondaryFaceMark !== 'none') ||
+      (typeof dna.head.blushIntensity === 'number' && dna.head.blushIntensity > 0))
+  ) {
+    return true;
+  }
+  if (
+    dna.outfit &&
+    ((dna.outfit.outerwear && dna.outfit.outerwear !== 'none') ||
+      (dna.outfit.sleeveStyle && dna.outfit.sleeveStyle !== 'auto') ||
+      (dna.outfit.waistStyle && dna.outfit.waistStyle !== 'none') ||
+      (dna.outfit.gloves && dna.outfit.gloves !== 'none') ||
+      (dna.outfit.footwear && dna.outfit.footwear !== 'auto'))
+  ) {
+    return true;
+  }
+  if (dna.palette && Boolean(dna.palette.eyeSecondary || dna.palette.lip || dna.palette.brow || dna.palette.markTint)) {
+    return true;
+  }
+  return false;
+}
+
+function cliComputeDnaSilhouetteSignature(castMember) {
+  if (!castMember) return 'dna_00000000';
+  const dna = castMember.dna;
+  const parts = [
+    `arch:${castMember.archetype || 'unknown'}`,
+    `col:${String(castMember.primaryColor || '').toLowerCase()}`,
+    `acc:${String(castMember.accentColor || '').toLowerCase()}`,
+  ];
+  if (dna && typeof dna === 'object') {
+    const morph = dna.morph || {};
+    const head = dna.head || {};
+    const outfit = dna.outfit || {};
+    const acc = dna.accessories || {};
+    const app = dna.appendages || {};
+    const bodyMarks = Array.isArray(dna.bodyMarks)
+      ? dna.bodyMarks.filter((m) => m && m !== 'none').slice().sort().join(',')
+      : '';
+    parts.push(
+      `ch:${dna.chassis || 'humanoid'}`,
+      `h:${Number((morph.height ?? 1).toFixed(2))}`,
+      `sw:${Number((morph.shoulderWidth ?? 1).toFixed(2))}`,
+      `tb:${Number((morph.torsoBulk ?? 1).toFixed(2))}`,
+      `hr:${Number((morph.headRatio ?? 1).toFixed(2))}`,
+      `hs:${head.headShape || 'oval'}`,
+      `hair:${head.hairStyle || 'none'}`,
+      `horns:${head.horns || 'none'}`,
+      `fm:${head.faceMark || 'none'}+${head.secondaryFaceMark || 'none'}`,
+      `hw:${outfit.headwear || 'none'}`,
+      `top:${outfit.topStyle || 'none'}`,
+      `out:${outfit.outerwear || 'none'}`,
+      `cape:${outfit.capeStyle || 'none'}`,
+      `eye:${acc.eyewear || 'none'}`,
+      `back:${acc.backGear || 'none'}`,
+      `wing:${app.wings || 'none'}`,
+      `tail:${app.tail || 'none'}`,
+      `bm:${bodyMarks}`
+    );
+  }
+  return `dna_${cliFnv1aHex(parts.join('|'))}`;
+}
+
+function buildStagecraftQaBundleCli(ep, aspect = '16:9') {
+  const safeAspect = aspect === '9:16' ? '9:16' : '16:9';
+  const vs = ep.visualStyle && typeof ep.visualStyle === 'object' ? ep.visualStyle : {};
+  const renderStyle = vs.renderStyle || 'chiaroscuro';
+  const cadence = vs.motionCadence || 'auto';
+  const rawFps =
+    cadence === '60fps' ? 60 : cadence === '24fps' ? 24 : cadence === '12fps' ? 12 : CLI_STYLE_FPS[renderStyle] || 24;
+  const effectiveCadenceFps = rawFps <= 16 ? 12 : rawFps <= 36 ? 24 : 60;
+  const hitstopEnabled = vs.hitstopEnabled !== false;
+  const vfxIntensity =
+    typeof vs.vfxIntensity === 'number' && Number.isFinite(vs.vfxIntensity)
+      ? Math.max(0, Math.min(1, vs.vfxIntensity))
+      : 0.75;
+
+  const castById = new Map();
+  for (const c of ep.cast || []) castById.set(c.id, c);
+
+  let cursorFrame = 0;
+  const beatTimeline = [];
+  const roundSec = (v) => Number(v.toFixed(4));
+  const roundNum = (v, d = 3) => Number(v.toFixed(d));
+
+  for (let i = 0; i < (ep.beats || []).length; i++) {
+    const beat = ep.beats[i];
+    const safeDur = Math.max(0.5, Number.isFinite(Number(beat.duration)) ? Number(beat.duration) : 4);
+    const beatFrames = Math.max(1, Math.round(safeDur * CLI_STUDIO_FPS));
+    const startFrame = cursorFrame;
+    const endFrame = cursorFrame + beatFrames;
+    const startSec = roundSec(startFrame / CLI_STUDIO_FPS);
+    const endSec = roundSec(endFrame / CLI_STUDIO_FPS);
+    const durationSec = roundSec(beatFrames / CLI_STUDIO_FPS);
+    const audioLeadSec =
+      typeof beat.audioLeadSec === 'number' && Number.isFinite(beat.audioLeadSec)
+        ? roundNum(Math.max(-0.6, Math.min(0.6, beat.audioLeadSec)), 3)
+        : 0;
+
+    const resolveCueStart = (cue) => {
+      if (typeof cue.frame === 'number' && Number.isFinite(cue.frame)) {
+        return Math.max(0, Math.min(beatFrames - 1, Math.round(cue.frame)));
+      }
+      if (typeof cue.timeSec === 'number' && Number.isFinite(cue.timeSec)) {
+        return Math.max(0, Math.min(beatFrames - 1, Math.round(Math.max(0, cue.timeSec) * CLI_STUDIO_FPS)));
+      }
+      if (typeof cue.at === 'number' && Number.isFinite(cue.at)) {
+        return Math.max(0, Math.min(beatFrames - 1, Math.round(Math.max(0, Math.min(0.98, cue.at)) * durationSec * CLI_STUDIO_FPS)));
+      }
+      return Math.round(beatFrames * 0.25);
+    };
+
+    const hitstopRaw = [];
+    if (hitstopEnabled) {
+      for (const cue of beat.actionCues || []) {
+        const isAttack = cue.pose === 'attack';
+        const isPunch = typeof cue.cameraPunch === 'number' && cue.cameraPunch >= 0.5;
+        const isImpactSfx = Boolean(cue.sfx && CLI_IMPACT_SFX.has(cue.sfx));
+        const isImpactFx = Boolean(cue.fx && CLI_IMPACT_FX.has(cue.fx));
+        if (!isAttack && !isPunch && !isImpactSfx && !isImpactFx) continue;
+        const frames = isImpactSfx || (typeof cue.cameraPunch === 'number' && cue.cameraPunch >= 0.78) ? 4 : isAttack || isImpactFx ? 3 : 2;
+        hitstopRaw.push({ localFrame: resolveCueStart(cue), frames });
+      }
+      if (beat.sfx && CLI_IMPACT_SFX.has(beat.sfx)) {
+        const off = typeof beat.sfxOffsetSec === 'number' && Number.isFinite(beat.sfxOffsetSec)
+          ? Math.max(0, Math.min(durationSec - 0.08, beat.sfxOffsetSec))
+          : 0.12;
+        hitstopRaw.push({ localFrame: Math.round(off * CLI_STUDIO_FPS), frames: beat.sfx === 'thunder_crack' ? 4 : 3 });
+      }
+      if (beat.fx && CLI_IMPACT_FX.has(beat.fx)) {
+        hitstopRaw.push({ localFrame: Math.min(beatFrames - 1, Math.round(0.14 * CLI_STUDIO_FPS)), frames: 3 });
+      }
+      if (Array.isArray(beat.actors) && beat.actors.some((a) => a.pose === 'attack')) {
+        hitstopRaw.push({ localFrame: Math.min(beatFrames - 1, Math.round(beatFrames * 0.22)), frames: 3 });
+      }
+    }
+    hitstopRaw.sort((a, b) => a.localFrame - b.localFrame || b.frames - a.frames);
+    const hitstopMerged = [];
+    for (const item of hitstopRaw) {
+      const prev = hitstopMerged[hitstopMerged.length - 1];
+      if (prev && item.localFrame - prev.localFrame <= 10) {
+        if (item.frames > prev.frames) prev.frames = item.frames;
+      } else {
+        hitstopMerged.push({ ...item });
+      }
+    }
+    const hitstopWindows = hitstopMerged.map((ev) => {
+      const sF = startFrame + ev.localFrame;
+      const eF = Math.min(endFrame, sF + ev.frames);
+      return {
+        startSec: roundSec(sF / CLI_STUDIO_FPS),
+        endSec: roundSec(eF / CLI_STUDIO_FPS),
+        frames: Math.max(1, eF - sF),
+      };
+    });
+
+    const vfxBurstWindows = [];
+    if (vfxIntensity > 0) {
+      if (beat.transition === 'popup_fold') {
+        const foldF = Math.min(beatFrames, Math.round(0.65 * CLI_STUDIO_FPS));
+        vfxBurstWindows.push({
+          startSec,
+          endSec: roundSec((startFrame + foldF) / CLI_STUDIO_FPS),
+          intensity: roundNum(Math.min(1, Math.max(0.35, vfxIntensity * 0.85)), 3),
+        });
+      }
+      if (beat.fx && beat.fx !== 'none') {
+        const sOff = Math.min(beatFrames - 1, Math.round(0.08 * CLI_STUDIO_FPS));
+        const span = Math.min(beatFrames - sOff, Math.max(Math.round(0.45 * CLI_STUDIO_FPS), Math.round(beatFrames * 0.65)));
+        vfxBurstWindows.push({
+          startSec: roundSec((startFrame + sOff) / CLI_STUDIO_FPS),
+          endSec: roundSec((startFrame + sOff + span) / CLI_STUDIO_FPS),
+          intensity: roundNum(Math.min(1, vfxIntensity * (CLI_IMPACT_FX.has(beat.fx) ? 1.0 : 0.78)), 3),
+        });
+      }
+      for (const cue of beat.actionCues || []) {
+        const hasFx = Boolean(cue.fx && cue.fx !== 'none');
+        const hasPunch = typeof cue.cameraPunch === 'number' && cue.cameraPunch >= 0.35;
+        const hasPulse = typeof cue.propPulse === 'number' && cue.propPulse >= 0.35;
+        if (!hasFx && !hasPunch && !hasPulse) continue;
+        const lS = resolveCueStart(cue);
+        const lE =
+          typeof cue.endFrame === 'number' && Number.isFinite(cue.endFrame) && cue.endFrame > lS
+            ? Math.min(beatFrames, Math.round(cue.endFrame))
+            : Math.min(beatFrames, lS + Math.round(0.45 * CLI_STUDIO_FPS));
+        const peak = Math.max(
+          hasFx ? vfxIntensity : 0,
+          hasPunch ? Math.min(1, cue.cameraPunch * vfxIntensity) : 0,
+          hasPulse ? Math.min(1, cue.propPulse * vfxIntensity) : 0
+        );
+        vfxBurstWindows.push({
+          startSec: roundSec((startFrame + lS) / CLI_STUDIO_FPS),
+          endSec: roundSec((startFrame + lE) / CLI_STUDIO_FPS),
+          intensity: roundNum(Math.max(0.15, Math.min(1, peak)), 3),
+        });
+      }
+      vfxBurstWindows.sort((a, b) => a.startSec - b.startSec || a.endSec - b.endSec);
+    }
+
+    const text = typeof beat.dialogue === 'string' ? beat.dialogue.trim() : '';
+    let speechWindow = null;
+    if (text) {
+      const sStart = Math.max(0, roundSec(startSec + 0.08 - audioLeadSec));
+      const sEnd = roundSec(Math.min(endSec + 0.6, Math.max(sStart + 0.25, endSec - 0.12 - Math.max(0, audioLeadSec * 0.5))));
+      const speakDur = Math.max(0.25, sEnd - sStart);
+      const nonSpace = text.replace(/\s+/g, '').length;
+      speechWindow = {
+        startSec: sStart,
+        endSec: sEnd,
+        wordCount: text.split(/\s+/).filter(Boolean).length,
+        estimatedCps: roundNum(nonSpace / speakDur, 2),
+        speakerId: beat.speakerId || 'narrator',
+      };
+    }
+
+    const locationCard =
+      beat.locationCard && typeof beat.locationCard.title === 'string' && beat.locationCard.title.trim()
+        ? {
+            title: beat.locationCard.title.trim(),
+            ...(beat.locationCard.subtitle?.trim() ? { subtitle: beat.locationCard.subtitle.trim() } : {}),
+            ...(beat.locationCard.position ? { position: beat.locationCard.position } : {}),
+            ...(beat.locationCard.style ? { style: beat.locationCard.style } : {}),
+          }
+        : null;
+
+    const actors = (beat.actors || []).map((a) => {
+      const member = castById.get(a.castId);
+      return {
+        castId: a.castId,
+        slot: a.slot,
+        pose: a.pose,
+        expression: a.expression,
+        offsetX: typeof a.offsetX === 'number' && Number.isFinite(a.offsetX) ? roundNum(a.offsetX, 4) : 0,
+        offsetY: typeof a.offsetY === 'number' && Number.isFinite(a.offsetY) ? roundNum(a.offsetY, 4) : 0,
+        hasGranularDna: cliHasGranularDna(member),
+        dnaSilhouetteSignature: cliComputeDnaSilhouetteSignature(member),
+      };
+    });
+
+    beatTimeline.push({
+      beatIndex: i,
+      beatId: beat.id,
+      startSec,
+      endSec,
+      durationSec,
+      shot: beat.shot,
+      stage: beat.stage,
+      renderStyle: beat.renderStyle || renderStyle,
+      transition: beat.transition,
+      audioLeadSec,
+      hitstopWindows,
+      vfxBurstWindows,
+      speechWindow,
+      locationCard,
+      actors,
+    });
+    cursorFrame = endFrame;
+  }
+
+  return {
+    schema: 'stagecraft-shot-inspector/v1',
+    exportedAt: new Date().toISOString(),
+    studioVersion: '8.0.0',
+    aspect: safeAspect,
+    fps: 60,
+    episode: JSON.parse(JSON.stringify(ep)),
+    telemetry: {
+      totalDurationSec: roundSec(cursorFrame / CLI_STUDIO_FPS),
+      effectiveCadenceFps,
+      beatTimeline,
+      audioSummary: {
+        targetLufs: -14,
+        targetTruePeakDbtp: -1.5,
+      },
+    },
+  };
+}
+
+function runOptionalShotInspectorQa(qaBundlePath, mp4Path, shotInspectorDir) {
+  if (!shotInspectorDir) return null;
+  const resolvedDir = path.resolve(shotInspectorDir);
+  if (!fs.existsSync(resolvedDir) || !fs.statSync(resolvedDir).isDirectory()) {
+    return 'shot-inspector QA skipped (directory not found)';
+  }
+  const tsEntry = path.resolve(resolvedDir, 'scripts', 'qa-headless-media.ts');
+  const mjsEntry = path.resolve(resolvedDir, 'scripts', 'qa-headless-media.mjs');
+  const targetScript = fs.existsSync(tsEntry) ? tsEntry : fs.existsSync(mjsEntry) ? mjsEntry : null;
+  if (!targetScript || !targetScript.startsWith(resolvedDir + path.sep)) {
+    return 'shot-inspector QA skipped (scripts/qa-headless-media.{ts,mjs} not found)';
+  }
+  const extraArgs = ['--bundle', qaBundlePath];
+  if (mp4Path && fs.existsSync(mp4Path)) {
+    extraArgs.push('--media', mp4Path);
+  }
+  try {
+    if (targetScript.endsWith('.mjs')) {
+      execFileSync(process.execPath, [targetScript, ...extraArgs], {
+        cwd: resolvedDir,
+        stdio: 'ignore',
+        timeout: 180_000,
+      });
+    } else {
+      const npxBin = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+      execFileSync(npxBin, ['tsx', targetScript, ...extraArgs], {
+        cwd: resolvedDir,
+        stdio: 'ignore',
+        timeout: 180_000,
+      });
+    }
+    return 'shot-inspector QA PASS';
+  } catch {
+    return 'shot-inspector QA reported findings (run Shot-Inspector directly for patch details)';
+  }
+}
+
 function validateHeadlessUrl(rawUrl) {
   let parsed;
   try {
@@ -548,7 +911,8 @@ async function processEpisode(
   ffmpegOk,
   videoEncoder,
   shortsExpDir,
-  headlessOpts
+  headlessOpts,
+  qaOpts = { emitQaBundle: false, shotInspectorDir: '', aspect: '16:9' }
 ) {
   const { ep, voices, musicStem, archiveAspect } = loadEpisodeInput(inputPath, voicesDir);
 
@@ -613,6 +977,16 @@ async function processEpisode(
   const launchPath = resolveSafeOut(`${safeId}.launch_pack.txt`);
   fs.writeFileSync(launchPath, launchTxt, 'utf8');
 
+  let qaBundlePath = null;
+  const resolvedBundleAspect = headlessOpts?.explicitAspect
+    ? headlessOpts.aspect
+    : archiveAspect || qaOpts?.aspect || '16:9';
+  if (qaOpts?.emitQaBundle || qaOpts?.shotInspectorDir) {
+    qaBundlePath = resolveSafeOut(`${safeId}.qa-bundle.json`);
+    const qaBundle = buildStagecraftQaBundleCli(ep, resolvedBundleAspect);
+    fs.writeFileSync(qaBundlePath, JSON.stringify(qaBundle, null, 2), 'utf8');
+  }
+
   // Optional WebM -> Broadcast H.264 MP4 (-14 LUFS) conversion if matching .webm exists
   const candidateWebms = [
     path.join(webmDir, `${safeId}.webm`),
@@ -620,6 +994,7 @@ async function processEpisode(
   ];
   const foundWebm = candidateWebms.find((p) => fs.existsSync(p));
   let mp4Note = 'no matching .webm found (record in studio or place in --webm-dir)';
+  let emittedMp4Path = null;
 
   if (headlessOpts?.page && ffmpegOk) {
     const resolvedAspect = headlessOpts.explicitAspect
@@ -757,6 +1132,7 @@ async function processEpisode(
       .filter(Boolean)
       .join(' + ');
     mp4Note = `Headless MP4 (${rendered.usedEncoder}, ${rendered.width}x${rendered.height}@${headlessOpts.fps}fps, ${rendered.totalFrames}f${audioTag}) -> ${path.basename(mp4Path)}${sheetTag}${extraTag ? ` | ${extraTag}` : ''}${qaNote ? ` | ${qaNote}` : ''}`;
+    emittedMp4Path = mp4Path;
   } else if (foundWebm && ffmpegOk) {
     const mp4Path = resolveSafeOut(`${safeId}_1080p60_youtube.mp4`);
     let usedEncoder = videoEncoder;
@@ -795,8 +1171,15 @@ async function processEpisode(
     }
     const qaNote = runOptionalShortsExpQa(mp4Path, shortsExpDir);
     mp4Note = `MP4 exported (${usedEncoder}) -> ${path.basename(mp4Path)}${qaNote ? ` | ${qaNote}` : ''}`;
+    emittedMp4Path = mp4Path;
   } else if (foundWebm && !ffmpegOk) {
     mp4Note = 'found .webm but ffmpeg is not installed on PATH';
+  }
+
+  let shotInspectorNote = '';
+  if (qaBundlePath && qaOpts?.shotInspectorDir) {
+    const siRes = runOptionalShotInspectorQa(qaBundlePath, emittedMp4Path, qaOpts.shotInspectorDir);
+    if (siRes) shotInspectorNote = ` | ${siRes}`;
   }
 
   const warnings = [];
@@ -805,7 +1188,8 @@ async function processEpisode(
   if (ep.beats.length < 3) warnings.push(`only ${ep.beats.length} beat(s)`);
   const warnNote = warnings.length > 0 ? ` [WARN: ${warnings.join(', ')}]` : '';
 
-  console.log(`[OK] ${safeId} [${langCode}] (${ep.beats.length} beats · ${cursor.toFixed(1)}s) -> .srt + .launch_pack.txt | ${mp4Note}${warnNote}`);
+  const qaArtifactTag = qaBundlePath ? ' + .qa-bundle.json' : '';
+  console.log(`[OK] ${safeId} [${langCode}] (${ep.beats.length} beats · ${cursor.toFixed(1)}s) -> .srt + .launch_pack.txt${qaArtifactTag} | ${mp4Note}${shotInspectorNote}${warnNote}`);
 }
 
 function concatMediaChapters(inputPaths, concatOutPath, ffmpegOk, videoEncoder) {
@@ -880,6 +1264,8 @@ let headlessThumbnails = false;
 let headlessAutoShortsCount = 0;
 let requestedEncoder = (process.env.FFMPEG_ENCODER || 'auto').trim();
 let shortsExpDir = (process.env.SHORTS_EXP_DIR || '').trim();
+let emitQaBundle = false;
+let shotInspectorDir = (process.env.SHOT_INSPECTOR_DIR || '').trim();
 const files = [];
 
 for (let i = 0; i < args.length; i++) {
@@ -895,6 +1281,11 @@ for (let i = 0; i < args.length; i++) {
     requestedEncoder = args[++i].trim();
   } else if (args[i] === '--shorts-exp-dir' && args[i + 1]) {
     shortsExpDir = args[++i].trim();
+  } else if (args[i] === '--qa-bundle') {
+    emitQaBundle = true;
+  } else if (args[i] === '--shot-inspector-dir' && args[i + 1]) {
+    shotInspectorDir = args[++i].trim();
+    emitQaBundle = true;
   } else if (args[i] === '--render-mp4') {
     renderMp4 = true;
   } else if (args[i] === '--url' && args[i + 1]) {
@@ -933,8 +1324,8 @@ for (let i = 0; i < args.length; i++) {
 if (files.length === 0) {
   console.log(
     'Usage:\n' +
-      '  Batch JSON/.katha: node scripts/render-batch.mjs <ep1.json|ep1.katha> [...] --out ./renders [--webm-dir ./recordings] [--voices-dir ./voices] [--encoder auto|libx264|h264_nvenc|h264_amf|h264_videotoolbox] [--shorts-exp-dir ../shorts-exp] [--validate]\n' +
-      '  Headless Factory:  node scripts/render-batch.mjs <ep1.json|ep1.katha> --out ./renders --render-mp4 [--auto-shorts 3] [--thumbnails] [--contact-sheet] [--voices-dir ./voices] [--url http://localhost:3000] [--fps 30|60] [--aspect 16:9|9:16] [--no-captions] [--no-audio] [--encoder auto]\n' +
+      '  Batch JSON/.katha: node scripts/render-batch.mjs <ep1.json|ep1.katha> [...] --out ./renders [--qa-bundle] [--shot-inspector-dir ../shot-inspector] [--webm-dir ./recordings] [--voices-dir ./voices] [--encoder auto|libx264|h264_nvenc|h264_amf|h264_videotoolbox] [--shorts-exp-dir ../shorts-exp] [--validate]\n' +
+      '  Headless Factory:  node scripts/render-batch.mjs <ep1.json|ep1.katha> --out ./renders --render-mp4 [--qa-bundle] [--shot-inspector-dir ../shot-inspector] [--auto-shorts 3] [--thumbnails] [--contact-sheet] [--voices-dir ./voices] [--url http://localhost:3000] [--fps 30|60] [--aspect 16:9|9:16] [--no-captions] [--no-audio] [--encoder auto]\n' +
       '  Long-Form Join:    node scripts/render-batch.mjs ch01.webm ch02.webm ch03.webm --concat ./renders/full_20min.mp4 [--encoder auto]'
   );
   process.exit(0);
@@ -1008,7 +1399,7 @@ async function main() {
         : renderMp4
           ? `HEADLESS MP4 (${headlessAspect}@${headlessFps}fps) -> ${outDir}`
           : `EXPORT -> ${outDir}`
-    } | FFmpeg: ${ffmpegOk ? `READY (${videoEncoder}, -14 LUFS MP4)` : 'NOT FOUND (SRT & Launch Packs only)'}${voicesDir ? ` | Voices: ${voicesDir}` : ''}${shortsExpDir ? ` | shorts-exp QA: ${path.resolve(shortsExpDir)}` : ''}`
+    } | FFmpeg: ${ffmpegOk ? `READY (${videoEncoder}, -14 LUFS MP4)` : 'NOT FOUND (SRT & Launch Packs only)'}${voicesDir ? ` | Voices: ${voicesDir}` : ''}${emitQaBundle ? ' | QA Bundle: ON (v1)' : ''}${shotInspectorDir ? ` | Shot-Inspector: ${path.resolve(shotInspectorDir)}` : ''}${shortsExpDir ? ` | shorts-exp QA: ${path.resolve(shortsExpDir)}` : ''}`
   );
 
   let succeeded = 0;
@@ -1027,7 +1418,17 @@ async function main() {
             `[VALID] ${ep.id} (${ep.beats.length} beats, ${totalSec.toFixed(1)}s, ${ep.cast?.length || 0} cast${voices.length ? `, ${voices.length} voice(s)` : ''}${musicStem ? ' + stem' : ''})`
           );
         } else {
-          await processEpisode(file, outDir, webmDir, voicesDir, ffmpegOk, videoEncoder, shortsExpDir, headlessOpts);
+          await processEpisode(
+            file,
+            outDir,
+            webmDir,
+            voicesDir,
+            ffmpegOk,
+            videoEncoder,
+            shortsExpDir,
+            headlessOpts,
+            { emitQaBundle, shotInspectorDir, aspect: headlessAspect }
+          );
         }
         succeeded++;
       } catch (err) {
