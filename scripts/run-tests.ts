@@ -23,6 +23,7 @@ import {
   ARCHETYPE_DEFAULT_COLORS,
   CAPTION_STYLE_CATALOG,
   CROWD_CATALOG,
+  EXPRESSION_CATALOG,
   EpisodeScript,
   FX_LIST,
   MOOD_CATALOG,
@@ -155,14 +156,47 @@ import {
   generateProceduralPropDataUrl,
 } from '../src/studio/backdropGenerator';
 import {
+  BACK_GEAR_CATALOG,
+  BODY_MARK_CATALOG,
+  EAR_JEWELRY_CATALOG,
+  EYEBROW_STYLE_CATALOG,
+  EYELASH_STYLE_CATALOG,
+  EYEWEAR_CATALOG,
+  FACE_MARK_CATALOG,
+  FACIAL_HAIR_CATALOG,
+  FOOTWEAR_CATALOG,
+  GLOVE_CATALOG,
+  HAIR_STYLE_CATALOG,
   HEADWEAR_CATALOG,
+  MOUTH_STYLE_CATALOG,
+  NECKWEAR_CATALOG,
+  OUTERWEAR_CATALOG,
+  PUPIL_STYLE_CATALOG,
+  SLEEVE_CATALOG,
   SURFACE_PATTERN_CATALOG,
   TOP_STYLE_CATALOG,
+  WAIST_CATALOG,
+  WRISTWEAR_CATALOG,
+  computeDnaDistance,
   createBaseDna,
   hydrateArchetypeToDna,
+  parseNaturalLanguageDnaTraits,
+  randomizeDnaAccessories,
+  randomizeDnaFace,
+  randomizeDnaOutfit,
+  resolveAccessories,
+  resolveBodyMarks,
+  resolveFaceMorph,
   syncMemberWithDna,
   validateAndNormalizeDna,
 } from '../src/studio/characterDna';
+import {
+  AUTO_SYNC_END_MARKER,
+  AUTO_SYNC_START_MARKER,
+  buildGuideAutoSyncSectionMd,
+  buildStagecraftLlmInstructionsMd,
+  computeStudioCatalogFingerprint,
+} from '../src/studio/llmMasterGuideBuilder';
 import {
   SPRITE_PRESET_CATEGORIES,
   SPRITE_WORKSHOP_PRESETS,
@@ -3477,6 +3511,395 @@ test('60. Upgrade 35: All 12 STORY_REMIX_BLUEPRINTS generate deterministic, vali
   }
 
   assert.equal(mock.getNanCount(), 0, `Remix blueprint smoke render produced ${mock.getNanCount()} NaN coordinates`);
+});
+
+// ---------------------------------------------------------------------------
+// Test 61 (Wave 7): Living LLM Docs Zero-Drift Audit
+// ---------------------------------------------------------------------------
+test('61. Wave 7 Living LLM Docs: STAGECRAFT_LLM_INSTRUCTIONS.md & LLM_STORY_STAGE_GUIDE.md auto-sync block match live catalogs with zero drift', () => {
+  const instructionsPath = path.join(process.cwd(), 'STAGECRAFT_LLM_INSTRUCTIONS.md');
+  const guidePath = path.join(process.cwd(), 'LLM_STORY_STAGE_GUIDE.md');
+  assert.equal(fs.existsSync(instructionsPath), true, 'STAGECRAFT_LLM_INSTRUCTIONS.md must exist');
+  assert.equal(fs.existsSync(guidePath), true, 'LLM_STORY_STAGE_GUIDE.md must exist');
+
+  const fpA = computeStudioCatalogFingerprint();
+  const fpB = computeStudioCatalogFingerprint();
+  assert.equal(fpA, fpB, 'Catalog fingerprint must be 100% deterministic');
+  assert.equal(fpA.length, 16, 'Catalog fingerprint must be 16 hex chars');
+
+  const expectedInstructions = buildStagecraftLlmInstructionsMd();
+  const actualInstructions = fs.readFileSync(instructionsPath, 'utf8');
+  assert.equal(
+    actualInstructions,
+    expectedInstructions,
+    'STAGECRAFT_LLM_INSTRUCTIONS.md drifted from live catalogs — run `npm run sync-docs`'
+  );
+  assert.ok(actualInstructions.includes('### 5.7 Sims-Grade Granular Character Customization'));
+  assert.ok(actualInstructions.includes(fpA));
+
+  const actualGuide = fs.readFileSync(guidePath, 'utf8');
+  const startIdx = actualGuide.indexOf(AUTO_SYNC_START_MARKER);
+  const endIdx = actualGuide.indexOf(AUTO_SYNC_END_MARKER);
+  assert.ok(startIdx !== -1 && endIdx > startIdx, 'LLM_STORY_STAGE_GUIDE.md must contain auto-sync markers');
+  const actualBlock = actualGuide.slice(startIdx, endIdx + AUTO_SYNC_END_MARKER.length);
+  const expectedBlock = buildGuideAutoSyncSectionMd();
+  assert.equal(
+    actualBlock,
+    expectedBlock,
+    'LLM_STORY_STAGE_GUIDE.md auto-sync block drifted — run `npm run sync-docs`'
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Test 62 (Wave 7 · Upgrades 36–39): Granular DNA Catalog Counts, Clamping & 100% Backward Compatibility
+// ---------------------------------------------------------------------------
+test('62. Wave 7 Upgrades 36–39: All 18 granular DNA catalogs have exact counts, morphs clamp, bodyMarks cap at 3 & all 192 legacy presets stay valid', () => {
+  assert.equal(EYEBROW_STYLE_CATALOG.length, 10);
+  assert.equal(PUPIL_STYLE_CATALOG.length, 8);
+  assert.equal(EYELASH_STYLE_CATALOG.length, 5);
+  assert.equal(MOUTH_STYLE_CATALOG.length, 8);
+  assert.equal(HAIR_STYLE_CATALOG.length, 21);
+  assert.equal(FACIAL_HAIR_CATALOG.length, 13);
+  assert.equal(FACE_MARK_CATALOG.length, 22);
+  assert.equal(BODY_MARK_CATALOG.length, 16);
+  assert.equal(OUTERWEAR_CATALOG.length, 14);
+  assert.equal(SLEEVE_CATALOG.length, 7);
+  assert.equal(WAIST_CATALOG.length, 10);
+  assert.equal(GLOVE_CATALOG.length, 9);
+  assert.equal(FOOTWEAR_CATALOG.length, 12);
+  assert.equal(EYEWEAR_CATALOG.length, 12);
+  assert.equal(EAR_JEWELRY_CATALOG.length, 9);
+  assert.equal(NECKWEAR_CATALOG.length, 10);
+  assert.equal(WRISTWEAR_CATALOG.length, 7);
+  assert.equal(BACK_GEAR_CATALOG.length, 12);
+
+  // Strict clamping, dedup, max-3 bodyMarks, and filtering of 'none'
+  const raw = {
+    version: 1,
+    chassis: 'humanoid',
+    head: {
+      eyebrowStyle: 'slit_notched',
+      pupilStyle: 'ring_cyber',
+      eyelashStyle: 'winged_liner',
+      mouthStyle: 'fangs_vampire',
+      faceMark: 'brow_slash_scar',
+      secondaryFaceMark: 'freckles',
+      blushIntensity: 9.5,
+    },
+    faceMorph: {
+      jawWidth: 99,
+      chinLength: -5,
+      cheekboneWidth: 5,
+      eyeSize: 0.1,
+      eyeSpacing: 4,
+      eyeTilt: 2,
+      browHeight: -9,
+      browThickness: 99,
+      noseScale: 0.01,
+      mouthWidth: 8,
+      earScale: 9,
+      neckLength: 0.1,
+    },
+    bodyMarks: [
+      'none',
+      'dragon_coil_tattoo',
+      'dragon_coil_tattoo',
+      'cyber_circuit_veins',
+      'battle_scars_chest',
+      'henna_mehndi_hands',
+    ],
+    outfit: {
+      outerwear: 'leather_biker',
+      sleeveStyle: 'rolled_cuff',
+      waistStyle: 'utility_pouches',
+      gloves: 'fingerless_biker',
+      footwear: 'combat_boots',
+    },
+    accessories: {
+      eyewear: 'aviator_shades',
+      earJewelry: 'cyber_comms_earpiece',
+      neckwear: 'dog_tags',
+      wristwear: 'holo_wristpad',
+      backGear: 'crossed_katanas',
+    },
+    palette: {
+      primary: '#1e293b',
+      secondary: '#0f172a',
+      accent: '#22d3ee',
+      skin: '#d6a481',
+      hair: '#0f172a',
+      eye: '#22d3ee',
+      eyeSecondary: '#f59e0b',
+      lip: '#9d4e5a',
+      brow: '#111827',
+      markTint: '#38bdf8',
+      patternTint: '#22d3ee',
+    },
+  };
+  const norm = validateAndNormalizeDna(raw);
+  assert.ok(norm, 'Valid Wave 7 DNA must normalize cleanly');
+  assert.equal(norm.version, 1);
+  assert.equal(norm.head.blushIntensity, 1);
+
+  const fm = resolveFaceMorph(norm);
+  assert.equal(fm.jawWidth, 1.32);
+  assert.equal(fm.chinLength, 0.75);
+  assert.equal(fm.cheekboneWidth, 1.3);
+  assert.equal(fm.eyeSize, 0.75);
+  assert.equal(fm.eyeSpacing, 1.28);
+  assert.equal(fm.eyeTilt, 0.35);
+  assert.equal(fm.browHeight, -0.3);
+  assert.equal(fm.browThickness, 1.55);
+  assert.equal(fm.noseScale, 0.7);
+  assert.equal(fm.mouthWidth, 1.3);
+  assert.equal(fm.earScale, 1.4);
+  assert.equal(fm.neckLength, 0.75);
+
+  const bm = resolveBodyMarks(norm);
+  assert.deepEqual(bm, ['dragon_coil_tattoo', 'cyber_circuit_veins', 'battle_scars_chest']);
+  const acc = resolveAccessories(norm);
+  assert.equal(acc.eyewear, 'aviator_shades');
+  assert.equal(acc.backGear, 'crossed_katanas');
+  assert.equal(norm.palette.eyeSecondary, '#f59e0b');
+  assert.equal(norm.outfit.gloves, 'fingerless_biker');
+  assert.equal(norm.outfit.footwear, 'combat_boots');
+
+  // Backward compat: all 192 legacy presets validate cleanly & retain version 1
+  for (const preset of SPRITE_WORKSHOP_PRESETS) {
+    const legacy = validateAndNormalizeDna(preset.dna);
+    assert.ok(legacy, `Preset ${preset.id} failed validation`);
+    assert.equal(legacy.version, 1);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Test 63 (Wave 7 · Upgrade 40): Granular Canvas 2D Renderer Zero-NaN & Zero-Random Audit
+// ---------------------------------------------------------------------------
+test('63. Wave 7 Upgrade 40: Granular Canvas 2D layers render every Wave 7 catalog, 10 expressions & 6 visemes with 0 NaNs and 0 Math.random()', () => {
+  const layerSrc = fs
+    .readFileSync(path.join(process.cwd(), 'src/studio/granularCharacterLayers.ts'), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/\/\/.*$/gm, '');
+  assert.equal(/\bMath\.random\s*\(/.test(layerSrc), false, 'granularCharacterLayers.ts must never call Math.random()');
+  assert.equal(/createElement\s*\(\s*['"]canvas['"]/.test(layerSrc), false, 'granularCharacterLayers.ts must never allocate canvases');
+
+  const dnaSrc = fs
+    .readFileSync(path.join(process.cwd(), 'src/studio/characterDna.ts'), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/\/\/.*$/gm, '');
+  assert.equal(/\bMath\.random\s*\(/.test(dnaSrc), false, 'characterDna.ts must never call Math.random()');
+
+  const mock = createAuditedMockCanvas2D();
+  const baseDna = createBaseDna('humanoid');
+  const maxLen = Math.max(
+    HAIR_STYLE_CATALOG.length,
+    FACE_MARK_CATALOG.length,
+    BODY_MARK_CATALOG.length,
+    OUTERWEAR_CATALOG.length,
+    EYEWEAR_CATALOG.length,
+    BACK_GEAR_CATALOG.length
+  );
+
+  for (let i = 0; i < maxLen; i++) {
+    const dna = {
+      ...baseDna,
+      head: {
+        ...baseDna.head,
+        eyebrowStyle: EYEBROW_STYLE_CATALOG[i % EYEBROW_STYLE_CATALOG.length].id,
+        pupilStyle: PUPIL_STYLE_CATALOG[i % PUPIL_STYLE_CATALOG.length].id,
+        eyelashStyle: EYELASH_STYLE_CATALOG[i % EYELASH_STYLE_CATALOG.length].id,
+        mouthStyle: MOUTH_STYLE_CATALOG[i % MOUTH_STYLE_CATALOG.length].id,
+        hairStyle: HAIR_STYLE_CATALOG[i % HAIR_STYLE_CATALOG.length].id,
+        facialHair: FACIAL_HAIR_CATALOG[i % FACIAL_HAIR_CATALOG.length].id,
+        faceMark: FACE_MARK_CATALOG[i % FACE_MARK_CATALOG.length].id,
+        secondaryFaceMark: FACE_MARK_CATALOG[(i + 5) % FACE_MARK_CATALOG.length].id,
+        blushIntensity: (i % 4) * 0.25,
+      },
+      faceMorph: {
+        jawWidth: 0.85 + (i % 5) * 0.08,
+        chinLength: 0.85 + (i % 4) * 0.1,
+        cheekboneWidth: 0.9 + (i % 3) * 0.1,
+        eyeSize: 0.85 + (i % 4) * 0.12,
+        eyeSpacing: 0.85 + (i % 4) * 0.1,
+        eyeTilt: -0.2 + (i % 5) * 0.1,
+        browHeight: -0.15 + (i % 4) * 0.1,
+        browThickness: 0.7 + (i % 4) * 0.2,
+        noseScale: 0.8 + (i % 4) * 0.15,
+        mouthWidth: 0.85 + (i % 4) * 0.12,
+        earScale: 0.8 + (i % 4) * 0.15,
+        neckLength: 0.85 + (i % 4) * 0.1,
+      },
+      bodyMarks: [
+        BODY_MARK_CATALOG[(i % (BODY_MARK_CATALOG.length - 1)) + 1].id,
+        BODY_MARK_CATALOG[((i + 3) % (BODY_MARK_CATALOG.length - 1)) + 1].id,
+      ],
+      outfit: {
+        ...baseDna.outfit,
+        outerwear: OUTERWEAR_CATALOG[i % OUTERWEAR_CATALOG.length].id,
+        sleeveStyle: SLEEVE_CATALOG[i % SLEEVE_CATALOG.length].id,
+        waistStyle: WAIST_CATALOG[i % WAIST_CATALOG.length].id,
+        gloves: GLOVE_CATALOG[i % GLOVE_CATALOG.length].id,
+        footwear: FOOTWEAR_CATALOG[i % FOOTWEAR_CATALOG.length].id,
+      },
+      accessories: {
+        eyewear: EYEWEAR_CATALOG[i % EYEWEAR_CATALOG.length].id,
+        earJewelry: EAR_JEWELRY_CATALOG[i % EAR_JEWELRY_CATALOG.length].id,
+        neckwear: NECKWEAR_CATALOG[i % NECKWEAR_CATALOG.length].id,
+        wristwear: WRISTWEAR_CATALOG[i % WRISTWEAR_CATALOG.length].id,
+        backGear: BACK_GEAR_CATALOG[i % BACK_GEAR_CATALOG.length].id,
+      },
+      palette: {
+        ...baseDna.palette,
+        eyeSecondary: i % 2 === 0 ? '#f59e0b' : undefined,
+        lip: '#b85c68',
+        brow: '#1e1b2e',
+        markTint: '#38bdf8',
+      },
+    };
+    const member = syncMemberWithDna(
+      { id: `w7_${i}`, name: `W7 ${i}`, archetype: 'detective', primaryColor: '#334155', accentColor: '#f2c85b' },
+      dna
+    );
+    const expr = EXPRESSION_CATALOG[i % EXPRESSION_CATALOG.length].id;
+    const viseme = i % 6;
+
+    drawModularEntityFullBody(
+      mock.ctx,
+      member,
+      dna,
+      320,
+      300,
+      1,
+      'stand',
+      expr,
+      i % 2 === 0 ? 'right' : 'left',
+      viseme,
+      viseme > 0 ? 0.7 : 0,
+      i * 0.2,
+      0.5,
+      undefined,
+      'chiaroscuro'
+    );
+    drawModularEntityCloseUp(mock.ctx, member, dna, expr, viseme, viseme > 0 ? 0.7 : 0, 'right', i * 0.2);
+  }
+
+  // Also explicitly sweep all 10 expressions x all 6 visemes on one granular face
+  const exprDna = {
+    ...baseDna,
+    head: {
+      ...baseDna.head,
+      eyebrowStyle: 'high_arched' as const,
+      pupilStyle: 'star_sparkle' as const,
+      eyelashStyle: 'winged_liner' as const,
+      mouthStyle: 'fangs_vampire' as const,
+    },
+    palette: { ...baseDna.palette, eyeSecondary: '#22d3ee', lip: '#9f1239' },
+  };
+  const exprMember = syncMemberWithDna(
+    { id: 'expr_sweep', name: 'Sweep', archetype: 'king', primaryColor: '#1e293b', accentColor: '#f2c85b' },
+    exprDna
+  );
+  for (const ex of EXPRESSION_CATALOG) {
+    for (let v = 0; v < 6; v++) {
+      drawModularEntityCloseUp(mock.ctx, exprMember, exprDna, ex.id, v, v > 0 ? 0.65 : 0, 'left', 1.2);
+    }
+  }
+
+  assert.equal(mock.getNanCount(), 0, `Granular Wave 7 renderer produced ${mock.getNanCount()} NaN coordinates`);
+});
+
+// ---------------------------------------------------------------------------
+// Test 64 (Wave 7 · Upgrade 39): NLP Trait Parser & Focused Deterministic Sub-Randomizers
+// ---------------------------------------------------------------------------
+test('64. Wave 7 Upgrade 39: parseNaturalLanguageDnaTraits & randomizeDnaFace/Outfit/Accessories are deterministic and preserve untouched sections', () => {
+  const parsed = parseNaturalLanguageDnaTraits(
+    'aviator shades, leather biker jacket, crossed katanas on back, dragon tattoo, combat boots, vampire fangs, hoop earrings, dog tags'
+  );
+  assert.equal(parsed.accessories?.eyewear, 'aviator_shades');
+  assert.equal(parsed.outfit.outerwear, 'leather_biker');
+  assert.equal(parsed.accessories?.backGear, 'crossed_katanas');
+  assert.ok(parsed.bodyMarks?.includes('dragon_coil_tattoo'));
+  assert.equal(parsed.outfit.footwear, 'combat_boots');
+  assert.equal(parsed.head.mouthStyle, 'fangs_vampire');
+  assert.equal(parsed.accessories?.earJewelry, 'hoop_earrings');
+  assert.equal(parsed.accessories?.neckwear, 'dog_tags');
+
+  const seedDna = hydrateArchetypeToDna({ id: 'det', name: 'Det', archetype: 'detective' }, 'w7_seed');
+
+  const faceA = randomizeDnaFace(seedDna, 42);
+  const faceB = randomizeDnaFace(seedDna, 42);
+  assert.deepEqual(faceA, faceB, 'randomizeDnaFace must be deterministic');
+  assert.deepEqual(faceA.outfit, seedDna.outfit, 'randomizeDnaFace must preserve outfit');
+  assert.deepEqual(faceA.accessories, seedDna.accessories, 'randomizeDnaFace must preserve accessories');
+
+  const outfitA = randomizeDnaOutfit(seedDna, 99);
+  const outfitB = randomizeDnaOutfit(seedDna, 99);
+  assert.deepEqual(outfitA, outfitB, 'randomizeDnaOutfit must be deterministic');
+  assert.deepEqual(outfitA.head, seedDna.head, 'randomizeDnaOutfit must preserve head');
+
+  const accA = randomizeDnaAccessories(seedDna, 77);
+  const accB = randomizeDnaAccessories(seedDna, 77);
+  assert.deepEqual(accA, accB, 'randomizeDnaAccessories must be deterministic');
+  assert.deepEqual(accA.head, seedDna.head, 'randomizeDnaAccessories must preserve head');
+  assert.deepEqual(accA.outfit, seedDna.outfit, 'randomizeDnaAccessories must preserve outfit');
+});
+
+// ---------------------------------------------------------------------------
+// Test 65 (Wave 7 · Upgrade 39): Silhouette Distance Differentiates Wave 7 Traits
+// ---------------------------------------------------------------------------
+test('65. Wave 7 Upgrade 39: computeDnaDistance distinguishes eyewear, outerwear, backGear, bodyMarks & faceMorphs', () => {
+  const base = createBaseDna('humanoid');
+  assert.equal(computeDnaDistance(base, base), 0, 'Identical DNA must have distance 0');
+
+  const customized = {
+    ...base,
+    faceMorph: { jawWidth: 1.25, eyeSize: 1.3, browHeight: 0.25 },
+    bodyMarks: ['dragon_coil_tattoo' as const, 'cyber_circuit_veins' as const],
+    outfit: { ...base.outfit, outerwear: 'leather_biker' as const, footwear: 'combat_boots' as const },
+    accessories: {
+      eyewear: 'aviator_shades' as const,
+      earJewelry: 'hoop_earrings' as const,
+      neckwear: 'dog_tags' as const,
+      wristwear: 'holo_wristpad' as const,
+      backGear: 'crossed_katanas' as const,
+    },
+  };
+  const dist = computeDnaDistance(base, customized);
+  assert.ok(dist > 0.15, `Expected meaningful Wave 7 silhouette distance > 0.15, got ${dist}`);
+});
+
+// ---------------------------------------------------------------------------
+// Test 66 (Wave 7): Director SKILL.md & BM25 Search Index Integration
+// ---------------------------------------------------------------------------
+test('66. Wave 7: Director SKILL.md documents all granular DNA catalogs & BM25 search finds Wave 7 parts', () => {
+  const fullMd = buildStagecraftDirectorSkillMd();
+  for (const token of [
+    'Wave 7 Sims-Grade Face & Hair DNA',
+    'Wave 7 Combinable Marks & Ink',
+    'Wave 7 Layered Clothing',
+    'Wave 7 5-Slot Accessories',
+    'aviator_shades',
+    'leather_biker',
+    'crossed_katanas',
+    'dragon_coil_tattoo',
+    'fangs_vampire',
+  ]) {
+    assert.ok(fullMd.includes(token), `Expected Director SKILL.md to include "${token}"`);
+  }
+
+  const queries: Array<[string, string]> = [
+    ['aviator shades', 'eyewear:aviator_shades'],
+    ['leather biker jacket', 'outerwear:leather_biker'],
+    ['crossed katanas', 'back_gear:crossed_katanas'],
+    ['vampire fangs', 'mouth:fangs_vampire'],
+  ];
+  for (const [q, expectedId] of queries) {
+    const hits = searchStudioCatalog(q, { kinds: ['dna_part'], limit: 10 });
+    assert.ok(
+      hits.some((h) => h.id === expectedId),
+      `Expected BM25 query "${q}" to return ${expectedId}, got: ${hits.map((h) => h.id).join(', ')}`
+    );
+  }
 });
 
 // ---------------------------------------------------------------------------

@@ -31,34 +31,60 @@ import {
 } from './types';
 import {
   AURA_STYLE_CATALOG,
+  BACK_GEAR_CATALOG,
+  BODY_MARK_CATALOG,
   BOTTOM_STYLE_CATALOG,
+  BodyMarkId,
   CAPE_CATALOG,
   CHASSIS_CATALOG,
-  CharacterDNA,
-  CharacterSilhouetteFingerprint,
   COLLAR_CATALOG,
   CURATED_DNA_PALETTES,
+  CharacterAccessoriesSpec,
+  CharacterDNA,
+  CharacterFaceMorph,
+  CharacterSilhouetteFingerprint,
+  DEFAULT_ACCESSORIES,
+  DEFAULT_FACE_MORPH,
+  EAR_JEWELRY_CATALOG,
   EAR_STYLE_CATALOG,
-  EntityChassisId,
+  EYEBROW_STYLE_CATALOG,
+  EYELASH_STYLE_CATALOG,
+  EYEWEAR_CATALOG,
   EYE_STYLE_CATALOG,
+  EntityChassisId,
   FACE_MARK_CATALOG,
   FACIAL_HAIR_CATALOG,
+  FOOTWEAR_CATALOG,
   GAIT_CATALOG,
+  GLOVE_CATALOG,
   HAIR_STYLE_CATALOG,
-  HEAD_SHAPE_CATALOG,
   HEADWEAR_CATALOG,
+  HEAD_SHAPE_CATALOG,
   HORN_STYLE_CATALOG,
+  MOUTH_STYLE_CATALOG,
+  NECKWEAR_CATALOG,
   NOSE_STYLE_CATALOG,
+  OUTERWEAR_CATALOG,
+  PUPIL_STYLE_CATALOG,
+  SLEEVE_CATALOG,
   SURFACE_PATTERN_CATALOG,
   TAIL_STYLE_CATALOG,
   TOP_STYLE_CATALOG,
+  WAIST_CATALOG,
   WING_STYLE_CATALOG,
+  WRISTWEAR_CATALOG,
   computeDnaFingerprint,
   createBaseDna,
   evaluateMemberUniqueness,
   hydrateArchetypeToDna,
   mutateDnaForUniqueness,
   randomizeCharacterDna,
+  randomizeDnaAccessories,
+  randomizeDnaFace,
+  randomizeDnaOutfit,
+  resolveAccessories,
+  resolveBodyMarks,
+  resolveFaceMorph,
   syncMemberWithDna,
   validateAndNormalizeDna,
 } from './characterDna';
@@ -80,8 +106,16 @@ import {
 } from './spriteWorkshopPresets';
 import { AssetThumb } from './AssetThumb';
 
-type WorkshopTab = 'presets' | 'body' | 'face' | 'hair' | 'outfit' | 'traits';
-type PreviewView = 'full' | 'closeup' | 'split';
+type WorkshopTab =
+  | 'presets'
+  | 'body'
+  | 'face'
+  | 'hair'
+  | 'marks'
+  | 'clothes'
+  | 'accessories'
+  | 'mythic';
+type PreviewView = 'auto' | 'full' | 'closeup' | 'split';
 
 interface EntityWorkshopModalProps {
   member: CastMember;
@@ -206,6 +240,42 @@ const MORPH_SLIDERS: Array<{
   },
 ];
 
+const FACE_MORPH_SLIDERS: Array<{
+  key: keyof CharacterFaceMorph;
+  label: string;
+  min: number;
+  max: number;
+  step: number;
+  format: (v: number) => string;
+}> = [
+  { key: 'jawWidth', label: 'Jaw Width', min: 0.72, max: 1.32, step: 0.02, format: (v) => `${v.toFixed(2)}×` },
+  { key: 'chinLength', label: 'Chin Length', min: 0.75, max: 1.3, step: 0.02, format: (v) => `${v.toFixed(2)}×` },
+  { key: 'cheekboneWidth', label: 'Cheekbones', min: 0.75, max: 1.3, step: 0.02, format: (v) => `${v.toFixed(2)}×` },
+  { key: 'eyeSize', label: 'Eye Size', min: 0.75, max: 1.35, step: 0.02, format: (v) => `${v.toFixed(2)}×` },
+  { key: 'eyeSpacing', label: 'Eye Spacing', min: 0.78, max: 1.28, step: 0.02, format: (v) => `${v.toFixed(2)}×` },
+  {
+    key: 'eyeTilt',
+    label: 'Eye Tilt',
+    min: -0.35,
+    max: 0.35,
+    step: 0.02,
+    format: (v) => (v === 0 ? '0.00' : `${v > 0 ? '+' : ''}${v.toFixed(2)}`),
+  },
+  {
+    key: 'browHeight',
+    label: 'Brow Height',
+    min: -0.3,
+    max: 0.3,
+    step: 0.02,
+    format: (v) => (v === 0 ? '0.00' : `${v > 0 ? '+' : ''}${v.toFixed(2)}`),
+  },
+  { key: 'browThickness', label: 'Brow Thickness', min: 0.65, max: 1.55, step: 0.05, format: (v) => `${v.toFixed(2)}×` },
+  { key: 'noseScale', label: 'Nose Scale', min: 0.7, max: 1.35, step: 0.02, format: (v) => `${v.toFixed(2)}×` },
+  { key: 'mouthWidth', label: 'Mouth Width', min: 0.75, max: 1.3, step: 0.02, format: (v) => `${v.toFixed(2)}×` },
+  { key: 'earScale', label: 'Ear Scale', min: 0.7, max: 1.4, step: 0.05, format: (v) => `${v.toFixed(2)}×` },
+  { key: 'neckLength', label: 'Neck Length', min: 0.75, max: 1.3, step: 0.02, format: (v) => `${v.toFixed(2)}×` },
+];
+
 export const EntityWorkshopModal: React.FC<EntityWorkshopModalProps> = ({
   member,
   isNew = false,
@@ -224,8 +294,9 @@ export const EntityWorkshopModal: React.FC<EntityWorkshopModalProps> = ({
   const [dna, setDna] = useState<CharacterDNA>(initialDna);
   const [activeTab, setActiveTab] = useState<WorkshopTab>('body');
 
-  // Stage preview controls
-  const [viewMode, setViewMode] = useState<PreviewView>('full');
+  // Stage preview controls ('auto' smart-zooms into Face Close-Up on Face/Hair/Marks tabs)
+  const [viewMode, setViewMode] = useState<PreviewView>('auto');
+  const randSeedRef = useRef(1);
   const [pose, setPose] = useState<PoseId>('stand');
   const [expression, setExpression] = useState<ExpressionId>('warm');
   const [facing, setFacing] = useState<'left' | 'right'>('right');
@@ -330,11 +401,18 @@ export const EntityWorkshopModal: React.FC<EntityWorkshopModalProps> = ({
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
+  const effectiveViewMode: 'full' | 'closeup' | 'split' = useMemo(() => {
+    if (viewMode !== 'auto') return viewMode;
+    return activeTab === 'face' || activeTab === 'hair' || activeTab === 'marks'
+      ? 'closeup'
+      : 'full';
+  }, [viewMode, activeTab]);
+
   // Live 60fps animated Workshop stage canvas
   const previewRef = useRef({
     draftMember,
     dna,
-    viewMode,
+    viewMode: effectiveViewMode,
     pose,
     expression,
     facing,
@@ -347,7 +425,7 @@ export const EntityWorkshopModal: React.FC<EntityWorkshopModalProps> = ({
     previewRef.current = {
       draftMember,
       dna,
-      viewMode,
+      viewMode: effectiveViewMode,
       pose,
       expression,
       facing,
@@ -355,7 +433,7 @@ export const EntityWorkshopModal: React.FC<EntityWorkshopModalProps> = ({
       renderStyle,
       mood,
     };
-  }, [draftMember, dna, viewMode, pose, expression, facing, isTalking, renderStyle, mood]);
+  }, [draftMember, dna, effectiveViewMode, pose, expression, facing, isTalking, renderStyle, mood]);
 
   useEffect(() => {
     let rafId = 0;
@@ -513,10 +591,72 @@ export const EntityWorkshopModal: React.FC<EntityWorkshopModalProps> = ({
     setDna((prev) => ({ ...prev, palette: { ...prev.palette, ...patch } }));
   };
 
+  const patchFaceMorph = (patch: Partial<CharacterFaceMorph>) => {
+    setDna((prev) => ({
+      ...prev,
+      faceMorph: { ...resolveFaceMorph(prev), ...patch },
+    }));
+  };
+
+  const resetFaceMorph = () => {
+    setDna((prev) => ({
+      ...prev,
+      faceMorph: { ...DEFAULT_FACE_MORPH },
+    }));
+    flash('Reset all 12 face sculpt morphs to neutral.');
+  };
+
+  const patchAccessories = (patch: Partial<CharacterAccessoriesSpec>) => {
+    setDna((prev) => ({
+      ...prev,
+      accessories: { ...resolveAccessories(prev), ...patch },
+    }));
+  };
+
+  const toggleBodyMark = (markId: BodyMarkId) => {
+    if (markId === 'none') {
+      setDna((prev) => ({ ...prev, bodyMarks: [] }));
+      return;
+    }
+    setDna((prev) => {
+      const current = resolveBodyMarks(prev);
+      if (current.includes(markId)) {
+        return { ...prev, bodyMarks: current.filter((m) => m !== markId) };
+      }
+      if (current.length >= 3) {
+        return { ...prev, bodyMarks: [...current.slice(1), markId] };
+      }
+      return { ...prev, bodyMarks: [...current, markId] };
+    });
+  };
+
+  const nextDeterministicSeed = () => {
+    randSeedRef.current += 1;
+    return randSeedRef.current * 7919 + 1337;
+  };
+
   const handleRandomize = () => {
-    const next = randomizeCharacterDna(dna.chassis, Date.now());
+    const next = randomizeCharacterDna(dna.chassis, nextDeterministicSeed());
     setDna(next);
     flash(`Generated fresh ${next.chassis} silhouette.`);
+  };
+
+  const handleRandomizeFace = () => {
+    const next = randomizeDnaFace(dna, nextDeterministicSeed());
+    setDna(next);
+    flash('Remixed eyes, brows, mouth, face sculpt & facial hair.');
+  };
+
+  const handleRandomizeOutfit = () => {
+    const next = randomizeDnaOutfit(dna, nextDeterministicSeed());
+    setDna(next);
+    flash('Remixed layered outfit, outerwear, sleeves, belt, gloves & footwear.');
+  };
+
+  const handleRandomizeAccessories = () => {
+    const next = randomizeDnaAccessories(dna, nextDeterministicSeed());
+    setDna(next);
+    flash('Remixed eyewear, jewelry, neckwear, wristwear & back gear.');
   };
 
   const handleMutateLook = () => {
@@ -724,8 +864,9 @@ export const EntityWorkshopModal: React.FC<EntityWorkshopModalProps> = ({
                 <div className="inline-flex rounded-md bg-[#090c16] border border-white/10 p-0.5">
                   {(
                     [
+                      ['auto', 'Auto'],
                       ['full', 'Full Body'],
-                      ['closeup', 'Close-Up'],
+                      ['closeup', 'Face'],
                       ['split', 'Split'],
                     ] as const
                   ).map(([id, label]) => (
@@ -852,23 +993,25 @@ export const EntityWorkshopModal: React.FC<EntityWorkshopModalProps> = ({
 
           {/* RIGHT MODULAR BUILDER PANE */}
           <div className="lg:w-[46%] flex flex-col min-h-0 bg-[#0e1222]">
-            {/* 6 Category Tabs */}
+            {/* 8 Sims-Grade CAS Category Tabs */}
             <div className="px-3 py-2 border-b border-white/10 bg-[#0b0e19] flex items-center gap-1 shrink-0 overflow-x-auto">
               {(
                 [
                   ['presets', `Presets (${SPRITE_WORKSHOP_PRESETS.length})`],
                   ['body', 'Body'],
-                  ['face', 'Face'],
-                  ['hair', 'Hair & Head'],
-                  ['outfit', 'Outfit'],
-                  ['traits', 'Traits & Palette'],
+                  ['face', 'Face & Eyes'],
+                  ['hair', 'Hair'],
+                  ['marks', 'Marks & Ink'],
+                  ['clothes', 'Clothes'],
+                  ['accessories', 'Accessories'],
+                  ['mythic', 'Mythic & Colors'],
                 ] as const
               ).map(([id, label]) => (
                 <button
                   key={id}
                   type="button"
                   onClick={() => setActiveTab(id)}
-                  className={`px-3 h-8 rounded-md text-xs font-semibold whitespace-nowrap cursor-pointer ${
+                  className={`px-2.5 h-8 rounded-md text-[11px] font-semibold whitespace-nowrap cursor-pointer ${
                     activeTab === id
                       ? 'bg-[#1c2440] text-[#f2c85b]'
                       : 'text-[#8e97b0] hover:text-white'
@@ -877,6 +1020,36 @@ export const EntityWorkshopModal: React.FC<EntityWorkshopModalProps> = ({
                   {label}
                 </button>
               ))}
+            </div>
+
+            {/* Focused Sub-Randomizer Utility Strip */}
+            <div className="px-3 py-1.5 border-b border-white/8 bg-[#0c101e] flex items-center justify-between gap-2 shrink-0">
+              <span className="text-[10px] text-[#7f89a6] truncate">
+                Quick Remix (preserves other sections)
+              </span>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleRandomizeFace}
+                  className="h-6 px-2 rounded bg-[#141a2f] hover:bg-[#1e2745] border border-white/10 text-[10px] font-semibold text-[#d4dced] cursor-pointer"
+                >
+                  Rnd Face
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRandomizeOutfit}
+                  className="h-6 px-2 rounded bg-[#141a2f] hover:bg-[#1e2745] border border-white/10 text-[10px] font-semibold text-[#d4dced] cursor-pointer"
+                >
+                  Rnd Outfit
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRandomizeAccessories}
+                  className="h-6 px-2 rounded bg-[#141a2f] hover:bg-[#1e2745] border border-white/10 text-[10px] font-semibold text-[#d4dced] cursor-pointer"
+                >
+                  Rnd Gear
+                </button>
+              </div>
             </div>
 
             {/* Scrollable Editor Content */}
@@ -1124,113 +1297,240 @@ export const EntityWorkshopModal: React.FC<EntityWorkshopModalProps> = ({
                 </>
               )}
 
-              {/* TAB 2: FACE (HEAD SHAPE, EYES, NOSE, EARS, FACE MARKS) */}
-              {activeTab === 'face' && (
-                <>
-                  <section className="space-y-2">
-                    <div className="text-xs font-semibold text-white">Head Silhouette</div>
-                    <div className="grid grid-cols-3 gap-2">
-                      {HEAD_SHAPE_CATALOG.map((h) => (
-                        <PartThumbTile
-                          key={h.id}
-                          category="headShape"
-                          optionId={h.id}
-                          label={h.label}
-                          dna={dna}
-                          active={dna.head.headShape === h.id}
-                          onSelect={() => patchHead({ headShape: h.id })}
-                        />
-                      ))}
-                    </div>
-                  </section>
+              {/* TAB 2: FACE & EYES (HEAD SHAPE, EYES, PUPILS, LASHES, BROWS, NOSE, MOUTH, EARS, 12 FACE SCULPT MORPHS) */}
+              {activeTab === 'face' && (() => {
+                const fm = resolveFaceMorph(dna);
+                return (
+                  <>
+                    <section className="space-y-2">
+                      <div className="text-xs font-semibold text-white">Head Silhouette</div>
+                      <div className="grid grid-cols-3 gap-2">
+                        {HEAD_SHAPE_CATALOG.map((h) => (
+                          <PartThumbTile
+                            key={h.id}
+                            category="headShape"
+                            optionId={h.id}
+                            label={h.label}
+                            dna={dna}
+                            active={dna.head.headShape === h.id}
+                            onSelect={() => patchHead({ headShape: h.id })}
+                          />
+                        ))}
+                      </div>
+                    </section>
 
-                  <section className="space-y-2 pt-3 border-t border-white/10">
-                    <div className="text-xs font-semibold text-white">Eye Geometry</div>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-                      {EYE_STYLE_CATALOG.map((item) => {
-                        const active = dna.head.eyeStyle === item.id;
-                        return (
-                          <button
+                    <section className="space-y-2 pt-3 border-t border-white/10">
+                      <div className="text-xs font-semibold text-white">Eye Geometry</div>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                        {EYE_STYLE_CATALOG.map((item) => {
+                          const active = dna.head.eyeStyle === item.id;
+                          return (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => patchHead({ eyeStyle: item.id })}
+                              className={`h-8 px-2 rounded-md border text-[11px] font-semibold truncate cursor-pointer ${
+                                active
+                                  ? 'bg-[#1c2440] border-[#f2c85b] text-[#f2c85b]'
+                                  : 'bg-[#13182b] border-white/10 text-[#c5cde0] hover:border-white/25'
+                              }`}
+                            >
+                              {item.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </section>
+
+                    <section className="space-y-2 pt-3 border-t border-white/10">
+                      <div className="text-xs font-semibold text-white">
+                        Pupil / Iris Detail ({PUPIL_STYLE_CATALOG.length})
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                        {PUPIL_STYLE_CATALOG.map((item) => {
+                          const active = (dna.head.pupilStyle ?? 'round') === item.id;
+                          return (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => patchHead({ pupilStyle: item.id })}
+                              className={`h-8 px-2 rounded-md border text-[11px] font-semibold truncate cursor-pointer ${
+                                active
+                                  ? 'bg-[#1c2440] border-[#f2c85b] text-[#f2c85b]'
+                                  : 'bg-[#13182b] border-white/10 text-[#c5cde0] hover:border-white/25'
+                              }`}
+                            >
+                              {item.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </section>
+
+                    <section className="space-y-2 pt-3 border-t border-white/10">
+                      <div className="text-xs font-semibold text-white">
+                        Eyelashes &amp; Eyeliner ({EYELASH_STYLE_CATALOG.length})
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
+                        {EYELASH_STYLE_CATALOG.map((item) => {
+                          const active = (dna.head.eyelashStyle ?? 'none') === item.id;
+                          return (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => patchHead({ eyelashStyle: item.id })}
+                              className={`h-8 px-2 rounded-md border text-[11px] font-semibold truncate cursor-pointer ${
+                                active
+                                  ? 'bg-[#1c2440] border-[#f2c85b] text-[#f2c85b]'
+                                  : 'bg-[#13182b] border-white/10 text-[#c5cde0] hover:border-white/25'
+                              }`}
+                            >
+                              {item.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </section>
+
+                    <section className="space-y-2 pt-3 border-t border-white/10">
+                      <div className="text-xs font-semibold text-white">
+                        Eyebrows ({EYEBROW_STYLE_CATALOG.length})
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
+                        {EYEBROW_STYLE_CATALOG.map((item) => {
+                          const active = (dna.head.eyebrowStyle ?? 'natural_arch') === item.id;
+                          return (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => patchHead({ eyebrowStyle: item.id })}
+                              className={`h-8 px-2 rounded-md border text-[11px] font-semibold truncate cursor-pointer ${
+                                active
+                                  ? 'bg-[#1c2440] border-[#f2c85b] text-[#f2c85b]'
+                                  : 'bg-[#13182b] border-white/10 text-[#c5cde0] hover:border-white/25'
+                              }`}
+                            >
+                              {item.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </section>
+
+                    <section className="space-y-2 pt-3 border-t border-white/10">
+                      <div className="text-xs font-semibold text-white">Nose / Snout / Beak</div>
+                      <div className="grid grid-cols-3 gap-1.5">
+                        {NOSE_STYLE_CATALOG.map((item) => {
+                          const active = dna.head.noseStyle === item.id;
+                          return (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => patchHead({ noseStyle: item.id })}
+                              className={`h-8 px-2 rounded-md border text-[11px] font-semibold truncate cursor-pointer ${
+                                active
+                                  ? 'bg-[#1c2440] border-[#f2c85b] text-[#f2c85b]'
+                                  : 'bg-[#13182b] border-white/10 text-[#c5cde0] hover:border-white/25'
+                              }`}
+                            >
+                              {item.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </section>
+
+                    <section className="space-y-2 pt-3 border-t border-white/10">
+                      <div className="text-xs font-semibold text-white">
+                        Mouth &amp; Lips ({MOUTH_STYLE_CATALOG.length})
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                        {MOUTH_STYLE_CATALOG.map((item) => {
+                          const active = (dna.head.mouthStyle ?? 'classic') === item.id;
+                          return (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => patchHead({ mouthStyle: item.id })}
+                              className={`h-8 px-2 rounded-md border text-[11px] font-semibold truncate cursor-pointer ${
+                                active
+                                  ? 'bg-[#1c2440] border-[#f2c85b] text-[#f2c85b]'
+                                  : 'bg-[#13182b] border-white/10 text-[#c5cde0] hover:border-white/25'
+                              }`}
+                            >
+                              {item.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </section>
+
+                    <section className="space-y-2 pt-3 border-t border-white/10">
+                      <div className="text-xs font-semibold text-white">Ears</div>
+                      <div className="grid grid-cols-3 gap-2">
+                        {EAR_STYLE_CATALOG.map((item) => (
+                          <PartThumbTile
                             key={item.id}
-                            type="button"
-                            onClick={() => patchHead({ eyeStyle: item.id })}
-                            className={`h-8 px-2 rounded-md border text-[11px] font-semibold truncate cursor-pointer ${
-                              active
-                                ? 'bg-[#1c2440] border-[#f2c85b] text-[#f2c85b]'
-                                : 'bg-[#13182b] border-white/10 text-[#c5cde0] hover:border-white/25'
-                            }`}
-                          >
-                            {item.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </section>
+                            category="ears"
+                            optionId={item.id}
+                            label={item.label}
+                            dna={dna}
+                            active={dna.head.ears === item.id}
+                            onSelect={() => patchHead({ ears: item.id })}
+                          />
+                        ))}
+                      </div>
+                    </section>
 
-                  <section className="space-y-2 pt-3 border-t border-white/10">
-                    <div className="text-xs font-semibold text-white">Nose / Snout / Beak</div>
-                    <div className="grid grid-cols-3 gap-1.5">
-                      {NOSE_STYLE_CATALOG.map((item) => {
-                        const active = dna.head.noseStyle === item.id;
-                        return (
-                          <button
-                            key={item.id}
-                            type="button"
-                            onClick={() => patchHead({ noseStyle: item.id })}
-                            className={`h-8 px-2 rounded-md border text-[11px] font-semibold truncate cursor-pointer ${
-                              active
-                                ? 'bg-[#1c2440] border-[#f2c85b] text-[#f2c85b]'
-                                : 'bg-[#13182b] border-white/10 text-[#c5cde0] hover:border-white/25'
-                            }`}
-                          >
-                            {item.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </section>
-
-                  <section className="space-y-2 pt-3 border-t border-white/10">
-                    <div className="text-xs font-semibold text-white">Ears</div>
-                    <div className="grid grid-cols-3 gap-2">
-                      {EAR_STYLE_CATALOG.map((item) => (
-                        <PartThumbTile
-                          key={item.id}
-                          category="ears"
-                          optionId={item.id}
-                          label={item.label}
-                          dna={dna}
-                          active={dna.head.ears === item.id}
-                          onSelect={() => patchHead({ ears: item.id })}
-                        />
-                      ))}
-                    </div>
-                  </section>
-
-                  <section className="space-y-2 pt-3 border-t border-white/10">
-                    <div className="text-xs font-semibold text-white">Face Marks &amp; Paint</div>
-                    <div className="grid grid-cols-3 gap-2">
-                      {FACE_MARK_CATALOG.map((item) => (
-                        <PartThumbTile
-                          key={item.id}
-                          category="faceMark"
-                          optionId={item.id}
-                          label={item.label}
-                          dna={dna}
-                          active={dna.head.faceMark === item.id}
-                          onSelect={() => patchHead({ faceMark: item.id })}
-                        />
-                      ))}
-                    </div>
-                  </section>
-                </>
-              )}
+                    {/* 12 Sims-Grade Face Sculpt Sliders */}
+                    <section className="space-y-3 pt-3 border-t border-white/10">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-white">
+                          Sims Face Sculpt Morphs (12)
+                        </span>
+                        <button
+                          type="button"
+                          onClick={resetFaceMorph}
+                          className="text-[11px] text-[#9aa3bd] hover:text-white cursor-pointer"
+                        >
+                          Reset Face
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2.5">
+                        {FACE_MORPH_SLIDERS.map((s) => (
+                          <label key={s.key} className="block">
+                            <div className="flex items-center justify-between text-[11px] mb-0.5">
+                              <span className="text-[#9aa3bd]">{s.label}</span>
+                              <span className="font-mono-tabular text-white">
+                                {s.format(fm[s.key])}
+                              </span>
+                            </div>
+                            <input
+                              type="range"
+                              min={s.min}
+                              max={s.max}
+                              step={s.step}
+                              value={fm[s.key]}
+                              onChange={(e) =>
+                                patchFaceMorph({ [s.key]: Number(e.target.value) })
+                              }
+                              className="w-full accent-[#f2c85b] cursor-pointer"
+                            />
+                          </label>
+                        ))}
+                      </div>
+                    </section>
+                  </>
+                );
+              })()}
 
               {/* TAB 3: HAIR, FACIAL HAIR, HORNS & HEADWEAR */}
               {activeTab === 'hair' && (
                 <>
                   <section className="space-y-2">
-                    <div className="text-xs font-semibold text-white">Hair, Mane &amp; Crest</div>
+                    <div className="text-xs font-semibold text-white">
+                      Hair, Mane &amp; Crest ({HAIR_STYLE_CATALOG.length})
+                    </div>
                     <div className="grid grid-cols-3 gap-2">
                       {HAIR_STYLE_CATALOG.map((item) => (
                         <PartThumbTile
@@ -1248,7 +1548,7 @@ export const EntityWorkshopModal: React.FC<EntityWorkshopModalProps> = ({
 
                   <section className="space-y-2 pt-3 border-t border-white/10">
                     <div className="text-xs font-semibold text-white">
-                      Beard, Mustache &amp; Whiskers
+                      Beard, Mustache &amp; Whiskers ({FACIAL_HAIR_CATALOG.length})
                     </div>
                     <div className="grid grid-cols-3 gap-2">
                       {FACIAL_HAIR_CATALOG.map((item) => (
@@ -1283,7 +1583,9 @@ export const EntityWorkshopModal: React.FC<EntityWorkshopModalProps> = ({
                   </section>
 
                   <section className="space-y-2 pt-3 border-t border-white/10">
-                    <div className="text-xs font-semibold text-white">Crowns, Hats &amp; Headwear</div>
+                    <div className="text-xs font-semibold text-white">
+                      Crowns, Hats &amp; Headwear ({HEADWEAR_CATALOG.length})
+                    </div>
                     <div className="grid grid-cols-3 gap-2">
                       {HEADWEAR_CATALOG.map((item) => (
                         <PartThumbTile
@@ -1301,11 +1603,141 @@ export const EntityWorkshopModal: React.FC<EntityWorkshopModalProps> = ({
                 </>
               )}
 
-              {/* TAB 4: OUTFIT, COLLAR, CAPE & PROCEDURAL SURFACE PATTERN */}
-              {activeTab === 'outfit' && (
+              {/* TAB 4: MARKS & INK (PRIMARY + SECONDARY FACE MARKS, BLUSH, MULTI-SELECT BODY MARKS) */}
+              {activeTab === 'marks' && (() => {
+                const activeBodyMarks = resolveBodyMarks(dna);
+                const blush = dna.head.blushIntensity ?? 0;
+                return (
+                  <>
+                    <section className="space-y-2">
+                      <div className="text-xs font-semibold text-white">
+                        Primary Face Mark / Scar / Paint ({FACE_MARK_CATALOG.length})
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        {FACE_MARK_CATALOG.map((item) => (
+                          <PartThumbTile
+                            key={item.id}
+                            category="faceMark"
+                            optionId={item.id}
+                            label={item.label}
+                            dna={dna}
+                            active={dna.head.faceMark === item.id}
+                            onSelect={() => patchHead({ faceMark: item.id })}
+                          />
+                        ))}
+                      </div>
+                    </section>
+
+                    <section className="space-y-2 pt-3 border-t border-white/10">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-white">
+                          Secondary Combinable Face Mark
+                        </span>
+                        {(dna.head.secondaryFaceMark ?? 'none') !== 'none' && (
+                          <button
+                            type="button"
+                            onClick={() => patchHead({ secondaryFaceMark: 'none' })}
+                            className="text-[11px] text-[#9aa3bd] hover:text-white cursor-pointer"
+                          >
+                            Clear
+                          </button>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                        {FACE_MARK_CATALOG.map((item) => {
+                          const active = (dna.head.secondaryFaceMark ?? 'none') === item.id;
+                          return (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => patchHead({ secondaryFaceMark: item.id })}
+                              className={`h-8 px-2 rounded-md border text-[11px] font-semibold truncate cursor-pointer ${
+                                active
+                                  ? 'bg-[#1c2440] border-[#f2c85b] text-[#f2c85b]'
+                                  : 'bg-[#13182b] border-white/10 text-[#c5cde0] hover:border-white/25'
+                              }`}
+                            >
+                              {item.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </section>
+
+                    <section className="space-y-2 pt-3 border-t border-white/10">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-semibold text-white">Cheek Blush / Flush</span>
+                        <span className="font-mono-tabular text-[#f2c85b]">
+                          {Math.round(blush * 100)}%
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min={0}
+                        max={1}
+                        step={0.05}
+                        value={blush}
+                        onChange={(e) => patchHead({ blushIntensity: Number(e.target.value) })}
+                        className="w-full accent-[#f2c85b] cursor-pointer"
+                      />
+                    </section>
+
+                    <section className="space-y-2 pt-3 border-t border-white/10">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-xs font-semibold text-white">
+                            Body Tattoos, Scars &amp; Implants ({BODY_MARK_CATALOG.length - 1})
+                          </div>
+                          <div className="text-[10px] text-[#8e97b0]">
+                            Combine up to 3 active body markers simultaneously.
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-mono-tabular text-[#f2c85b]">
+                            {activeBodyMarks.length}/3
+                          </span>
+                          {activeBodyMarks.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => toggleBodyMark('none')}
+                              className="text-[11px] text-[#9aa3bd] hover:text-white cursor-pointer"
+                            >
+                              Clear
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                        {BODY_MARK_CATALOG.filter((m) => m.id !== 'none').map((item) => {
+                          const active = activeBodyMarks.includes(item.id);
+                          return (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => toggleBodyMark(item.id)}
+                              className={`h-8 px-2 rounded-md border text-[11px] font-semibold truncate cursor-pointer ${
+                                active
+                                  ? 'bg-[#1c2440] border-[#f2c85b] text-[#f2c85b]'
+                                  : 'bg-[#13182b] border-white/10 text-[#c5cde0] hover:border-white/25'
+                              }`}
+                            >
+                              {item.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </section>
+                  </>
+                );
+              })()}
+
+              {/* TAB 5: CLOTHES (UPPER, OUTERWEAR, SLEEVES, LOWER, WAIST, GLOVES, FOOTWEAR, COLLAR, CAPE, PATTERN) */}
+              {activeTab === 'clothes' && (
                 <>
                   <section className="space-y-2">
-                    <div className="text-xs font-semibold text-white">Upper Garment / Armor</div>
+                    <div className="text-xs font-semibold text-white">
+                      Upper Garment / Armor ({TOP_STYLE_CATALOG.length})
+                    </div>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
                       {TOP_STYLE_CATALOG.map((item) => {
                         const active = dna.outfit.topStyle === item.id;
@@ -1314,6 +1746,56 @@ export const EntityWorkshopModal: React.FC<EntityWorkshopModalProps> = ({
                             key={item.id}
                             type="button"
                             onClick={() => patchOutfit({ topStyle: item.id })}
+                            className={`h-8 px-2 rounded-md border text-[11px] font-semibold truncate cursor-pointer ${
+                              active
+                                ? 'bg-[#1c2440] border-[#f2c85b] text-[#f2c85b]'
+                                : 'bg-[#13182b] border-white/10 text-[#c5cde0] hover:border-white/25'
+                            }`}
+                          >
+                            {item.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </section>
+
+                  <section className="space-y-2 pt-3 border-t border-white/10">
+                    <div className="text-xs font-semibold text-white">
+                      Outerwear Layer ({OUTERWEAR_CATALOG.length})
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                      {OUTERWEAR_CATALOG.map((item) => {
+                        const active = (dna.outfit.outerwear ?? 'none') === item.id;
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => patchOutfit({ outerwear: item.id })}
+                            className={`h-8 px-2 rounded-md border text-[11px] font-semibold truncate cursor-pointer ${
+                              active
+                                ? 'bg-[#1c2440] border-[#f2c85b] text-[#f2c85b]'
+                                : 'bg-[#13182b] border-white/10 text-[#c5cde0] hover:border-white/25'
+                            }`}
+                          >
+                            {item.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </section>
+
+                  <section className="space-y-2 pt-3 border-t border-white/10">
+                    <div className="text-xs font-semibold text-white">
+                      Sleeve Cut ({SLEEVE_CATALOG.length})
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                      {SLEEVE_CATALOG.map((item) => {
+                        const active = (dna.outfit.sleeveStyle ?? 'auto') === item.id;
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => patchOutfit({ sleeveStyle: item.id })}
                             className={`h-8 px-2 rounded-md border text-[11px] font-semibold truncate cursor-pointer ${
                               active
                                 ? 'bg-[#1c2440] border-[#f2c85b] text-[#f2c85b]'
@@ -1337,6 +1819,81 @@ export const EntityWorkshopModal: React.FC<EntityWorkshopModalProps> = ({
                             key={item.id}
                             type="button"
                             onClick={() => patchOutfit({ bottomStyle: item.id })}
+                            className={`h-8 px-2 rounded-md border text-[11px] font-semibold truncate cursor-pointer ${
+                              active
+                                ? 'bg-[#1c2440] border-[#f2c85b] text-[#f2c85b]'
+                                : 'bg-[#13182b] border-white/10 text-[#c5cde0] hover:border-white/25'
+                            }`}
+                          >
+                            {item.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </section>
+
+                  <section className="space-y-2 pt-3 border-t border-white/10">
+                    <div className="text-xs font-semibold text-white">
+                      Waist, Belt &amp; Sash ({WAIST_CATALOG.length})
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                      {WAIST_CATALOG.map((item) => {
+                        const active = (dna.outfit.waistStyle ?? 'none') === item.id;
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => patchOutfit({ waistStyle: item.id })}
+                            className={`h-8 px-2 rounded-md border text-[11px] font-semibold truncate cursor-pointer ${
+                              active
+                                ? 'bg-[#1c2440] border-[#f2c85b] text-[#f2c85b]'
+                                : 'bg-[#13182b] border-white/10 text-[#c5cde0] hover:border-white/25'
+                            }`}
+                          >
+                            {item.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </section>
+
+                  <section className="space-y-2 pt-3 border-t border-white/10">
+                    <div className="text-xs font-semibold text-white">
+                      Gloves &amp; Handwear ({GLOVE_CATALOG.length})
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                      {GLOVE_CATALOG.map((item) => {
+                        const active = (dna.outfit.gloves ?? 'none') === item.id;
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => patchOutfit({ gloves: item.id })}
+                            className={`h-8 px-2 rounded-md border text-[11px] font-semibold truncate cursor-pointer ${
+                              active
+                                ? 'bg-[#1c2440] border-[#f2c85b] text-[#f2c85b]'
+                                : 'bg-[#13182b] border-white/10 text-[#c5cde0] hover:border-white/25'
+                            }`}
+                          >
+                            {item.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </section>
+
+                  <section className="space-y-2 pt-3 border-t border-white/10">
+                    <div className="text-xs font-semibold text-white">
+                      Footwear &amp; Boots ({FOOTWEAR_CATALOG.length})
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                      {FOOTWEAR_CATALOG.map((item) => {
+                        const active = (dna.outfit.footwear ?? 'auto') === item.id;
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => patchOutfit({ footwear: item.id })}
                             className={`h-8 px-2 rounded-md border text-[11px] font-semibold truncate cursor-pointer ${
                               active
                                 ? 'bg-[#1c2440] border-[#f2c85b] text-[#f2c85b]'
@@ -1398,7 +1955,7 @@ export const EntityWorkshopModal: React.FC<EntityWorkshopModalProps> = ({
 
                   <section className="space-y-2 pt-3 border-t border-white/10">
                     <div className="text-xs font-semibold text-white">
-                      Coat, Scales &amp; Textile Pattern
+                      Coat, Scales &amp; Textile Pattern ({SURFACE_PATTERN_CATALOG.length})
                     </div>
                     <div className="grid grid-cols-3 gap-2">
                       {SURFACE_PATTERN_CATALOG.map((item) => (
@@ -1417,8 +1974,162 @@ export const EntityWorkshopModal: React.FC<EntityWorkshopModalProps> = ({
                 </>
               )}
 
-              {/* TAB 5: APPENDAGES, PALETTE STUDIO & DNA JSON */}
-              {activeTab === 'traits' && (
+              {/* TAB 6: ACCESSORIES (5 INDEPENDENT SLOTS: EYEWEAR, EAR/FACE JEWELRY, NECKWEAR, WRISTWEAR, BACK GEAR) */}
+              {activeTab === 'accessories' && (() => {
+                const acc = resolveAccessories(dna);
+                return (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-xs font-semibold text-white">
+                          5 Independent Accessory Slots
+                        </div>
+                        <div className="text-[10px] text-[#8e97b0]">
+                          Layer eyewear, jewelry, neckwear, wristwear &amp; back gear freely.
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          patchAccessories({ ...DEFAULT_ACCESSORIES });
+                          flash('Cleared all 5 accessory slots.');
+                        }}
+                        className="text-[11px] text-[#9aa3bd] hover:text-white cursor-pointer"
+                      >
+                        Clear All
+                      </button>
+                    </div>
+
+                    <section className="space-y-2 pt-2 border-t border-white/10">
+                      <div className="text-xs font-semibold text-white">
+                        Eyewear &amp; Visors ({EYEWEAR_CATALOG.length})
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                        {EYEWEAR_CATALOG.map((item) => {
+                          const active = acc.eyewear === item.id;
+                          return (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => patchAccessories({ eyewear: item.id })}
+                              className={`h-8 px-2 rounded-md border text-[11px] font-semibold truncate cursor-pointer ${
+                                active
+                                  ? 'bg-[#1c2440] border-[#f2c85b] text-[#f2c85b]'
+                                  : 'bg-[#13182b] border-white/10 text-[#c5cde0] hover:border-white/25'
+                              }`}
+                            >
+                              {item.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </section>
+
+                    <section className="space-y-2 pt-3 border-t border-white/10">
+                      <div className="text-xs font-semibold text-white">
+                        Ear &amp; Face Jewelry ({EAR_JEWELRY_CATALOG.length})
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                        {EAR_JEWELRY_CATALOG.map((item) => {
+                          const active = acc.earJewelry === item.id;
+                          return (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => patchAccessories({ earJewelry: item.id })}
+                              className={`h-8 px-2 rounded-md border text-[11px] font-semibold truncate cursor-pointer ${
+                                active
+                                  ? 'bg-[#1c2440] border-[#f2c85b] text-[#f2c85b]'
+                                  : 'bg-[#13182b] border-white/10 text-[#c5cde0] hover:border-white/25'
+                              }`}
+                            >
+                              {item.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </section>
+
+                    <section className="space-y-2 pt-3 border-t border-white/10">
+                      <div className="text-xs font-semibold text-white">
+                        Neckwear &amp; Pendants ({NECKWEAR_CATALOG.length})
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                        {NECKWEAR_CATALOG.map((item) => {
+                          const active = acc.neckwear === item.id;
+                          return (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => patchAccessories({ neckwear: item.id })}
+                              className={`h-8 px-2 rounded-md border text-[11px] font-semibold truncate cursor-pointer ${
+                                active
+                                  ? 'bg-[#1c2440] border-[#f2c85b] text-[#f2c85b]'
+                                  : 'bg-[#13182b] border-white/10 text-[#c5cde0] hover:border-white/25'
+                              }`}
+                            >
+                              {item.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </section>
+
+                    <section className="space-y-2 pt-3 border-t border-white/10">
+                      <div className="text-xs font-semibold text-white">
+                        Wristwear &amp; Tech ({WRISTWEAR_CATALOG.length})
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                        {WRISTWEAR_CATALOG.map((item) => {
+                          const active = acc.wristwear === item.id;
+                          return (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => patchAccessories({ wristwear: item.id })}
+                              className={`h-8 px-2 rounded-md border text-[11px] font-semibold truncate cursor-pointer ${
+                                active
+                                  ? 'bg-[#1c2440] border-[#f2c85b] text-[#f2c85b]'
+                                  : 'bg-[#13182b] border-white/10 text-[#c5cde0] hover:border-white/25'
+                              }`}
+                            >
+                              {item.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </section>
+
+                    <section className="space-y-2 pt-3 border-t border-white/10">
+                      <div className="text-xs font-semibold text-white">
+                        Back Gear, Packs &amp; Sheathed Weapons ({BACK_GEAR_CATALOG.length})
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                        {BACK_GEAR_CATALOG.map((item) => {
+                          const active = acc.backGear === item.id;
+                          return (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => patchAccessories({ backGear: item.id })}
+                              className={`h-8 px-2 rounded-md border text-[11px] font-semibold truncate cursor-pointer ${
+                                active
+                                  ? 'bg-[#1c2440] border-[#f2c85b] text-[#f2c85b]'
+                                  : 'bg-[#13182b] border-white/10 text-[#c5cde0] hover:border-white/25'
+                              }`}
+                            >
+                              {item.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </section>
+                  </>
+                );
+              })()}
+
+              {/* TAB 7: MYTHIC APPENDAGES, 10-CHANNEL PALETTE STUDIO & DNA JSON */}
+              {activeTab === 'mythic' && (
                 <>
                   <section className="space-y-2">
                     <div className="flex items-center justify-between">
@@ -1437,7 +2148,9 @@ export const EntityWorkshopModal: React.FC<EntityWorkshopModalProps> = ({
                               : 'bg-[#13182b] border-white/10 text-[#c5cde0]'
                           }`}
                         >
-                          {dna.appendages.extraArms === 2 ? '4-Armed Deity Rig: ON' : 'Add Extra Arms (4-Armed)'}
+                          {dna.appendages.extraArms === 2
+                            ? '4-Armed Deity Rig: ON'
+                            : 'Add Extra Arms (4-Armed)'}
                         </button>
                       )}
                     </div>
@@ -1490,9 +2203,33 @@ export const EntityWorkshopModal: React.FC<EntityWorkshopModalProps> = ({
                     </div>
                   </section>
 
-                  {/* 7-Channel Color Palette Studio */}
+                  {/* 10-Channel Sims Color Palette Studio (7 Base + Heterochromia, Lips, Brows, Mark Ink) */}
                   <section className="space-y-3 pt-3 border-t border-white/10">
-                    <div className="text-xs font-semibold text-white">7-Channel Color Palette</div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-white">
+                        10-Channel Color Palette
+                      </span>
+                      {(dna.palette.eyeSecondary ||
+                        dna.palette.lip ||
+                        dna.palette.brow ||
+                        dna.palette.markTint) && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            patchPalette({
+                              eyeSecondary: undefined,
+                              lip: undefined,
+                              brow: undefined,
+                              markTint: undefined,
+                            })
+                          }
+                          className="text-[11px] text-[#9aa3bd] hover:text-white cursor-pointer"
+                        >
+                          Reset Extras
+                        </button>
+                      )}
+                    </div>
+
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                       {(
                         [
@@ -1518,6 +2255,48 @@ export const EntityWorkshopModal: React.FC<EntityWorkshopModalProps> = ({
                           <span className="text-[11px] text-[#d4dced] truncate">{label}</span>
                         </label>
                       ))}
+
+                      <label className="flex items-center gap-2 px-2 h-8 rounded-md bg-[#13182b] border border-white/10 cursor-pointer">
+                        <input
+                          type="color"
+                          value={dna.palette.eyeSecondary || dna.palette.eye}
+                          onChange={(e) => patchPalette({ eyeSecondary: e.target.value })}
+                          className="w-4 h-4 bg-transparent border-0 p-0 cursor-pointer shrink-0"
+                        />
+                        <span className="text-[11px] text-[#d4dced] truncate">
+                          {dna.palette.eyeSecondary ? '2nd Eye' : '2nd Eye (Auto)'}
+                        </span>
+                      </label>
+
+                      <label className="flex items-center gap-2 px-2 h-8 rounded-md bg-[#13182b] border border-white/10 cursor-pointer">
+                        <input
+                          type="color"
+                          value={dna.palette.lip || '#b85c68'}
+                          onChange={(e) => patchPalette({ lip: e.target.value })}
+                          className="w-4 h-4 bg-transparent border-0 p-0 cursor-pointer shrink-0"
+                        />
+                        <span className="text-[11px] text-[#d4dced] truncate">Lips</span>
+                      </label>
+
+                      <label className="flex items-center gap-2 px-2 h-8 rounded-md bg-[#13182b] border border-white/10 cursor-pointer">
+                        <input
+                          type="color"
+                          value={dna.palette.brow || dna.palette.hair}
+                          onChange={(e) => patchPalette({ brow: e.target.value })}
+                          className="w-4 h-4 bg-transparent border-0 p-0 cursor-pointer shrink-0"
+                        />
+                        <span className="text-[11px] text-[#d4dced] truncate">Eyebrows</span>
+                      </label>
+
+                      <label className="flex items-center gap-2 px-2 h-8 rounded-md bg-[#13182b] border border-white/10 cursor-pointer">
+                        <input
+                          type="color"
+                          value={dna.palette.markTint || dna.palette.accent}
+                          onChange={(e) => patchPalette({ markTint: e.target.value })}
+                          className="w-4 h-4 bg-transparent border-0 p-0 cursor-pointer shrink-0"
+                        />
+                        <span className="text-[11px] text-[#d4dced] truncate">Marks / Ink</span>
+                      </label>
                     </div>
 
                     {/* Curated Cultural Palettes */}

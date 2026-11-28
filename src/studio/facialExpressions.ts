@@ -221,6 +221,54 @@ export function getExpressionHeadTilt(expression: ExpressionId): number {
   }
 }
 
+export interface ExpressionRecipe {
+  eyeOpen: number;
+  pupilScale: number;
+  topLidCover: number;
+  bottomCheekLift: number;
+  leftBrowLift: number;
+  rightBrowLift: number;
+  leftBrowAngle: number;
+  rightBrowAngle: number;
+  mouthCurve: number;
+}
+
+/** Deterministic FACS expression recipe used by granular Wave 7 eyes, eyebrows, and mouth layers. */
+export function getExpressionRecipe(expression: ExpressionId): ExpressionRecipe {
+  switch (expression) {
+    case 'warm':
+      return { eyeOpen: 0.94, pupilScale: 1.05, topLidCover: 0.06, bottomCheekLift: 0.2, leftBrowLift: -2, rightBrowLift: -2, leftBrowAngle: -0.05, rightBrowAngle: 0.05, mouthCurve: 0.55 };
+    case 'joy':
+      return { eyeOpen: 0.9, pupilScale: 1.08, topLidCover: 0.04, bottomCheekLift: 0.34, leftBrowLift: -4, rightBrowLift: -4, leftBrowAngle: -0.08, rightBrowAngle: 0.08, mouthCurve: 0.9 };
+    case 'curious':
+      return { eyeOpen: 1.08, pupilScale: 1.02, topLidCover: 0, bottomCheekLift: 0, leftBrowLift: -6, rightBrowLift: 1, leftBrowAngle: -0.1, rightBrowAngle: 0.04, mouthCurve: 0.1 };
+    case 'awe':
+      return { eyeOpen: 1.24, pupilScale: 1.16, topLidCover: 0, bottomCheekLift: 0, leftBrowLift: -7, rightBrowLift: -7, leftBrowAngle: -0.12, rightBrowAngle: 0.12, mouthCurve: -0.15 };
+    case 'sly':
+      return { eyeOpen: 0.78, pupilScale: 0.95, topLidCover: 0.28, bottomCheekLift: 0.16, leftBrowLift: -3, rightBrowLift: 2, leftBrowAngle: -0.04, rightBrowAngle: -0.14, mouthCurve: 0.45 };
+    case 'shocked':
+      return { eyeOpen: 1.32, pupilScale: 0.68, topLidCover: 0, bottomCheekLift: 0, leftBrowLift: -9, rightBrowLift: -9, leftBrowAngle: -0.14, rightBrowAngle: 0.14, mouthCurve: -0.45 };
+    case 'grief':
+      return { eyeOpen: 0.84, pupilScale: 1.04, topLidCover: 0.18, bottomCheekLift: 0.1, leftBrowLift: -2, rightBrowLift: -2, leftBrowAngle: -0.22, rightBrowAngle: 0.22, mouthCurve: -0.7 };
+    case 'stern':
+      return { eyeOpen: 0.86, pupilScale: 0.94, topLidCover: 0.2, bottomCheekLift: 0.06, leftBrowLift: 2, rightBrowLift: 2, leftBrowAngle: 0.06, rightBrowAngle: -0.06, mouthCurve: -0.2 };
+    case 'angry':
+      return { eyeOpen: 0.82, pupilScale: 0.85, topLidCover: 0.3, bottomCheekLift: 0.12, leftBrowLift: 4, rightBrowLift: 4, leftBrowAngle: 0.28, rightBrowAngle: -0.28, mouthCurve: -0.6 };
+    case 'calm':
+    default:
+      return { eyeOpen: 1.0, pupilScale: 1.0, topLidCover: 0.04, bottomCheekLift: 0, leftBrowLift: 0, rightBrowLift: 0, leftBrowAngle: 0, rightBrowAngle: 0, mouthCurve: 0.18 };
+  }
+}
+
+/** Deterministic natural staggered blink check matching drawUnifiedEyePair. */
+export function shouldBlink(t: number, castSeed: number, expression: ExpressionId): boolean {
+  if (expression === 'shocked' || expression === 'awe') return false;
+  const seed = Math.abs(Math.floor(castSeed || 11));
+  const blinkCycle = (Math.max(0, t) + (seed % 37) * 0.19) % 3.85;
+  const isDoubleBlink = seed % 3 === 0 && blinkCycle > 0.22 && blinkCycle < 0.34;
+  return blinkCycle < 0.13 || isDoubleBlink;
+}
+
 /**
  * Draws anatomically readable eyebrows & eyes for all 10 ExpressionIds.
  * Key fix: `calm`, `warm`, `joy`, `curious`, `awe`, `grief`, `shocked`, `sly`, and `stern`

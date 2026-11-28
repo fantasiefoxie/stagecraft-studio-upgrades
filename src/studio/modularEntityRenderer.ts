@@ -38,6 +38,9 @@ import {
   TailStyleId,
   TopStyleId,
   WingStyleId,
+  resolveAccessories,
+  resolveBodyMarks,
+  resolveFaceMorph,
 } from './characterDna';
 import {
   drawUnifiedEyePair,
@@ -45,6 +48,28 @@ import {
   getExpressionHeadTilt,
   getVisemeAperture,
 } from './facialExpressions';
+import {
+  drawArmBodyMarksOverlay,
+  drawBackGearLayer,
+  drawBodyMarksLayer,
+  drawEarAndFaceJewelryLayer,
+  drawEyewearLayer,
+  drawFootwearLayer,
+  drawGlovesLayer,
+  drawGranularEyesLayer,
+  drawGranularFaceMarksLayer,
+  drawGranularFacialHair,
+  drawGranularHairBehind,
+  drawGranularHairFront,
+  drawGranularMouthLayer,
+  drawNeckwearLayer,
+  drawOuterwearCloseUpLayer,
+  drawOuterwearLayer,
+  drawSleeveOverlay,
+  drawWaistLayer,
+  drawWristwearLayer,
+  hasGranularFaceOverrides,
+} from './granularCharacterLayers';
 import type {
   CastMember,
   ExpressionId,
@@ -1088,6 +1113,8 @@ function drawModularHairBehind(
       ctx.fill();
       ctx.restore();
     }
+  } else {
+    drawGranularHairBehind(ctx, hair, hairColor, t);
   }
   ctx.restore();
 }
@@ -1468,6 +1495,8 @@ function drawModularFacialHair(
       ctx.lineTo(s * 72, 48);
       ctx.stroke();
     }
+  } else {
+    drawGranularFacialHair(ctx, facialHair, hairColor);
   }
   ctx.restore();
 }
@@ -1505,6 +1534,10 @@ export function drawModularEntityCloseUp(
 
   ctx.translate(0, breath * -2.2 - speechEnergy * 2.8);
   ctx.rotate(Math.sin(ts * 1.9 + castSeed * 0.2) * 0.02 + speechNod + exprTilt);
+
+  const fm = resolveFaceMorph(dna);
+  const acc = resolveAccessories(dna);
+  const useGranularFace = hasGranularFaceOverrides(dna);
 
   // Shoulders / Hood / Collar bust base
   const shW = 128 * clamp(dna.morph.shoulderWidth, 0.78, 1.38);
@@ -1547,6 +1580,9 @@ export function drawModularEntityCloseUp(
     ctx.closePath();
     ctx.fill();
 
+    // Wave 7 Outerwear collar/lapels preview in close-up
+    drawOuterwearCloseUpLayer(ctx, dna.outfit.outerwear, pal, shW);
+
     // Collar accessory preview in close-up!
     if (dna.outfit.collarAccessory === 'gold_necklace') {
       ctx.strokeStyle = pal.accent;
@@ -1576,7 +1612,15 @@ export function drawModularEntityCloseUp(
       ctx.ellipse(shW * 0.85, 86, 44, 28, 0.2, 0, Math.PI * 2);
       ctx.fill();
     }
+
+    // Wave 7 Neckwear accessory in close-up
+    drawNeckwearLayer(ctx, acc.neckwear, pal, true);
   }
+
+  // Apply Wave 7 neckLength morph offset cleanly
+  const neckLift = (fm.neckLength - 1) * -18;
+  ctx.save();
+  ctx.translate(0, neckLift);
 
   // Hair / Mane behind head
   drawModularHairBehind(ctx, dna.head.hairStyle, pal.hair, ts);
@@ -1584,10 +1628,15 @@ export function drawModularEntityCloseUp(
   // Horns & Antlers
   drawModularHorns(ctx, dna.head.horns, pal.accent);
 
-  // Ears
+  // Ears (scaled by Wave 7 earScale morph)
+  ctx.save();
+  ctx.scale(fm.earScale, fm.earScale);
   drawModularEars(ctx, dna.head.ears, pal.skin, pal.primary, pal.accent);
+  ctx.restore();
 
-  // Head silhouette + Surface pattern + Chiaroscuro shadow split
+  // Head silhouette + Surface pattern + Chiaroscuro shadow split (sculpted by Wave 7 jawWidth/cheekboneWidth/chinLength)
+  const headMorphX = clamp(fm.cheekboneWidth * 0.52 + fm.jawWidth * 0.48, 0.74, 1.32);
+  const headMorphY = clamp(0.62 + fm.chinLength * 0.38, 0.82, 1.24);
   const isFurHead =
     dna.head.headShape === 'canine_snout' ||
     dna.head.headShape === 'feline_muzzle' ||
@@ -1599,6 +1648,8 @@ export function drawModularEntityCloseUp(
     dna.head.headShape === 'serpent_hood' ||
     dna.head.headShape === 'arachnid_mandible';
 
+  ctx.save();
+  ctx.scale(headMorphX, headMorphY);
   const headFill = isFurHead ? pal.skin : pal.skin;
   ctx.fillStyle = headFill;
   buildHeadPath(ctx, dna.head.headShape);
@@ -1616,6 +1667,7 @@ export function drawModularEntityCloseUp(
   ctx.fillStyle = skinShadow;
   ctx.globalAlpha = 0.72;
   ctx.fillRect(lightRight ? -100 : 0, -100, 100, 260);
+  ctx.restore();
   ctx.restore();
 
   // Elephant tusks if elephant_trunk
@@ -1644,49 +1696,55 @@ export function drawModularEntityCloseUp(
     }
   }
 
-  // Forehead / Cheek Marks
-  drawModularFaceMarks(ctx, dna.head.faceMark, pal.accent);
+  // Forehead / Cheek Marks (Primary + Wave 7 Secondary + Blush!)
+  drawGranularFaceMarksLayer(ctx, dna, drawModularFaceMarks);
 
-  // Eyes (Unified FACS Engine adapted to EyeStyleId!)
-  const isGlowing = dna.head.eyeStyle === 'glowing_orb' || dna.head.eyeStyle === 'slit_reptile';
-  const eyeScale =
-    dna.head.eyeStyle === 'wide_fable'
-      ? 1.18
-      : dna.head.eyeStyle === 'narrow_sharp'
-        ? 0.88
-        : 1.0;
+  // Eyes & Eyebrows
+  const baseEyeX = dna.head.headShape === 'serpent_hood' ? 24 : 28;
+  const baseEyeY = -8;
+  if (useGranularFace) {
+    drawGranularEyesLayer(ctx, dna, expression, ts, speechEnergy, castSeed, baseEyeX, baseEyeY);
+  } else {
+    const isGlowing = dna.head.eyeStyle === 'glowing_orb' || dna.head.eyeStyle === 'slit_reptile';
+    const eyeScale =
+      dna.head.eyeStyle === 'wide_fable'
+        ? 1.18
+        : dna.head.eyeStyle === 'narrow_sharp'
+          ? 0.88
+          : 1.0;
 
-  drawUnifiedEyePair(ctx, expression, pal.eye || pal.accent, ts, speechEnergy, {
-    glowing: isGlowing,
-    roundOwl: dna.head.eyeStyle === 'owl_disc',
-    eyeX: dna.head.headShape === 'serpent_hood' ? 24 : 28,
-    eyeY: -8,
-    noBrows: dna.head.headShape === 'serpent_hood' || dna.head.headShape === 'arachnid_mandible',
-    castSeed,
-    eyeScale,
-  });
+    drawUnifiedEyePair(ctx, expression, pal.eye || pal.accent, ts, speechEnergy, {
+      glowing: isGlowing,
+      roundOwl: dna.head.eyeStyle === 'owl_disc',
+      eyeX: baseEyeX,
+      eyeY: baseEyeY,
+      noBrows: dna.head.headShape === 'serpent_hood' || dna.head.headShape === 'arachnid_mandible',
+      castSeed,
+      eyeScale,
+    });
 
-  // Extra spider eyes if multi_eyes
-  if (dna.head.eyeStyle === 'multi_eyes') {
-    ctx.fillStyle = pal.eye || pal.accent;
-    for (const [ex, ey, r] of [[-12, -28, 6], [12, -28, 6], [-42, -24, 5], [42, -24, 5]]) {
-      ctx.beginPath();
-      ctx.arc(ex, ey, r, 0, Math.PI * 2);
-      ctx.fill();
+    // Extra spider eyes if multi_eyes
+    if (dna.head.eyeStyle === 'multi_eyes') {
+      ctx.fillStyle = pal.eye || pal.accent;
+      for (const [ex, ey, r] of [[-12, -28, 6], [12, -28, 6], [-42, -24, 5], [42, -24, 5]]) {
+        ctx.beginPath();
+        ctx.arc(ex, ey, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // Reptile vertical slit pupil accent
+    if (dna.head.eyeStyle === 'slit_reptile') {
+      ctx.fillStyle = '#070914';
+      for (const s of [-1, 1]) {
+        ctx.beginPath();
+        ctx.ellipse(s * 26, -8, 2.5, 9, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
   }
 
-  // Reptile vertical slit pupil accent
-  if (dna.head.eyeStyle === 'slit_reptile') {
-    ctx.fillStyle = '#070914';
-    for (const s of [-1, 1]) {
-      ctx.beginPath();
-      ctx.ellipse(s * 26, -8, 2.5, 9, 0, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
-
-  // Nose / Snout Tip / Beak
+  // Nose / Snout Tip / Beak (scaled by Wave 7 noseScale morph)
   if (dna.head.headShape === 'curved_beak' || dna.head.headShape === 'raptor_beak') {
     const beakOpen = getVisemeAperture(viseme) * 5;
     ctx.fillStyle = pal.accent;
@@ -1707,6 +1765,10 @@ export function drawModularEntityCloseUp(
   } else {
     // Nose bridge
     if (dna.head.noseStyle !== 'none') {
+      ctx.save();
+      ctx.translate(0, 14);
+      ctx.scale(fm.noseScale, fm.noseScale);
+      ctx.translate(0, -14);
       ctx.fillStyle = darkenHex(pal.skin, 0.72);
       if (dna.head.noseStyle === 'snout_bridge') {
         ctx.fillStyle = '#12151f';
@@ -1729,33 +1791,47 @@ export function drawModularEntityCloseUp(
         ctx.closePath();
         ctx.fill();
       }
+      ctx.restore();
     }
 
     // Facial hair / Whiskers
     drawModularFacialHair(ctx, dna.head.facialHair, pal.hair);
 
-    // Unified 4-shape lip-sync mouth
-    const fanged =
-      dna.chassis === 'ethereal' ||
-      dna.head.headShape === 'canine_snout' ||
-      dna.head.headShape === 'feline_muzzle' ||
-      dna.head.headShape === 'croc_snout' ||
-      dna.head.headShape === 'serpent_hood';
+    // Unified 6-shape phoneme lip-sync mouth
+    const mouthY =
+      dna.head.headShape === 'canine_snout' || dna.head.headShape === 'equine_snout'
+        ? 52
+        : dna.head.headShape === 'elephant_trunk'
+          ? 44
+          : 40;
+    if (useGranularFace) {
+      drawGranularMouthLayer(ctx, dna, expression, viseme, mouthY);
+    } else {
+      const fanged =
+        dna.chassis === 'ethereal' ||
+        dna.head.headShape === 'canine_snout' ||
+        dna.head.headShape === 'feline_muzzle' ||
+        dna.head.headShape === 'croc_snout' ||
+        dna.head.headShape === 'serpent_hood';
 
-    drawUnifiedMouth(ctx, expression, viseme, {
-      y:
-        dna.head.headShape === 'canine_snout' || dna.head.headShape === 'equine_snout'
-          ? 52
-          : dna.head.headShape === 'elephant_trunk'
-            ? 44
-            : 40,
-      fanged,
-    });
+      drawUnifiedMouth(ctx, expression, viseme, {
+        y: mouthY,
+        fanged,
+      });
+    }
   }
+
+  // Front hair bangs / ties for Wave 7 hair styles
+  drawGranularHairFront(ctx, dna.head.hairStyle, pal.hair, pal.accent);
+
+  // Wave 7 Eyewear & Ear/Face Jewelry
+  drawEyewearLayer(ctx, acc.eyewear, pal, baseEyeX * fm.eyeSpacing, baseEyeY, fm.eyeSize);
+  drawEarAndFaceJewelryLayer(ctx, acc.earJewelry, pal, fm.earScale, fm.noseScale);
 
   // Headwear / Crown / Turban / Helm
   drawModularHeadwear(ctx, dna.outfit.headwear, pal.primary, pal.accent);
 
+  ctx.restore(); // end neckLift
   ctx.restore();
 }
 
@@ -2087,7 +2163,11 @@ export function drawModularEntityFullBody(
   const torsoTopY = -122 * limbScale + chestRise;
   const waistY = -62 * limbScale;
 
-  // Behind: Wings, Cape & Tail
+  const fullAcc = resolveAccessories(dna);
+  const fullBodyMarks = resolveBodyMarks(dna);
+
+  // Behind: Back Gear, Wings, Cape & Tail (Z-order)
+  drawBackGearLayer(ctx, fullAcc.backGear, pal, torsoTopY, waistY, chestW, ts, bodySeed);
   drawModularWings(ctx, dna.appendages.wings, pal.primary, pal.accent, pose, ts, bodySeed, torsoTopY + 14, 1.0);
   drawModularCape(ctx, dna.outfit.capeStyle, pal.primary, pal.secondary, pal.accent, pose, kin.capeDrag, ts, bodySeed, torsoTopY);
   drawModularTail(ctx, dna.appendages.tail, pal.primary, pal.accent, ts, bodySeed, -14, waistY + 16);
@@ -2120,12 +2200,18 @@ export function drawModularEntityFullBody(
   ctx.rotate(armRig.back.shoulderAngle);
   ctx.fillStyle = darkenHex(pal.skin, 0.72);
   ctx.fillRect(-4, 0, 8, armRig.back.upperLen * limbScale + 2);
+  drawSleeveOverlay(ctx, dna.outfit.sleeveStyle, pal, armRig.back.upperLen * limbScale, armRig.back.forearmLen * limbScale, true);
   ctx.translate(0, armRig.back.upperLen * limbScale);
   ctx.rotate(armRig.back.elbowAngle);
+  ctx.fillStyle = darkenHex(pal.skin, 0.72);
   ctx.fillRect(-3.5, 0, 7, armRig.back.forearmLen * limbScale);
+  drawArmBodyMarksOverlay(ctx, fullBodyMarks, pal, armRig.back.forearmLen * limbScale);
+  drawSleeveOverlay(ctx, dna.outfit.sleeveStyle, pal, armRig.back.upperLen * limbScale, armRig.back.forearmLen * limbScale, false);
+  ctx.fillStyle = darkenHex(pal.skin, 0.72);
   ctx.beginPath();
   ctx.arc(0, armRig.back.forearmLen * limbScale + 1, 5, 0, Math.PI * 2);
   ctx.fill();
+  drawGlovesLayer(ctx, dna.outfit.gloves, pal, armRig.back.forearmLen * limbScale);
   ctx.restore();
 
   // Lower Body (Ethereal Wisp | Dhoti | Skirt | Greaves | Trousers | Robe)
@@ -2151,10 +2237,13 @@ export function drawModularEntityFullBody(
     ctx.closePath();
     ctx.fill();
   } else {
-    // Feet / boots
-    ctx.fillStyle = dna.outfit.bottomStyle === 'armored_greaves' ? '#475569' : '#0e1120';
-    ctx.fillRect(-16 - stride * 0.52, -24, 11 * bulkScale, 24);
-    ctx.fillRect(6 + stride * 0.52, -24, 11 * bulkScale, 24);
+    // Feet / boots (Wave 7 Footwear override or default auto)
+    const drewCustomFootwear = drawFootwearLayer(ctx, dna.outfit.footwear, pal, stride, bulkScale);
+    if (!drewCustomFootwear) {
+      ctx.fillStyle = dna.outfit.bottomStyle === 'armored_greaves' ? '#475569' : '#0e1120';
+      ctx.fillRect(-16 - stride * 0.52, -24, 11 * bulkScale, 24);
+      ctx.fillRect(6 + stride * 0.52, -24, 11 * bulkScale, 24);
+    }
 
     // Garment lower silhouette
     const botCol =
@@ -2230,6 +2319,9 @@ export function drawModularEntityFullBody(
   ctx.lineTo(-waistW, waistY);
   ctx.closePath();
   ctx.fill();
+
+  // Wave 7 Body Marks Layer on torso
+  drawBodyMarksLayer(ctx, fullBodyMarks, pal, chestW, waistW, torsoTopY, waistY, ts);
 
   // Distinct Top Details (Plate Armor ridges | Samurai Cuirass | Saree Drape | Sash | Collar)
   if (dna.outfit.topStyle === 'plate_armor' || dna.outfit.topStyle === 'samurai_cuirass') {
@@ -2312,6 +2404,10 @@ export function drawModularEntityFullBody(
     ctx.fillRect(-10, torsoTopY + 18, 20, 18);
   }
 
+  // Wave 7 Layered Outerwear & Waist Belt/Sash
+  drawOuterwearLayer(ctx, dna.outfit.outerwear, pal, chestW, waistW, torsoTopY, waistY);
+  drawWaistLayer(ctx, dna.outfit.waistStyle, pal, waistW, waistY);
+
   // Collar Accessories on full-body torso
   if (dna.outfit.collarAccessory === 'gold_necklace') {
     ctx.strokeStyle = pal.accent;
@@ -2332,6 +2428,9 @@ export function drawModularEntityFullBody(
     ctx.fill();
   }
 
+  // Wave 7 Neckwear Layer
+  drawNeckwearLayer(ctx, fullAcc.neckwear, pal, false, torsoTopY, chestW);
+
   // Attack Action Motion-Smear Arc
   if (env.smearAlpha > 0.05) {
     ctx.save();
@@ -2348,22 +2447,30 @@ export function drawModularEntityFullBody(
   ctx.save();
   ctx.translate(armRig.front.shoulderX * shScale, torsoTopY + 10);
   ctx.rotate(armRig.front.shoulderAngle);
-  if (dna.outfit.topStyle !== 'none_fur') {
+  if (dna.outfit.topStyle !== 'none_fur' && (!dna.outfit.sleeveStyle || dna.outfit.sleeveStyle === 'auto')) {
     ctx.fillStyle = pal.primary;
     ctx.fillRect(-6, -2, 12, 12);
   }
   ctx.fillStyle = pal.skin;
   ctx.fillRect(-4.5, 8, 9, armRig.front.upperLen * limbScale - 5);
+  drawSleeveOverlay(ctx, dna.outfit.sleeveStyle, pal, armRig.front.upperLen * limbScale, armRig.front.forearmLen * limbScale, true);
   ctx.translate(0, armRig.front.upperLen * limbScale);
   ctx.rotate(armRig.front.elbowAngle);
   ctx.fillStyle = pal.skin;
   ctx.fillRect(-4, 0, 8, armRig.front.forearmLen * limbScale);
-  ctx.fillStyle = pal.accent;
-  ctx.fillRect(-4.5, armRig.front.forearmLen * limbScale - 6, 9, 3.5);
+  drawArmBodyMarksOverlay(ctx, fullBodyMarks, pal, armRig.front.forearmLen * limbScale);
+  drawSleeveOverlay(ctx, dna.outfit.sleeveStyle, pal, armRig.front.upperLen * limbScale, armRig.front.forearmLen * limbScale, false);
+  if (fullAcc.wristwear === 'none') {
+    ctx.fillStyle = pal.accent;
+    ctx.fillRect(-4.5, armRig.front.forearmLen * limbScale - 6, 9, 3.5);
+  } else {
+    drawWristwearLayer(ctx, fullAcc.wristwear, pal, armRig.front.forearmLen * limbScale);
+  }
   ctx.fillStyle = pal.skin;
   ctx.beginPath();
   ctx.arc(0, armRig.front.forearmLen * limbScale + 2, 5.8, 0, Math.PI * 2);
   ctx.fill();
+  drawGlovesLayer(ctx, dna.outfit.gloves, pal, armRig.front.forearmLen * limbScale);
   ctx.restore();
 
   // Style-Native Shadow Puppetry Bamboo Control Rods!
@@ -2476,7 +2583,11 @@ export function drawDnaPartThumbnail(
     ctx.beginPath();
     ctx.arc(0, 0, 54, 0, Math.PI * 2);
     ctx.fill();
-    drawModularFaceMarks(ctx, optionId as FaceMarkId, pal.accent);
+    drawGranularFaceMarksLayer(
+      ctx,
+      { ...dna, head: { ...dna.head, faceMark: optionId as FaceMarkId, secondaryFaceMark: 'none', blushIntensity: 0 } },
+      drawModularFaceMarks
+    );
   } else if (category === 'headwear') {
     ctx.translate(0, 12);
     ctx.scale(0.21, 0.21);

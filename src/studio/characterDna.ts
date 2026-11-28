@@ -92,6 +92,45 @@ export type HornStyleId =
   | 'unicorn_spire'
   | 'oni_twin';
 
+export type EyebrowStyleId =
+  | 'natural_arch'
+  | 'thick_bold'
+  | 'thin_curved'
+  | 'straight_stoic'
+  | 'angled_fierce'
+  | 'high_arched'
+  | 'bushy_elder'
+  | 'slit_notched'
+  | 'feathered'
+  | 'none';
+
+export type PupilStyleId =
+  | 'round'
+  | 'slit_cat'
+  | 'star_sparkle'
+  | 'ring_cyber'
+  | 'crosshair'
+  | 'blank_glow'
+  | 'spiral_hypno'
+  | 'heart_cute';
+
+export type EyelashStyleId =
+  | 'none'
+  | 'natural'
+  | 'winged_liner'
+  | 'dramatic_long'
+  | 'kohl_kajal';
+
+export type MouthStyleId =
+  | 'classic'
+  | 'full_lips'
+  | 'thin_stern'
+  | 'wide_grin'
+  | 'fangs_vampire'
+  | 'tusks_boar'
+  | 'beak_line'
+  | 'stitched_gothic';
+
 export type HairStyleId =
   | 'none'
   | 'short_crop'
@@ -103,7 +142,17 @@ export type HairStyleId =
   | 'lion_mane'
   | 'feather_crest'
   | 'dreadlocks'
-  | 'hooded_cowl';
+  | 'hooded_cowl'
+  | 'bob_cut'
+  | 'pixie_short'
+  | 'curly_afro'
+  | 'ponytail_high'
+  | 'side_shave_undercut'
+  | 'wavy_shoulder'
+  | 'twin_buns'
+  | 'mohawk_punk'
+  | 'messy_anime'
+  | 'silver_bun_elder';
 
 export type FacialHairId =
   | 'none'
@@ -112,7 +161,13 @@ export type FacialHairId =
   | 'short_trimmed'
   | 'sage_long_beard'
   | 'goatee'
-  | 'whiskers';
+  | 'whiskers'
+  | 'stubble_5oclock'
+  | 'full_viking_beard'
+  | 'van_dyke'
+  | 'mutton_chops'
+  | 'soul_patch'
+  | 'braided_dwarf_beard';
 
 export type FaceMarkId =
   | 'none'
@@ -124,7 +179,159 @@ export type FaceMarkId =
   | 'cheek_scar'
   | 'eye_patch'
   | 'freckles'
-  | 'tribal_lines';
+  | 'tribal_lines'
+  | 'nose_bridge_scar'
+  | 'brow_slash_scar'
+  | 'beauty_mole'
+  | 'vitiligo_patch'
+  | 'cyber_cheek_circuit'
+  | 'tear_tattoos'
+  | 'star_freckles'
+  | 'glow_runes'
+  | 'nose_bandage'
+  | 'clown_diamond'
+  | 'gold_leaf_forehead'
+  | 'dark_undereye';
+
+export type BodyMarkId =
+  | 'none'
+  | 'tribal_arm_bands'
+  | 'sleeve_tattoo_ink'
+  | 'cyber_circuit_veins'
+  | 'glowing_magic_runes'
+  | 'battle_scars_chest'
+  | 'vitiligo_body'
+  | 'henna_mehndi_hands'
+  | 'dragon_coil_tattoo'
+  | 'sacred_ash_stripes'
+  | 'tiger_body_stripes'
+  | 'starlight_freckles'
+  | 'stitch_seams'
+  | 'cracked_stone_veins'
+  | 'biolum_spots'
+  | 'anchor_sailor_tattoo';
+
+export type OuterwearStyleId =
+  | 'none'
+  | 'leather_biker'
+  | 'denim_vest'
+  | 'royal_sherwani_coat'
+  | 'bomber_jacket'
+  | 'puffer_vest'
+  | 'tactical_rig'
+  | 'fur_collared_coat'
+  | 'academic_blazer'
+  | 'shawl_wrap'
+  | 'chainmail_hauberk'
+  | 'cyber_exovest'
+  | 'hooded_poncho'
+  | 'apron_artisan';
+
+export type SleeveStyleId =
+  | 'auto'
+  | 'sleeveless'
+  | 'short_sleeve'
+  | 'rolled_cuff'
+  | 'long_fitted'
+  | 'bell_wide'
+  | 'puffed_royal';
+
+export type WaistStyleId =
+  | 'none'
+  | 'leather_buckle'
+  | 'royal_kamarband'
+  | 'utility_pouches'
+  | 'obi_sash'
+  | 'chain_belt'
+  | 'rope_cord'
+  | 'champion_belt'
+  | 'ammo_bandolier'
+  | 'jeweled_girdle';
+
+export type GloveStyleId =
+  | 'none'
+  | 'fingerless_biker'
+  | 'leather_gloves'
+  | 'steel_gauntlets'
+  | 'silk_opera_gloves'
+  | 'wrapped_bandages'
+  | 'boxing_wraps'
+  | 'cyber_hands'
+  | 'gold_bangles_stack';
+
+export type FootwearStyleId =
+  | 'auto'
+  | 'barefoot'
+  | 'royal_mojari'
+  | 'leather_boots'
+  | 'combat_boots'
+  | 'sneakers_high'
+  | 'dress_oxfords'
+  | 'sandals_strappy'
+  | 'armored_sabatons'
+  | 'cyber_greaves'
+  | 'heels_classic'
+  | 'tabi_ninja';
+
+export type EyewearStyleId =
+  | 'none'
+  | 'round_scholar'
+  | 'rectangular_modern'
+  | 'aviator_shades'
+  | 'cat_eye_chic'
+  | 'monocle_brass'
+  | 'steampunk_goggles'
+  | 'cyber_holo_visor'
+  | 'tactical_hud'
+  | 'heart_shades'
+  | 'pirate_eyepatch'
+  | 'blindfold_mystic';
+
+export type EarJewelryId =
+  | 'none'
+  | 'gold_studs'
+  | 'hoop_earrings'
+  | 'royal_jhumkas'
+  | 'feather_drop'
+  | 'elf_ear_cuffs'
+  | 'cyber_comms_earpiece'
+  | 'nose_ring_nath'
+  | 'brow_piercing';
+
+export type NeckwearStyleId =
+  | 'none'
+  | 'locket_pendant'
+  | 'crystal_amulet_chain'
+  | 'choker_velvet'
+  | 'dog_tags'
+  | 'tie_necktie'
+  | 'bow_tie'
+  | 'pearl_strand'
+  | 'stethoscope_drape'
+  | 'scarf_bandana';
+
+export type WristwearStyleId =
+  | 'none'
+  | 'smartwatch'
+  | 'gold_kadas'
+  | 'leather_bracers'
+  | 'spiked_cuffs'
+  | 'bead_bracelets'
+  | 'holo_wristpad';
+
+export type BackGearStyleId =
+  | 'none'
+  | 'adventure_backpack'
+  | 'archer_quiver'
+  | 'crossed_katanas'
+  | 'electric_guitar_sling'
+  | 'jetpack_twin'
+  | 'scroll_cylinder'
+  | 'shield_slung'
+  | 'oxygen_tanks'
+  | 'lantern_pole'
+  | 'cyber_halo_ring'
+  | 'plush_satchel';
 
 export type TopStyleId =
   | 'none_fur'
@@ -266,6 +473,52 @@ export interface CharacterMorph {
   gait?: DnaGaitId;
 }
 
+export interface CharacterFaceMorph {
+  jawWidth: number; // 0.72 .. 1.32 (default 1.0)
+  chinLength: number; // 0.75 .. 1.30 (default 1.0)
+  cheekboneWidth: number; // 0.75 .. 1.30 (default 1.0)
+  eyeSize: number; // 0.75 .. 1.35 (default 1.0)
+  eyeSpacing: number; // 0.78 .. 1.28 (default 1.0)
+  eyeTilt: number; // -0.35 .. +0.35 (default 0)
+  browHeight: number; // -0.30 .. +0.30 (default 0)
+  browThickness: number; // 0.65 .. 1.55 (default 1.0)
+  noseScale: number; // 0.70 .. 1.35 (default 1.0)
+  mouthWidth: number; // 0.75 .. 1.30 (default 1.0)
+  earScale: number; // 0.70 .. 1.40 (default 1.0)
+  neckLength: number; // 0.75 .. 1.30 (default 1.0)
+}
+
+export const DEFAULT_FACE_MORPH: CharacterFaceMorph = {
+  jawWidth: 1.0,
+  chinLength: 1.0,
+  cheekboneWidth: 1.0,
+  eyeSize: 1.0,
+  eyeSpacing: 1.0,
+  eyeTilt: 0,
+  browHeight: 0,
+  browThickness: 1.0,
+  noseScale: 1.0,
+  mouthWidth: 1.0,
+  earScale: 1.0,
+  neckLength: 1.0,
+};
+
+export interface CharacterAccessoriesSpec {
+  eyewear: EyewearStyleId;
+  earJewelry: EarJewelryId;
+  neckwear: NeckwearStyleId;
+  wristwear: WristwearStyleId;
+  backGear: BackGearStyleId;
+}
+
+export const DEFAULT_ACCESSORIES: CharacterAccessoriesSpec = {
+  eyewear: 'none',
+  earJewelry: 'none',
+  neckwear: 'none',
+  wristwear: 'none',
+  backGear: 'none',
+};
+
 export interface CharacterHeadSpec {
   headShape: HeadShapeId;
   eyeStyle: EyeStyleId;
@@ -275,6 +528,13 @@ export interface CharacterHeadSpec {
   hairStyle: HairStyleId;
   facialHair: FacialHairId;
   faceMark: FaceMarkId;
+  /** Wave 7 optional granular facial features */
+  eyebrowStyle?: EyebrowStyleId;
+  pupilStyle?: PupilStyleId;
+  eyelashStyle?: EyelashStyleId;
+  mouthStyle?: MouthStyleId;
+  secondaryFaceMark?: FaceMarkId;
+  blushIntensity?: number; // 0 .. 1
 }
 
 export interface CharacterOutfitSpec {
@@ -284,6 +544,12 @@ export interface CharacterOutfitSpec {
   capeStyle: CapeStyleId;
   headwear: HeadwearStyleId;
   surfacePattern: SurfacePatternId;
+  /** Wave 7 optional layered clothing sub-slots */
+  outerwear?: OuterwearStyleId;
+  sleeveStyle?: SleeveStyleId;
+  waistStyle?: WaistStyleId;
+  gloves?: GloveStyleId;
+  footwear?: FootwearStyleId;
 }
 
 export interface CharacterAppendagesSpec {
@@ -301,6 +567,11 @@ export interface CharacterPaletteSpec {
   hair: string;
   eye: string;
   patternTint: string;
+  /** Wave 7 optional extra palette channels */
+  eyeSecondary?: string; // heterochromia second eye color
+  lip?: string;
+  brow?: string;
+  markTint?: string;
 }
 
 export interface CharacterDNA {
@@ -311,7 +582,56 @@ export interface CharacterDNA {
   outfit: CharacterOutfitSpec;
   appendages: CharacterAppendagesSpec;
   palette: CharacterPaletteSpec;
+  /** Wave 7 optional Sims-grade face sculpting morphs */
+  faceMorph?: Partial<CharacterFaceMorph>;
+  /** Wave 7 optional combinable body marks (up to 3) */
+  bodyMarks?: BodyMarkId[];
+  /** Wave 7 optional 5-slot combinable accessories */
+  accessories?: Partial<CharacterAccessoriesSpec>;
   seedTag?: string;
+}
+
+export function resolveFaceMorph(dna?: CharacterDNA): CharacterFaceMorph {
+  const fm = dna?.faceMorph;
+  if (!fm) return { ...DEFAULT_FACE_MORPH };
+  return {
+    jawWidth: clampNum(fm.jawWidth, 0.72, 1.32, DEFAULT_FACE_MORPH.jawWidth),
+    chinLength: clampNum(fm.chinLength, 0.75, 1.3, DEFAULT_FACE_MORPH.chinLength),
+    cheekboneWidth: clampNum(fm.cheekboneWidth, 0.75, 1.3, DEFAULT_FACE_MORPH.cheekboneWidth),
+    eyeSize: clampNum(fm.eyeSize, 0.75, 1.35, DEFAULT_FACE_MORPH.eyeSize),
+    eyeSpacing: clampNum(fm.eyeSpacing, 0.78, 1.28, DEFAULT_FACE_MORPH.eyeSpacing),
+    eyeTilt: clampNum(fm.eyeTilt, -0.35, 0.35, DEFAULT_FACE_MORPH.eyeTilt),
+    browHeight: clampNum(fm.browHeight, -0.3, 0.3, DEFAULT_FACE_MORPH.browHeight),
+    browThickness: clampNum(fm.browThickness, 0.65, 1.55, DEFAULT_FACE_MORPH.browThickness),
+    noseScale: clampNum(fm.noseScale, 0.7, 1.35, DEFAULT_FACE_MORPH.noseScale),
+    mouthWidth: clampNum(fm.mouthWidth, 0.75, 1.3, DEFAULT_FACE_MORPH.mouthWidth),
+    earScale: clampNum(fm.earScale, 0.7, 1.4, DEFAULT_FACE_MORPH.earScale),
+    neckLength: clampNum(fm.neckLength, 0.75, 1.3, DEFAULT_FACE_MORPH.neckLength),
+  };
+}
+
+export function resolveAccessories(dna?: CharacterDNA): CharacterAccessoriesSpec {
+  const acc = dna?.accessories;
+  if (!acc) return { ...DEFAULT_ACCESSORIES };
+  return {
+    eyewear: acc.eyewear && VALID_EYEWEAR.has(acc.eyewear) ? acc.eyewear : 'none',
+    earJewelry: acc.earJewelry && VALID_EAR_JEWELRY.has(acc.earJewelry) ? acc.earJewelry : 'none',
+    neckwear: acc.neckwear && VALID_NECKWEAR.has(acc.neckwear) ? acc.neckwear : 'none',
+    wristwear: acc.wristwear && VALID_WRISTWEAR.has(acc.wristwear) ? acc.wristwear : 'none',
+    backGear: acc.backGear && VALID_BACK_GEAR.has(acc.backGear) ? acc.backGear : 'none',
+  };
+}
+
+export function resolveBodyMarks(dna?: CharacterDNA): BodyMarkId[] {
+  if (!Array.isArray(dna?.bodyMarks) || dna.bodyMarks.length === 0) return [];
+  const out: BodyMarkId[] = [];
+  for (const m of dna.bodyMarks) {
+    if (m !== 'none' && VALID_BODY_MARKS.has(m) && !out.includes(m)) {
+      out.push(m);
+      if (out.length >= 3) break;
+    }
+  }
+  return out;
 }
 
 export interface CharacterSilhouetteFingerprint {
@@ -337,6 +657,23 @@ export interface CharacterSilhouetteFingerprint {
   primaryHex: string;
   skinHex: string;
   hasCustomDna: boolean;
+  /** Wave 7 granular silhouette differentiation fields */
+  eyebrowStyle?: EyebrowStyleId;
+  pupilStyle?: PupilStyleId;
+  mouthStyle?: MouthStyleId;
+  faceMark?: FaceMarkId;
+  secondaryFaceMark?: FaceMarkId;
+  bodyMarksKey?: string;
+  outerwear?: OuterwearStyleId;
+  waistStyle?: WaistStyleId;
+  gloves?: GloveStyleId;
+  footwear?: FootwearStyleId;
+  eyewear?: EyewearStyleId;
+  earJewelry?: EarJewelryId;
+  neckwear?: NeckwearStyleId;
+  wristwear?: WristwearStyleId;
+  backGear?: BackGearStyleId;
+  faceMorphSignature?: number;
 }
 
 // =========================================================================
@@ -423,6 +760,49 @@ export const HORN_STYLE_CATALOG: Array<{ id: HornStyleId; label: string }> = [
   { id: 'oni_twin', label: 'Twin Oni Spikes' },
 ];
 
+export const EYEBROW_STYLE_CATALOG: Array<{ id: EyebrowStyleId; label: string }> = [
+  { id: 'natural_arch', label: 'Natural Arch' },
+  { id: 'thick_bold', label: 'Thick Bold' },
+  { id: 'thin_curved', label: 'Thin Curved' },
+  { id: 'straight_stoic', label: 'Straight Stoic' },
+  { id: 'angled_fierce', label: 'Angled Fierce' },
+  { id: 'high_arched', label: 'High Arched' },
+  { id: 'bushy_elder', label: 'Bushy Elder' },
+  { id: 'slit_notched', label: 'Slit Notched' },
+  { id: 'feathered', label: 'Feathered Soft' },
+  { id: 'none', label: 'No Eyebrows' },
+];
+
+export const PUPIL_STYLE_CATALOG: Array<{ id: PupilStyleId; label: string }> = [
+  { id: 'round', label: 'Classic Round' },
+  { id: 'slit_cat', label: 'Feline Slit' },
+  { id: 'star_sparkle', label: 'Starlight Sparkle' },
+  { id: 'ring_cyber', label: 'Cyber Ring' },
+  { id: 'crosshair', label: 'Tactical Crosshair' },
+  { id: 'blank_glow', label: 'Mystic Blank Glow' },
+  { id: 'spiral_hypno', label: 'Hypno Spiral' },
+  { id: 'heart_cute', label: 'Heart Shine' },
+];
+
+export const EYELASH_STYLE_CATALOG: Array<{ id: EyelashStyleId; label: string }> = [
+  { id: 'none', label: 'None' },
+  { id: 'natural', label: 'Natural Lashes' },
+  { id: 'winged_liner', label: 'Winged Liner' },
+  { id: 'dramatic_long', label: 'Dramatic Long' },
+  { id: 'kohl_kajal', label: 'Royal Kohl / Kajal' },
+];
+
+export const MOUTH_STYLE_CATALOG: Array<{ id: MouthStyleId; label: string }> = [
+  { id: 'classic', label: 'Classic Line' },
+  { id: 'full_lips', label: 'Full Sculpted Lips' },
+  { id: 'thin_stern', label: 'Thin Stern' },
+  { id: 'wide_grin', label: 'Wide Grin' },
+  { id: 'fangs_vampire', label: 'Vampire Fangs' },
+  { id: 'tusks_boar', label: 'Boar / Orc Tusks' },
+  { id: 'beak_line', label: 'Beak Seam' },
+  { id: 'stitched_gothic', label: 'Stitched Gothic' },
+];
+
 export const HAIR_STYLE_CATALOG: Array<{ id: HairStyleId; label: string }> = [
   { id: 'none', label: 'None / Bald' },
   { id: 'short_crop', label: 'Short Crop' },
@@ -435,6 +815,16 @@ export const HAIR_STYLE_CATALOG: Array<{ id: HairStyleId; label: string }> = [
   { id: 'feather_crest', label: 'Plumed Crest' },
   { id: 'dreadlocks', label: 'Mystic Locks' },
   { id: 'hooded_cowl', label: 'Shadowed Cowl' },
+  { id: 'bob_cut', label: 'Sleek Bob Cut' },
+  { id: 'pixie_short', label: 'Pixie Crop' },
+  { id: 'curly_afro', label: 'Curly Afro Crown' },
+  { id: 'ponytail_high', label: 'High Ponytail' },
+  { id: 'side_shave_undercut', label: 'Side-Shave Undercut' },
+  { id: 'wavy_shoulder', label: 'Wavy Shoulder' },
+  { id: 'twin_buns', label: 'Twin Odango Buns' },
+  { id: 'mohawk_punk', label: 'Punk Mohawk' },
+  { id: 'messy_anime', label: 'Messy Shonen Spikes' },
+  { id: 'silver_bun_elder', label: 'Elder Chignon Bun' },
 ];
 
 export const FACIAL_HAIR_CATALOG: Array<{ id: FacialHairId; label: string }> = [
@@ -445,6 +835,12 @@ export const FACIAL_HAIR_CATALOG: Array<{ id: FacialHairId; label: string }> = [
   { id: 'sage_long_beard', label: 'Long Sage Beard' },
   { id: 'goatee', label: 'Witty Goatee' },
   { id: 'whiskers', label: 'Feline / Fox Whiskers' },
+  { id: 'stubble_5oclock', label: "5 O'Clock Stubble" },
+  { id: 'full_viking_beard', label: 'Full Viking Beard' },
+  { id: 'van_dyke', label: 'Van Dyke' },
+  { id: 'mutton_chops', label: 'Mutton Chops' },
+  { id: 'soul_patch', label: 'Soul Patch' },
+  { id: 'braided_dwarf_beard', label: 'Braided Dwarf Beard' },
 ];
 
 export const FACE_MARK_CATALOG: Array<{ id: FaceMarkId; label: string }> = [
@@ -458,6 +854,169 @@ export const FACE_MARK_CATALOG: Array<{ id: FaceMarkId; label: string }> = [
   { id: 'eye_patch', label: 'Corsair Eye Patch' },
   { id: 'freckles', label: 'Folk Freckles' },
   { id: 'tribal_lines', label: 'Griot / Tribal Lines' },
+  { id: 'nose_bridge_scar', label: 'Nose Bridge Scar' },
+  { id: 'brow_slash_scar', label: 'Brow Slash Scar' },
+  { id: 'beauty_mole', label: 'Classic Beauty Mole' },
+  { id: 'vitiligo_patch', label: 'Vitiligo Face Patch' },
+  { id: 'cyber_cheek_circuit', label: 'Cyber Cheek Circuit' },
+  { id: 'tear_tattoos', label: 'Teardrop Ink' },
+  { id: 'star_freckles', label: 'Starlight Freckles' },
+  { id: 'glow_runes', label: 'Glowing Arcane Runes' },
+  { id: 'nose_bandage', label: 'Hero Nose Bandage' },
+  { id: 'clown_diamond', label: 'Harlequin Diamonds' },
+  { id: 'gold_leaf_forehead', label: 'Gold Leaf Brow Seal' },
+  { id: 'dark_undereye', label: 'Sleepless Undereye' },
+];
+
+export const BODY_MARK_CATALOG: Array<{ id: BodyMarkId; label: string }> = [
+  { id: 'none', label: 'None' },
+  { id: 'tribal_arm_bands', label: 'Tribal Arm Bands' },
+  { id: 'sleeve_tattoo_ink', label: 'Full Ink Sleeve' },
+  { id: 'cyber_circuit_veins', label: 'Cyber Circuit Veins' },
+  { id: 'glowing_magic_runes', label: 'Glowing Magic Runes' },
+  { id: 'battle_scars_chest', label: 'Battle Scars (Chest)' },
+  { id: 'vitiligo_body', label: 'Vitiligo Body Pattern' },
+  { id: 'henna_mehndi_hands', label: 'Henna / Mehndi Hands' },
+  { id: 'dragon_coil_tattoo', label: 'Dragon Coil Tattoo' },
+  { id: 'sacred_ash_stripes', label: 'Sacred Ash Stripes' },
+  { id: 'tiger_body_stripes', label: 'Tiger Body Stripes' },
+  { id: 'starlight_freckles', label: 'Starlight Body Freckles' },
+  { id: 'stitch_seams', label: 'Gothic Stitch Seams' },
+  { id: 'cracked_stone_veins', label: 'Cracked Stone Veins' },
+  { id: 'biolum_spots', label: 'Bioluminescent Spots' },
+  { id: 'anchor_sailor_tattoo', label: 'Sailor Anchor Tattoo' },
+];
+
+export const OUTERWEAR_CATALOG: Array<{ id: OuterwearStyleId; label: string }> = [
+  { id: 'none', label: 'None' },
+  { id: 'leather_biker', label: 'Leather Biker Jacket' },
+  { id: 'denim_vest', label: 'Denim Street Vest' },
+  { id: 'royal_sherwani_coat', label: 'Royal Sherwani Coat' },
+  { id: 'bomber_jacket', label: 'Aviator Bomber Jacket' },
+  { id: 'puffer_vest', label: 'Quilted Puffer Vest' },
+  { id: 'tactical_rig', label: 'Tactical Chest Rig' },
+  { id: 'fur_collared_coat', label: 'Fur-Collared Greatcoat' },
+  { id: 'academic_blazer', label: 'Academic Blazer' },
+  { id: 'shawl_wrap', label: 'Woven Shawl Wrap' },
+  { id: 'chainmail_hauberk', label: 'Chainmail Hauberk' },
+  { id: 'cyber_exovest', label: 'Cyber Exo-Vest' },
+  { id: 'hooded_poncho', label: 'Traveler Hooded Poncho' },
+  { id: 'apron_artisan', label: 'Artisan Work Apron' },
+];
+
+export const SLEEVE_CATALOG: Array<{ id: SleeveStyleId; label: string }> = [
+  { id: 'auto', label: 'Auto (Match Top)' },
+  { id: 'sleeveless', label: 'Sleeveless' },
+  { id: 'short_sleeve', label: 'Short Sleeve' },
+  { id: 'rolled_cuff', label: 'Rolled Cuff' },
+  { id: 'long_fitted', label: 'Long Fitted' },
+  { id: 'bell_wide', label: 'Wide Bell Sleeve' },
+  { id: 'puffed_royal', label: 'Puffed Royal Sleeve' },
+];
+
+export const WAIST_CATALOG: Array<{ id: WaistStyleId; label: string }> = [
+  { id: 'none', label: 'None' },
+  { id: 'leather_buckle', label: 'Leather Buckle Belt' },
+  { id: 'royal_kamarband', label: 'Royal Kamarband' },
+  { id: 'utility_pouches', label: 'Utility Pouch Belt' },
+  { id: 'obi_sash', label: 'Folded Obi Sash' },
+  { id: 'chain_belt', label: 'Punk Chain Belt' },
+  { id: 'rope_cord', label: 'Monk Rope Cord' },
+  { id: 'champion_belt', label: 'Champion Title Belt' },
+  { id: 'ammo_bandolier', label: 'Cross Bandolier' },
+  { id: 'jeweled_girdle', label: 'Jeweled Girdle' },
+];
+
+export const GLOVE_CATALOG: Array<{ id: GloveStyleId; label: string }> = [
+  { id: 'none', label: 'Bare Hands' },
+  { id: 'fingerless_biker', label: 'Fingerless Biker' },
+  { id: 'leather_gloves', label: 'Tailored Leather' },
+  { id: 'steel_gauntlets', label: 'Steel Gauntlets' },
+  { id: 'silk_opera_gloves', label: 'Silk Opera Gloves' },
+  { id: 'wrapped_bandages', label: 'Fighter Bandages' },
+  { id: 'boxing_wraps', label: 'Boxing Hand Wraps' },
+  { id: 'cyber_hands', label: 'Cybernetic Hands' },
+  { id: 'gold_bangles_stack', label: 'Royal Gold Bangles' },
+];
+
+export const FOOTWEAR_CATALOG: Array<{ id: FootwearStyleId; label: string }> = [
+  { id: 'auto', label: 'Auto (Match Outfit)' },
+  { id: 'barefoot', label: 'Barefoot' },
+  { id: 'royal_mojari', label: 'Curled Royal Mojari' },
+  { id: 'leather_boots', label: 'Riding Leather Boots' },
+  { id: 'combat_boots', label: 'Laced Combat Boots' },
+  { id: 'sneakers_high', label: 'High-Top Sneakers' },
+  { id: 'dress_oxfords', label: 'Polished Oxfords' },
+  { id: 'sandals_strappy', label: 'Strappy Sandals' },
+  { id: 'armored_sabatons', label: 'Armored Sabatons' },
+  { id: 'cyber_greaves', label: 'Neon Cyber Greaves' },
+  { id: 'heels_classic', label: 'Classic Heels' },
+  { id: 'tabi_ninja', label: 'Shinobi Tabi Boots' },
+];
+
+export const EYEWEAR_CATALOG: Array<{ id: EyewearStyleId; label: string }> = [
+  { id: 'none', label: 'None' },
+  { id: 'round_scholar', label: 'Round Scholar Glasses' },
+  { id: 'rectangular_modern', label: 'Modern Rectangular' },
+  { id: 'aviator_shades', label: 'Aviator Shades' },
+  { id: 'cat_eye_chic', label: 'Cat-Eye Chic' },
+  { id: 'monocle_brass', label: 'Brass Monocle' },
+  { id: 'steampunk_goggles', label: 'Steampunk Goggles' },
+  { id: 'cyber_holo_visor', label: 'Cyber Holo-Visor' },
+  { id: 'tactical_hud', label: 'Tactical HUD Lens' },
+  { id: 'heart_shades', label: 'Heart Shades' },
+  { id: 'pirate_eyepatch', label: 'Corsair Eyepatch' },
+  { id: 'blindfold_mystic', label: 'Mystic Blindfold' },
+];
+
+export const EAR_JEWELRY_CATALOG: Array<{ id: EarJewelryId; label: string }> = [
+  { id: 'none', label: 'None' },
+  { id: 'gold_studs', label: 'Gold Ear Studs' },
+  { id: 'hoop_earrings', label: 'Hoop Earrings' },
+  { id: 'royal_jhumkas', label: 'Royal Jhumka Drops' },
+  { id: 'feather_drop', label: 'Feather Drop Earrings' },
+  { id: 'elf_ear_cuffs', label: 'Elven Ear Cuffs' },
+  { id: 'cyber_comms_earpiece', label: 'Cyber Comms Earpiece' },
+  { id: 'nose_ring_nath', label: 'Royal Nose Ring (Nath)' },
+  { id: 'brow_piercing', label: 'Twin Brow Piercing' },
+];
+
+export const NECKWEAR_CATALOG: Array<{ id: NeckwearStyleId; label: string }> = [
+  { id: 'none', label: 'None' },
+  { id: 'locket_pendant', label: 'Gold Locket Pendant' },
+  { id: 'crystal_amulet_chain', label: 'Crystal Amulet Chain' },
+  { id: 'choker_velvet', label: 'Velvet Choker' },
+  { id: 'dog_tags', label: 'Tactical Dog Tags' },
+  { id: 'tie_necktie', label: 'Tailored Necktie' },
+  { id: 'bow_tie', label: 'Classic Bow Tie' },
+  { id: 'pearl_strand', label: 'Pearl Strand' },
+  { id: 'stethoscope_drape', label: 'Clinical Stethoscope' },
+  { id: 'scarf_bandana', label: 'Neck Bandana Scarf' },
+];
+
+export const WRISTWEAR_CATALOG: Array<{ id: WristwearStyleId; label: string }> = [
+  { id: 'none', label: 'None' },
+  { id: 'smartwatch', label: 'Smartwatch' },
+  { id: 'gold_kadas', label: 'Royal Gold Kadas' },
+  { id: 'leather_bracers', label: 'Leather Bracers' },
+  { id: 'spiked_cuffs', label: 'Spiked Punk Cuffs' },
+  { id: 'bead_bracelets', label: 'Woven Bead Bracelets' },
+  { id: 'holo_wristpad', label: 'Cyber Holo-Wristpad' },
+];
+
+export const BACK_GEAR_CATALOG: Array<{ id: BackGearStyleId; label: string }> = [
+  { id: 'none', label: 'None' },
+  { id: 'adventure_backpack', label: 'Adventure Backpack' },
+  { id: 'archer_quiver', label: 'Archer Arrow Quiver' },
+  { id: 'crossed_katanas', label: 'Crossed Katanas' },
+  { id: 'electric_guitar_sling', label: 'Slung Electric Guitar' },
+  { id: 'jetpack_twin', label: 'Twin Thruster Jetpack' },
+  { id: 'scroll_cylinder', label: 'Master Scroll Cylinder' },
+  { id: 'shield_slung', label: 'Back-Slung Heater Shield' },
+  { id: 'oxygen_tanks', label: 'Twin EVA Oxygen Tanks' },
+  { id: 'lantern_pole', label: 'Spirit Lantern Pole' },
+  { id: 'cyber_halo_ring', label: 'Cyber Halo Ring' },
+  { id: 'plush_satchel', label: 'Cozy Messenger Satchel' },
 ];
 
 export const TOP_STYLE_CATALOG: Array<{ id: TopStyleId; label: string }> = [
@@ -733,6 +1292,21 @@ const VALID_PATTERNS = new Set<SurfacePatternId>(SURFACE_PATTERN_CATALOG.map((c)
 const VALID_WINGS = new Set<WingStyleId>(WING_STYLE_CATALOG.map((c) => c.id));
 const VALID_TAILS = new Set<TailStyleId>(TAIL_STYLE_CATALOG.map((c) => c.id));
 const VALID_AURAS = new Set<AuraStyleId>(AURA_STYLE_CATALOG.map((c) => c.id));
+const VALID_EYEBROWS = new Set<EyebrowStyleId>(EYEBROW_STYLE_CATALOG.map((c) => c.id));
+const VALID_PUPILS = new Set<PupilStyleId>(PUPIL_STYLE_CATALOG.map((c) => c.id));
+const VALID_EYELASHES = new Set<EyelashStyleId>(EYELASH_STYLE_CATALOG.map((c) => c.id));
+const VALID_MOUTHS = new Set<MouthStyleId>(MOUTH_STYLE_CATALOG.map((c) => c.id));
+const VALID_BODY_MARKS = new Set<BodyMarkId>(BODY_MARK_CATALOG.map((c) => c.id));
+const VALID_OUTERWEAR = new Set<OuterwearStyleId>(OUTERWEAR_CATALOG.map((c) => c.id));
+const VALID_SLEEVES = new Set<SleeveStyleId>(SLEEVE_CATALOG.map((c) => c.id));
+const VALID_WAISTS = new Set<WaistStyleId>(WAIST_CATALOG.map((c) => c.id));
+const VALID_GLOVES = new Set<GloveStyleId>(GLOVE_CATALOG.map((c) => c.id));
+const VALID_FOOTWEAR = new Set<FootwearStyleId>(FOOTWEAR_CATALOG.map((c) => c.id));
+const VALID_EYEWEAR = new Set<EyewearStyleId>(EYEWEAR_CATALOG.map((c) => c.id));
+const VALID_EAR_JEWELRY = new Set<EarJewelryId>(EAR_JEWELRY_CATALOG.map((c) => c.id));
+const VALID_NECKWEAR = new Set<NeckwearStyleId>(NECKWEAR_CATALOG.map((c) => c.id));
+const VALID_WRISTWEAR = new Set<WristwearStyleId>(WRISTWEAR_CATALOG.map((c) => c.id));
+const VALID_BACK_GEAR = new Set<BackGearStyleId>(BACK_GEAR_CATALOG.map((c) => c.id));
 
 const HEX_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 
@@ -1774,6 +2348,195 @@ function applyNaturalTraitHints(dna: CharacterDNA, traitsText: string): void {
   if (/\bhalo|radiant\b/.test(t)) dna.appendages.aura = 'solar_halo';
   else if (/\blunar|moon\b/.test(t)) dna.appendages.aura = 'lunar_crescent';
   else if (/\bember|fiery|flaming\b/.test(t)) dna.appendages.aura = 'ember_sparks';
+
+  // Wave 7 Granular Hair & Facial Hair Hints
+  if (/\bbob\s*cut\b/.test(t)) dna.head.hairStyle = 'bob_cut';
+  else if (/\bpixie\b/.test(t)) dna.head.hairStyle = 'pixie_short';
+  else if (/\bafro\b/.test(t)) dna.head.hairStyle = 'curly_afro';
+  else if (/\bponytail\b/.test(t)) dna.head.hairStyle = 'ponytail_high';
+  else if (/\bundercut|side\s*shave\b/.test(t)) dna.head.hairStyle = 'side_shave_undercut';
+  else if (/\bwavy\s*hair\b/.test(t)) dna.head.hairStyle = 'wavy_shoulder';
+  else if (/\btwin\s*buns|odango\b/.test(t)) dna.head.hairStyle = 'twin_buns';
+  else if (/\bmohawk\b/.test(t)) dna.head.hairStyle = 'mohawk_punk';
+  else if (/\bmessy\s*(anime|hair)\b/.test(t)) dna.head.hairStyle = 'messy_anime';
+
+  if (/\bstubble\b/.test(t)) dna.head.facialHair = 'stubble_5oclock';
+  else if (/\bviking\s*beard\b/.test(t)) dna.head.facialHair = 'full_viking_beard';
+  else if (/\bbraided\s*beard|dwarf\s*beard\b/.test(t)) dna.head.facialHair = 'braided_dwarf_beard';
+  else if (/\bvan\s*dyke\b/.test(t)) dna.head.facialHair = 'van_dyke';
+  else if (/\bmutton\s*chops\b/.test(t)) dna.head.facialHair = 'mutton_chops';
+
+  // Wave 7 Eyes, Eyebrows, Lashes & Mouth Hints
+  if (/\bcat\s*eyes?|feline\s*pupils?\b/.test(t)) dna.head.pupilStyle = 'slit_cat';
+  else if (/\bstar\s*(eyes?|pupils?)\b/.test(t)) dna.head.pupilStyle = 'star_sparkle';
+  else if (/\bcyber\s*(eyes?|pupils?)\b/.test(t)) dna.head.pupilStyle = 'ring_cyber';
+  else if (/\bcrosshair\b/.test(t)) dna.head.pupilStyle = 'crosshair';
+  else if (/\bheart\s*(eyes?|pupils?)\b/.test(t)) dna.head.pupilStyle = 'heart_cute';
+  else if (/\bglowing\s*blank|blank\s*eyes?\b/.test(t)) dna.head.pupilStyle = 'blank_glow';
+
+  if (/\bthick\s*brows?|bushy\s*brows?\b/.test(t)) dna.head.eyebrowStyle = /\bbushy\b/.test(t) ? 'bushy_elder' : 'thick_bold';
+  else if (/\bnotched\s*brow|slit\s*brow\b/.test(t)) dna.head.eyebrowStyle = 'slit_notched';
+  else if (/\bfierce\s*brows?\b/.test(t)) dna.head.eyebrowStyle = 'angled_fierce';
+
+  if (/\bwinged\s*(liner|eyeliner)\b/.test(t)) dna.head.eyelashStyle = 'winged_liner';
+  else if (/\bkohl|kajal\b/.test(t)) dna.head.eyelashStyle = 'kohl_kajal';
+  else if (/\blong\s*lashes\b/.test(t)) dna.head.eyelashStyle = 'dramatic_long';
+
+  if (/\bvampire|fangs?\b/.test(t)) dna.head.mouthStyle = 'fangs_vampire';
+  else if (/\btusks?|boar\b/.test(t)) dna.head.mouthStyle = 'tusks_boar';
+  else if (/\bstitched\s*(mouth|lips?)\b/.test(t)) dna.head.mouthStyle = 'stitched_gothic';
+  else if (/\bfull\s*lips?\b/.test(t)) dna.head.mouthStyle = 'full_lips';
+  else if (/\bwide\s*grin\b/.test(t)) dna.head.mouthStyle = 'wide_grin';
+
+  if (/\bheterochromia\b/.test(t)) {
+    dna.palette.eyeSecondary = dna.palette.accent || '#38bdf8';
+  }
+
+  // Wave 7 Face Marks & Body Marks Hints
+  const addFaceMark = (mark: FaceMarkId) => {
+    if (dna.head.faceMark === 'none') dna.head.faceMark = mark;
+    else if (dna.head.faceMark !== mark) dna.head.secondaryFaceMark = mark;
+  };
+  if (/\bnose\s*(bridge\s*)?scar\b/.test(t)) addFaceMark('nose_bridge_scar');
+  else if (/\bbrow\s*(slash\s*)?scar\b/.test(t)) addFaceMark('brow_slash_scar');
+  if (/\bbeauty\s*mole|mole\b/.test(t)) addFaceMark('beauty_mole');
+  if (/\bstar\s*freckles?\b/.test(t)) addFaceMark('star_freckles');
+  else if (/\bfreckles?\b/.test(t)) addFaceMark('freckles');
+  if (/\bvitiligo\b/.test(t)) {
+    addFaceMark('vitiligo_patch');
+    dna.bodyMarks = Array.from(new Set([...(dna.bodyMarks || []), 'vitiligo_body' as BodyMarkId])).slice(0, 3);
+  }
+  if (/\bnose\s*bandage\b/.test(t)) addFaceMark('nose_bandage');
+  if (/\bcyber\s*(cheek|circuit|implant)\b/.test(t)) addFaceMark('cyber_cheek_circuit');
+  if (/\bglow(ing)?\s*runes?\b/.test(t)) {
+    addFaceMark('glow_runes');
+    dna.bodyMarks = Array.from(new Set([...(dna.bodyMarks || []), 'glowing_magic_runes' as BodyMarkId])).slice(0, 3);
+  }
+  if (/\bblush|rosy\s*cheeks?\b/.test(t)) dna.head.blushIntensity = 0.55;
+
+  const pushBodyMark = (bm: BodyMarkId) => {
+    const cur = dna.bodyMarks ? [...dna.bodyMarks] : [];
+    if (!cur.includes(bm) && cur.length < 3) cur.push(bm);
+    dna.bodyMarks = cur;
+  };
+  if (/\bdragon\s*tattoo\b/.test(t)) pushBodyMark('dragon_coil_tattoo');
+  else if (/\bsleeve\s*tattoo|tattoos?|inked\b/.test(t)) pushBodyMark('sleeve_tattoo_ink');
+  if (/\btribal\s*(arm|tattoo|bands?)\b/.test(t)) pushBodyMark('tribal_arm_bands');
+  if (/\bhenna|mehndi\b/.test(t)) pushBodyMark('henna_mehndi_hands');
+  if (/\bchest\s*scars?|battle\s*scars?\b/.test(t)) pushBodyMark('battle_scars_chest');
+  if (/\bcyber\s*veins?\b/.test(t)) pushBodyMark('cyber_circuit_veins');
+  if (/\banchor\s*tattoo\b/.test(t)) pushBodyMark('anchor_sailor_tattoo');
+
+  // Wave 7 Layered Clothing (Outerwear, Sleeves, Waist, Gloves, Footwear)
+  if (/\bleather\s*(biker|jacket)\b/.test(t)) dna.outfit.outerwear = 'leather_biker';
+  else if (/\bdenim\s*vest\b/.test(t)) dna.outfit.outerwear = 'denim_vest';
+  else if (/\bsherwani\b/.test(t)) dna.outfit.outerwear = 'royal_sherwani_coat';
+  else if (/\bbomber\s*jacket\b/.test(t)) dna.outfit.outerwear = 'bomber_jacket';
+  else if (/\bpuffer\s*vest\b/.test(t)) dna.outfit.outerwear = 'puffer_vest';
+  else if (/\btactical\s*rig\b/.test(t)) dna.outfit.outerwear = 'tactical_rig';
+  else if (/\bfur[\s-]collar(ed)?\s*coat\b/.test(t)) dna.outfit.outerwear = 'fur_collared_coat';
+  else if (/\bblazer\b/.test(t)) dna.outfit.outerwear = 'academic_blazer';
+  else if (/\bshawl\b/.test(t)) dna.outfit.outerwear = 'shawl_wrap';
+  else if (/\bchainmail\b/.test(t)) dna.outfit.outerwear = 'chainmail_hauberk';
+  else if (/\bexo[\s-]?vest\b/.test(t)) dna.outfit.outerwear = 'cyber_exovest';
+  else if (/\bponcho\b/.test(t)) dna.outfit.outerwear = 'hooded_poncho';
+  else if (/\bapron\b/.test(t)) dna.outfit.outerwear = 'apron_artisan';
+
+  if (/\bsleeveless\b/.test(t)) dna.outfit.sleeveStyle = 'sleeveless';
+  else if (/\brolled\s*(cuff|sleeves?)\b/.test(t)) dna.outfit.sleeveStyle = 'rolled_cuff';
+  else if (/\bbell\s*sleeves?\b/.test(t)) dna.outfit.sleeveStyle = 'bell_wide';
+  else if (/\bpuffed\s*sleeves?\b/.test(t)) dna.outfit.sleeveStyle = 'puffed_royal';
+
+  if (/\bkamarband\b/.test(t)) dna.outfit.waistStyle = 'royal_kamarband';
+  else if (/\butility\s*(belt|pouches)\b/.test(t)) dna.outfit.waistStyle = 'utility_pouches';
+  else if (/\bobi\s*sash\b/.test(t)) dna.outfit.waistStyle = 'obi_sash';
+  else if (/\bchain\s*belt\b/.test(t)) dna.outfit.waistStyle = 'chain_belt';
+  else if (/\bbandolier\b/.test(t)) dna.outfit.waistStyle = 'ammo_bandolier';
+  else if (/\bchampion\s*belt\b/.test(t)) dna.outfit.waistStyle = 'champion_belt';
+  else if (/\bbuckle\s*belt|leather\s*belt\b/.test(t)) dna.outfit.waistStyle = 'leather_buckle';
+
+  if (/\bfingerless\s*gloves?\b/.test(t)) dna.outfit.gloves = 'fingerless_biker';
+  else if (/\bgauntlets?\b/.test(t)) dna.outfit.gloves = 'steel_gauntlets';
+  else if (/\bopera\s*gloves?\b/.test(t)) dna.outfit.gloves = 'silk_opera_gloves';
+  else if (/\bboxing\s*wraps?\b/.test(t)) dna.outfit.gloves = 'boxing_wraps';
+  else if (/\bwrapped\s*bandages|hand\s*bandages?\b/.test(t)) dna.outfit.gloves = 'wrapped_bandages';
+  else if (/\bcyber\s*hands?\b/.test(t)) dna.outfit.gloves = 'cyber_hands';
+  else if (/\bgold\s*bangles?\b/.test(t)) dna.outfit.gloves = 'gold_bangles_stack';
+  else if (/\bgloves?\b/.test(t)) dna.outfit.gloves = 'leather_gloves';
+
+  if (/\bcombat\s*boots?\b/.test(t)) dna.outfit.footwear = 'combat_boots';
+  else if (/\bsneakers?\b/.test(t)) dna.outfit.footwear = 'sneakers_high';
+  else if (/\bmojari\b/.test(t)) dna.outfit.footwear = 'royal_mojari';
+  else if (/\bsabatons?\b/.test(t)) dna.outfit.footwear = 'armored_sabatons';
+  else if (/\bcyber\s*greaves?\b/.test(t)) dna.outfit.footwear = 'cyber_greaves';
+  else if (/\bheels?\b/.test(t)) dna.outfit.footwear = 'heels_classic';
+  else if (/\btabi\b/.test(t)) dna.outfit.footwear = 'tabi_ninja';
+  else if (/\bsandals?\b/.test(t)) dna.outfit.footwear = 'sandals_strappy';
+  else if (/\bbarefoot\b/.test(t)) dna.outfit.footwear = 'barefoot';
+  else if (/\bboots?\b/.test(t)) dna.outfit.footwear = 'leather_boots';
+
+  // Wave 7 5-Slot Accessories
+  const acc: Partial<CharacterAccessoriesSpec> = { ...(dna.accessories || {}) };
+  let accDirty = false;
+  if (/\baviator|sunglasses|shades\b/.test(t)) { acc.eyewear = /\bheart\b/.test(t) ? 'heart_shades' : 'aviator_shades'; accDirty = true; }
+  else if (/\bmonocle\b/.test(t)) { acc.eyewear = 'monocle_brass'; accDirty = true; }
+  else if (/\bgoggles\b/.test(t)) { acc.eyewear = 'steampunk_goggles'; accDirty = true; }
+  else if (/\bholo[\s-]?visor|cyber\s*visor\b/.test(t)) { acc.eyewear = 'cyber_holo_visor'; accDirty = true; }
+  else if (/\btactical\s*hud\b/.test(t)) { acc.eyewear = 'tactical_hud'; accDirty = true; }
+  else if (/\bcat[\s-]?eye\b/.test(t)) { acc.eyewear = 'cat_eye_chic'; accDirty = true; }
+  else if (/\bblindfold\b/.test(t)) { acc.eyewear = 'blindfold_mystic'; accDirty = true; }
+  else if (/\beye\s*patch\b/.test(t)) { acc.eyewear = 'pirate_eyepatch'; accDirty = true; }
+  else if (/\bglasses|spectacles\b/.test(t)) { acc.eyewear = /\brectangular|square\b/.test(t) ? 'rectangular_modern' : 'round_scholar'; accDirty = true; }
+
+  if (/\bjhumkas?\b/.test(t)) { acc.earJewelry = 'royal_jhumkas'; accDirty = true; }
+  else if (/\bhoop\s*earrings?\b/.test(t)) { acc.earJewelry = 'hoop_earrings'; accDirty = true; }
+  else if (/\bnose\s*ring|nath\b/.test(t)) { acc.earJewelry = 'nose_ring_nath'; accDirty = true; }
+  else if (/\bcomms?\s*earpiece|earpiece\b/.test(t)) { acc.earJewelry = 'cyber_comms_earpiece'; accDirty = true; }
+  else if (/\bear\s*cuffs?\b/.test(t)) { acc.earJewelry = 'elf_ear_cuffs'; accDirty = true; }
+  else if (/\bearrings?|studs?\b/.test(t)) { acc.earJewelry = 'gold_studs'; accDirty = true; }
+
+  if (/\bstethoscope\b/.test(t)) { acc.neckwear = 'stethoscope_drape'; accDirty = true; }
+  else if (/\bbow\s*tie\b/.test(t)) { acc.neckwear = 'bow_tie'; accDirty = true; }
+  else if (/\bnecktie|tie\b/.test(t)) { acc.neckwear = 'tie_necktie'; accDirty = true; }
+  else if (/\bchoker\b/.test(t)) { acc.neckwear = 'choker_velvet'; accDirty = true; }
+  else if (/\bdog\s*tags?\b/.test(t)) { acc.neckwear = 'dog_tags'; accDirty = true; }
+  else if (/\bpearl\b/.test(t)) { acc.neckwear = 'pearl_strand'; accDirty = true; }
+  else if (/\bamulet\b/.test(t)) { acc.neckwear = 'crystal_amulet_chain'; accDirty = true; }
+  else if (/\blocket|pendant\b/.test(t)) { acc.neckwear = 'locket_pendant'; accDirty = true; }
+
+  if (/\bsmartwatch\b/.test(t)) { acc.wristwear = 'smartwatch'; accDirty = true; }
+  else if (/\bkadas?\b/.test(t)) { acc.wristwear = 'gold_kadas'; accDirty = true; }
+  else if (/\bbracers?\b/.test(t)) { acc.wristwear = 'leather_bracers'; accDirty = true; }
+  else if (/\bspiked\s*cuffs?\b/.test(t)) { acc.wristwear = 'spiked_cuffs'; accDirty = true; }
+  else if (/\bwristpad\b/.test(t)) { acc.wristwear = 'holo_wristpad'; accDirty = true; }
+
+  if (/\bbackpack\b/.test(t)) { acc.backGear = 'adventure_backpack'; accDirty = true; }
+  else if (/\bquiver\b/.test(t)) { acc.backGear = 'archer_quiver'; accDirty = true; }
+  else if (/\bkatanas?\b/.test(t)) { acc.backGear = 'crossed_katanas'; accDirty = true; }
+  else if (/\bguitar\b/.test(t)) { acc.backGear = 'electric_guitar_sling'; accDirty = true; }
+  else if (/\bjetpack\b/.test(t)) { acc.backGear = 'jetpack_twin'; accDirty = true; }
+  else if (/\bscroll\s*cylinder\b/.test(t)) { acc.backGear = 'scroll_cylinder'; accDirty = true; }
+  else if (/\bshield\b/.test(t)) { acc.backGear = 'shield_slung'; accDirty = true; }
+  else if (/\boxygen\s*tanks?\b/.test(t)) { acc.backGear = 'oxygen_tanks'; accDirty = true; }
+  else if (/\bsatchel\b/.test(t)) { acc.backGear = 'plush_satchel'; accDirty = true; }
+
+  if (accDirty) {
+    dna.accessories = { ...DEFAULT_ACCESSORIES, ...acc };
+  }
+}
+
+/**
+ * Pure deterministic natural-language trait parser — maps descriptive phrases
+ * (e.g. "glasses, nose scar, leather jacket, backpack, vampire fangs, sleeve tattoo")
+ * into a validated CharacterDNA genome without any LLM call or Math.random().
+ */
+export function parseNaturalLanguageDnaTraits(
+  traitsText: string,
+  baseDna?: CharacterDNA
+): CharacterDNA {
+  const working: CharacterDNA = baseDna ? structuredClone(baseDna) : createBaseDna('humanoid');
+  applyNaturalTraitHints(working, traitsText);
+  return validateAndNormalizeDna(working) || working;
 }
 
 function normEnum<T extends string>(val: unknown, validSet: Set<T>, fallback: T): T {
@@ -1810,6 +2573,8 @@ export function validateAndNormalizeDna(
   const oRaw = (obj.outfit && typeof obj.outfit === 'object' ? obj.outfit : obj) as Record<string, unknown>;
   const aRaw = (obj.appendages && typeof obj.appendages === 'object' ? obj.appendages : obj) as Record<string, unknown>;
   const pRaw = (obj.palette && typeof obj.palette === 'object' ? obj.palette : obj) as Record<string, unknown>;
+  const fmRaw = (obj.faceMorph && typeof obj.faceMorph === 'object' ? obj.faceMorph : null) as Record<string, unknown> | null;
+  const accRaw = (obj.accessories && typeof obj.accessories === 'object' ? obj.accessories : obj) as Record<string, unknown>;
 
   const primary = cleanHex(pRaw.primary ?? fallbackMember?.primaryColor, base.palette.primary);
   const secondary = cleanHex(pRaw.secondary, darkenHexSimple(primary, 0.56));
@@ -1819,7 +2584,108 @@ export function validateAndNormalizeDna(
   const eye = cleanHex(pRaw.eye, base.palette.eye);
   const patternTint = cleanHex(pRaw.patternTint, accent);
 
+  const eyeSecondaryVal = pRaw.eyeSecondary ?? base.palette.eyeSecondary;
+  const lipVal = pRaw.lip ?? base.palette.lip;
+  const browVal = pRaw.brow ?? base.palette.brow;
+  const markTintVal = pRaw.markTint ?? base.palette.markTint;
+
   const extraArmsNum = Number(aRaw.extraArms);
+
+  // Optional Wave 7 head fields (only populated when set or non-default)
+  const eyebrowStyle = hRaw.eyebrowStyle !== undefined || base.head.eyebrowStyle
+    ? normEnum(hRaw.eyebrowStyle, VALID_EYEBROWS, base.head.eyebrowStyle || 'natural_arch')
+    : undefined;
+  const pupilStyle = hRaw.pupilStyle !== undefined || base.head.pupilStyle
+    ? normEnum(hRaw.pupilStyle, VALID_PUPILS, base.head.pupilStyle || 'round')
+    : undefined;
+  const eyelashStyle = hRaw.eyelashStyle !== undefined || base.head.eyelashStyle
+    ? normEnum(hRaw.eyelashStyle, VALID_EYELASHES, base.head.eyelashStyle || 'none')
+    : undefined;
+  const mouthStyle = hRaw.mouthStyle !== undefined || base.head.mouthStyle
+    ? normEnum(hRaw.mouthStyle, VALID_MOUTHS, base.head.mouthStyle || 'classic')
+    : undefined;
+  const secondaryFaceMark = hRaw.secondaryFaceMark !== undefined || base.head.secondaryFaceMark
+    ? normEnum(hRaw.secondaryFaceMark, VALID_FACE_MARKS, base.head.secondaryFaceMark || 'none')
+    : undefined;
+  const blushIntensity = hRaw.blushIntensity !== undefined || base.head.blushIntensity !== undefined
+    ? clampNum(hRaw.blushIntensity, 0, 1, base.head.blushIntensity ?? 0)
+    : undefined;
+
+  // Optional Wave 7 outfit sub-layers
+  const outerwear = oRaw.outerwear !== undefined || base.outfit.outerwear
+    ? normEnum(oRaw.outerwear, VALID_OUTERWEAR, base.outfit.outerwear || 'none')
+    : undefined;
+  const sleeveStyle = oRaw.sleeveStyle !== undefined || base.outfit.sleeveStyle
+    ? normEnum(oRaw.sleeveStyle, VALID_SLEEVES, base.outfit.sleeveStyle || 'auto')
+    : undefined;
+  const waistStyle = oRaw.waistStyle !== undefined || base.outfit.waistStyle
+    ? normEnum(oRaw.waistStyle, VALID_WAISTS, base.outfit.waistStyle || 'none')
+    : undefined;
+  const gloves = oRaw.gloves !== undefined || base.outfit.gloves
+    ? normEnum(oRaw.gloves, VALID_GLOVES, base.outfit.gloves || 'none')
+    : undefined;
+  const footwear = oRaw.footwear !== undefined || base.outfit.footwear
+    ? normEnum(oRaw.footwear, VALID_FOOTWEAR, base.outfit.footwear || 'auto')
+    : undefined;
+
+  // Optional Wave 7 faceMorph (strictly clamped)
+  let faceMorph: CharacterFaceMorph | undefined;
+  if (fmRaw || base.faceMorph) {
+    const src = fmRaw || (base.faceMorph as Record<string, unknown>);
+    faceMorph = {
+      jawWidth: clampNum(src.jawWidth, 0.72, 1.32, DEFAULT_FACE_MORPH.jawWidth),
+      chinLength: clampNum(src.chinLength, 0.75, 1.3, DEFAULT_FACE_MORPH.chinLength),
+      cheekboneWidth: clampNum(src.cheekboneWidth, 0.75, 1.3, DEFAULT_FACE_MORPH.cheekboneWidth),
+      eyeSize: clampNum(src.eyeSize, 0.75, 1.35, DEFAULT_FACE_MORPH.eyeSize),
+      eyeSpacing: clampNum(src.eyeSpacing, 0.78, 1.28, DEFAULT_FACE_MORPH.eyeSpacing),
+      eyeTilt: clampNum(src.eyeTilt, -0.35, 0.35, DEFAULT_FACE_MORPH.eyeTilt),
+      browHeight: clampNum(src.browHeight, -0.3, 0.3, DEFAULT_FACE_MORPH.browHeight),
+      browThickness: clampNum(src.browThickness, 0.65, 1.55, DEFAULT_FACE_MORPH.browThickness),
+      noseScale: clampNum(src.noseScale, 0.7, 1.35, DEFAULT_FACE_MORPH.noseScale),
+      mouthWidth: clampNum(src.mouthWidth, 0.75, 1.3, DEFAULT_FACE_MORPH.mouthWidth),
+      earScale: clampNum(src.earScale, 0.7, 1.4, DEFAULT_FACE_MORPH.earScale),
+      neckLength: clampNum(src.neckLength, 0.75, 1.3, DEFAULT_FACE_MORPH.neckLength),
+    };
+  }
+
+  // Optional Wave 7 bodyMarks (validated, deduped, excludes 'none', capped at 3)
+  let bodyMarks: BodyMarkId[] | undefined;
+  const rawBm = obj.bodyMarks ?? base.bodyMarks;
+  if (Array.isArray(rawBm) || typeof rawBm === 'string') {
+    const list = Array.isArray(rawBm) ? rawBm : rawBm.split(',');
+    const deduped: BodyMarkId[] = [];
+    for (const item of list) {
+      const bm = normEnum(item, VALID_BODY_MARKS, 'none');
+      if (bm !== 'none' && !deduped.includes(bm)) {
+        deduped.push(bm);
+        if (deduped.length >= 3) break;
+      }
+    }
+    if (deduped.length > 0 || Array.isArray(obj.bodyMarks)) {
+      bodyMarks = deduped;
+    }
+  }
+
+  // Optional Wave 7 5-slot accessories
+  const hasExplicitAcc =
+    (obj.accessories && typeof obj.accessories === 'object') ||
+    base.accessories ||
+    obj.eyewear !== undefined ||
+    obj.earJewelry !== undefined ||
+    obj.neckwear !== undefined ||
+    obj.wristwear !== undefined ||
+    obj.backGear !== undefined;
+
+  let accessories: CharacterAccessoriesSpec | undefined;
+  if (hasExplicitAcc) {
+    accessories = {
+      eyewear: normEnum(accRaw.eyewear, VALID_EYEWEAR, base.accessories?.eyewear || 'none'),
+      earJewelry: normEnum(accRaw.earJewelry, VALID_EAR_JEWELRY, base.accessories?.earJewelry || 'none'),
+      neckwear: normEnum(accRaw.neckwear, VALID_NECKWEAR, base.accessories?.neckwear || 'none'),
+      wristwear: normEnum(accRaw.wristwear, VALID_WRISTWEAR, base.accessories?.wristwear || 'none'),
+      backGear: normEnum(accRaw.backGear, VALID_BACK_GEAR, base.accessories?.backGear || 'none'),
+    };
+  }
 
   return {
     version: 1,
@@ -1842,6 +2708,12 @@ export function validateAndNormalizeDna(
       hairStyle: normEnum(hRaw.hairStyle, VALID_HAIR_STYLES, base.head.hairStyle),
       facialHair: normEnum(hRaw.facialHair, VALID_FACIAL_HAIR, base.head.facialHair),
       faceMark: normEnum(hRaw.faceMark, VALID_FACE_MARKS, base.head.faceMark),
+      ...(eyebrowStyle ? { eyebrowStyle } : {}),
+      ...(pupilStyle ? { pupilStyle } : {}),
+      ...(eyelashStyle ? { eyelashStyle } : {}),
+      ...(mouthStyle ? { mouthStyle } : {}),
+      ...(secondaryFaceMark ? { secondaryFaceMark } : {}),
+      ...(blushIntensity !== undefined ? { blushIntensity } : {}),
     },
     outfit: {
       topStyle: normEnum(oRaw.topStyle, VALID_TOP_STYLES, base.outfit.topStyle),
@@ -1850,6 +2722,11 @@ export function validateAndNormalizeDna(
       capeStyle: normEnum(oRaw.capeStyle, VALID_CAPES, base.outfit.capeStyle),
       headwear: normEnum(oRaw.headwear, VALID_HEADWEAR, base.outfit.headwear),
       surfacePattern: normEnum(oRaw.surfacePattern ?? oRaw.pattern, VALID_PATTERNS, base.outfit.surfacePattern),
+      ...(outerwear ? { outerwear } : {}),
+      ...(sleeveStyle ? { sleeveStyle } : {}),
+      ...(waistStyle ? { waistStyle } : {}),
+      ...(gloves ? { gloves } : {}),
+      ...(footwear ? { footwear } : {}),
     },
     appendages: {
       wings: normEnum(aRaw.wings, VALID_WINGS, base.appendages.wings),
@@ -1865,7 +2742,22 @@ export function validateAndNormalizeDna(
       hair,
       eye,
       patternTint,
+      ...(typeof eyeSecondaryVal === 'string' && HEX_RE.test(eyeSecondaryVal.trim())
+        ? { eyeSecondary: cleanHex(eyeSecondaryVal, eye) }
+        : {}),
+      ...(typeof lipVal === 'string' && HEX_RE.test(lipVal.trim())
+        ? { lip: cleanHex(lipVal, '#b85d63') }
+        : {}),
+      ...(typeof browVal === 'string' && HEX_RE.test(browVal.trim())
+        ? { brow: cleanHex(browVal, hair) }
+        : {}),
+      ...(typeof markTintVal === 'string' && HEX_RE.test(markTintVal.trim())
+        ? { markTint: cleanHex(markTintVal, accent) }
+        : {}),
     },
+    ...(faceMorph ? { faceMorph } : {}),
+    ...(bodyMarks ? { bodyMarks } : {}),
+    ...(accessories ? { accessories } : {}),
     ...(typeof obj.seedTag === 'string' && obj.seedTag.trim()
       ? { seedTag: obj.seedTag.trim().slice(0, 48) }
       : {}),
@@ -1890,6 +2782,25 @@ export function syncMemberWithDna(member: CastMember, dna: CharacterDNA): CastMe
 
 export function computeDnaFingerprint(member: CastMember): CharacterSilhouetteFingerprint {
   const dna = member.dna || hydrateArchetypeToDna(member);
+  const acc = resolveAccessories(dna);
+  const fm = resolveFaceMorph(dna);
+  const bms = resolveBodyMarks(dna);
+  const faceMorphSignature = Number(
+    (
+      Math.abs(fm.jawWidth - 1) +
+      Math.abs(fm.chinLength - 1) +
+      Math.abs(fm.cheekboneWidth - 1) +
+      Math.abs(fm.eyeSize - 1) +
+      Math.abs(fm.eyeSpacing - 1) +
+      Math.abs(fm.eyeTilt) * 2 +
+      Math.abs(fm.browHeight) * 2 +
+      Math.abs(fm.browThickness - 1) +
+      Math.abs(fm.noseScale - 1) +
+      Math.abs(fm.mouthWidth - 1) +
+      Math.abs(fm.earScale - 1) +
+      Math.abs(fm.neckLength - 1)
+    ).toFixed(3)
+  );
   return {
     castId: member.id,
     name: member.name,
@@ -1913,6 +2824,22 @@ export function computeDnaFingerprint(member: CastMember): CharacterSilhouetteFi
     primaryHex: dna.palette.primary,
     skinHex: dna.palette.skin,
     hasCustomDna: Boolean(member.dna),
+    eyebrowStyle: dna.head.eyebrowStyle || 'natural_arch',
+    pupilStyle: dna.head.pupilStyle || 'round',
+    mouthStyle: dna.head.mouthStyle || 'classic',
+    faceMark: dna.head.faceMark,
+    secondaryFaceMark: dna.head.secondaryFaceMark || 'none',
+    bodyMarksKey: [...bms].sort().join(','),
+    outerwear: dna.outfit.outerwear || 'none',
+    waistStyle: dna.outfit.waistStyle || 'none',
+    gloves: dna.outfit.gloves || 'none',
+    footwear: dna.outfit.footwear || 'auto',
+    eyewear: acc.eyewear,
+    earJewelry: acc.earJewelry,
+    neckwear: acc.neckwear,
+    wristwear: acc.wristwear,
+    backGear: acc.backGear,
+    faceMorphSignature,
   };
 }
 
@@ -1952,6 +2879,32 @@ export function computeSilhouetteDistance(
   addCat(a.extraArms === b.extraArms, 0.8);
   addCat(a.aura === b.aura, 0.7);
 
+  // Wave 7 granular feature differentiation (only contributes when at least one side sets a non-default trait so legacy distances stay stable!)
+  const addOptCat = <T,>(va: T | undefined, vb: T | undefined, neutral: T, weight: number) => {
+    const na = va ?? neutral;
+    const nb = vb ?? neutral;
+    if (na === neutral && nb === neutral) return;
+    addCat(na === nb, weight);
+  };
+  addOptCat(a.outerwear, b.outerwear, 'none' as OuterwearStyleId, 1.15);
+  addOptCat(a.eyewear, b.eyewear, 'none' as EyewearStyleId, 0.95);
+  addOptCat(a.backGear, b.backGear, 'none' as BackGearStyleId, 1.1);
+  addOptCat(a.faceMark, b.faceMark, 'none' as FaceMarkId, 0.65);
+  addOptCat(a.secondaryFaceMark, b.secondaryFaceMark, 'none' as FaceMarkId, 0.5);
+  addOptCat(a.bodyMarksKey, b.bodyMarksKey, '', 0.8);
+  addOptCat(a.eyebrowStyle, b.eyebrowStyle, 'natural_arch' as EyebrowStyleId, 0.45);
+  addOptCat(a.pupilStyle, b.pupilStyle, 'round' as PupilStyleId, 0.55);
+  addOptCat(a.mouthStyle, b.mouthStyle, 'classic' as MouthStyleId, 0.55);
+  addOptCat(a.waistStyle, b.waistStyle, 'none' as WaistStyleId, 0.55);
+  addOptCat(a.gloves, b.gloves, 'none' as GloveStyleId, 0.45);
+  addOptCat(a.footwear, b.footwear, 'auto' as FootwearStyleId, 0.5);
+  addOptCat(a.earJewelry, b.earJewelry, 'none' as EarJewelryId, 0.4);
+  addOptCat(a.neckwear, b.neckwear, 'none' as NeckwearStyleId, 0.5);
+  addOptCat(a.wristwear, b.wristwear, 'none' as WristwearStyleId, 0.35);
+  if ((a.faceMorphSignature ?? 0) > 0.01 || (b.faceMorphSignature ?? 0) > 0.01) {
+    addNum(a.faceMorphSignature ?? 0, b.faceMorphSignature ?? 0, 1.8, 0.65);
+  }
+
   addNum(a.height, b.height, 0.35, 1.1);
   addNum(a.shoulderWidth, b.shoulderWidth, 0.45, 1.0);
   addNum(a.torsoBulk, b.torsoBulk, 0.42, 0.9);
@@ -1961,6 +2914,29 @@ export function computeSilhouetteDistance(
   diff += colorDistance(a.primaryHex, b.primaryHex) * 0.9 + colorDistance(a.skinHex, b.skinHex) * 0.5;
 
   return Number(Math.max(0, Math.min(1, diff / Math.max(1, totalWeight))).toFixed(3));
+}
+
+/** Direct deterministic distance helper between two CharacterDNA objects (0..1). */
+export function computeDnaDistance(a: CharacterDNA, b: CharacterDNA): number {
+  const stubA: CastMember = {
+    id: 'dna_a',
+    name: 'A',
+    archetype: 'warrior',
+    primaryColor: a.palette.primary,
+    accentColor: a.palette.accent,
+    skinColor: a.palette.skin,
+    dna: a,
+  };
+  const stubB: CastMember = {
+    id: 'dna_b',
+    name: 'B',
+    archetype: 'warrior',
+    primaryColor: b.palette.primary,
+    accentColor: b.palette.accent,
+    skinColor: b.palette.skin,
+    dna: b,
+  };
+  return computeSilhouetteDistance(computeDnaFingerprint(stubA), computeDnaFingerprint(stubB));
 }
 
 export const SILHOUETTE_TWIN_THRESHOLD = 0.34;
@@ -2246,4 +3222,83 @@ export function randomizeCharacterDna(chassis?: EntityChassisId, seed = Date.now
   }
 
   return mutated;
+}
+
+/**
+ * Wave 7 Deterministic Focused Sub-Randomizer — Face, Eyes, Brows, Mouth, Marks & Sculpt Morphs.
+ * Zero Math.random(): bit-exact function of (dna, seed).
+ */
+export function randomizeDnaFace(dna: CharacterDNA, seed: number): CharacterDNA {
+  const s = Math.abs(Math.floor(seed)) || 701;
+  const next: CharacterDNA = structuredClone(dna);
+  if (next.chassis === 'humanoid' || next.chassis === 'ethereal') {
+    next.head.headShape = seededPick(HUMAN_HEADS, s, 1);
+    next.head.hairStyle = seededPick(HAIR_STYLE_CATALOG, s, 2).id;
+    next.head.facialHair = s % 3 === 0 ? seededPick(FACIAL_HAIR_CATALOG, s, 3).id : 'none';
+  }
+  next.head.eyeStyle = seededPick(EYE_STYLE_CATALOG, s, 4).id;
+  next.head.noseStyle = seededPick(NOSE_STYLE_CATALOG, s, 5).id;
+  next.head.eyebrowStyle = seededPick(EYEBROW_STYLE_CATALOG, s, 6).id;
+  next.head.pupilStyle = seededPick(PUPIL_STYLE_CATALOG, s, 7).id;
+  next.head.eyelashStyle = seededPick(EYELASH_STYLE_CATALOG, s, 8).id;
+  next.head.mouthStyle = seededPick(MOUTH_STYLE_CATALOG, s, 9).id;
+  next.head.faceMark = s % 2 === 0 ? seededPick(FACE_MARK_CATALOG, s, 10).id : 'none';
+  next.head.secondaryFaceMark = s % 4 === 0 ? seededPick(FACE_MARK_CATALOG, s, 11).id : 'none';
+  next.head.blushIntensity = s % 3 === 0 ? seededRange(s, 12, 0.15, 0.55) : 0;
+  next.faceMorph = {
+    jawWidth: seededRange(s, 20, 0.84, 1.18),
+    chinLength: seededRange(s, 21, 0.85, 1.18),
+    cheekboneWidth: seededRange(s, 22, 0.86, 1.18),
+    eyeSize: seededRange(s, 23, 0.86, 1.2),
+    eyeSpacing: seededRange(s, 24, 0.88, 1.16),
+    eyeTilt: seededRange(s, 25, -0.2, 0.2),
+    browHeight: seededRange(s, 26, -0.18, 0.18),
+    browThickness: seededRange(s, 27, 0.8, 1.35),
+    noseScale: seededRange(s, 28, 0.84, 1.2),
+    mouthWidth: seededRange(s, 29, 0.86, 1.18),
+    earScale: seededRange(s, 30, 0.85, 1.2),
+    neckLength: seededRange(s, 31, 0.86, 1.16),
+  };
+  return next;
+}
+
+/**
+ * Wave 7 Deterministic Focused Sub-Randomizer — Layered Clothing (Top, Outerwear, Sleeves, Waist, Gloves, Footwear, Pattern).
+ */
+export function randomizeDnaOutfit(dna: CharacterDNA, seed: number): CharacterDNA {
+  const s = Math.abs(Math.floor(seed)) || 809;
+  const next: CharacterDNA = structuredClone(dna);
+  next.outfit.topStyle = seededPick(TOP_STYLE_CATALOG, s, 1).id;
+  next.outfit.bottomStyle = seededPick(BOTTOM_STYLE_CATALOG, s, 2).id;
+  next.outfit.outerwear = s % 4 === 0 ? 'none' : seededPick(OUTERWEAR_CATALOG, s, 3).id;
+  next.outfit.sleeveStyle = seededPick(SLEEVE_CATALOG, s, 4).id;
+  next.outfit.waistStyle = s % 3 === 0 ? 'none' : seededPick(WAIST_CATALOG, s, 5).id;
+  next.outfit.gloves = s % 3 === 0 ? 'none' : seededPick(GLOVE_CATALOG, s, 6).id;
+  next.outfit.footwear = seededPick(FOOTWEAR_CATALOG, s, 7).id;
+  next.outfit.capeStyle = s % 3 === 0 ? seededPick(CAPE_CATALOG, s, 8).id : 'none';
+  next.outfit.collarAccessory = s % 3 === 0 ? seededPick(COLLAR_CATALOG, s, 9).id : 'none';
+  next.outfit.surfacePattern = seededPick(SURFACE_PATTERN_CATALOG, s, 10).id;
+  return next;
+}
+
+/**
+ * Wave 7 Deterministic Focused Sub-Randomizer — 5 Combinable Accessories + Body Marks.
+ */
+export function randomizeDnaAccessories(dna: CharacterDNA, seed: number): CharacterDNA {
+  const s = Math.abs(Math.floor(seed)) || 911;
+  const next: CharacterDNA = structuredClone(dna);
+  next.accessories = {
+    eyewear: s % 3 === 0 ? 'none' : seededPick(EYEWEAR_CATALOG, s, 1).id,
+    earJewelry: s % 3 === 1 ? 'none' : seededPick(EAR_JEWELRY_CATALOG, s, 2).id,
+    neckwear: s % 3 === 2 ? 'none' : seededPick(NECKWEAR_CATALOG, s, 3).id,
+    wristwear: s % 2 === 0 ? seededPick(WRISTWEAR_CATALOG, s, 4).id : 'none',
+    backGear: s % 4 === 0 ? 'none' : seededPick(BACK_GEAR_CATALOG, s, 5).id,
+  };
+  const bm1 = seededPick(BODY_MARK_CATALOG, s, 6).id;
+  const bm2 = seededPick(BODY_MARK_CATALOG, s, 7).id;
+  const marks: BodyMarkId[] = [];
+  if (bm1 !== 'none') marks.push(bm1);
+  if (bm2 !== 'none' && bm2 !== bm1 && s % 2 === 0) marks.push(bm2);
+  next.bodyMarks = marks;
+  return next;
 }

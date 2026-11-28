@@ -132,11 +132,15 @@ import studioVfxDistortionPassTs from './vfxDistortionPass.ts?raw';
 import studioPapercraftCraftTs from './papercraftCraft.ts?raw';
 import studioCatalogSearchIndexTs from './catalogSearchIndex.ts?raw';
 import studioStoryRemixEngineTs from './storyRemixEngine.ts?raw';
+import studioGranularCharacterLayersTs from './granularCharacterLayers.ts?raw';
+import studioLlmMasterGuideBuilderTs from './llmMasterGuideBuilder.ts?raw';
 import studioZipBuilderTs from './zipBuilder.ts?raw';
+import stagecraftLlmInstructionsMd from '../../STAGECRAFT_LLM_INSTRUCTIONS.md?raw';
 import batchRenderScriptMjs from '../../scripts/render-batch.mjs?raw';
 import determinismAuditScriptMjs from '../../scripts/determinism-audit.mjs?raw';
 import studioStressTestScriptMjs from '../../scripts/studio-stress-test.mjs?raw';
 import compileEpisodeScriptTs from '../../scripts/compile-episode.ts?raw';
+import syncLlmDocsScriptTs from '../../scripts/sync-llm-docs.ts?raw';
 import runTestsScriptTs from '../../scripts/run-tests.ts?raw';
 
 // Standard IEEE 802.3 CRC-32 table
@@ -808,8 +812,20 @@ export function collectAllMachinimaEntries(): ZipEntryInput[] {
       content: studioStoryRemixEngineTs,
     },
     {
+      path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/granularCharacterLayers.ts`,
+      content: studioGranularCharacterLayersTs,
+    },
+    {
+      path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/llmMasterGuideBuilder.ts`,
+      content: studioLlmMasterGuideBuilderTs,
+    },
+    {
       path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/zipBuilder.ts`,
       content: studioZipBuilderTs,
+    },
+    {
+      path: `${root}/03_katha_studio_indian_folklore_engine/STAGECRAFT_LLM_INSTRUCTIONS.md`,
+      content: stagecraftLlmInstructionsMd,
     },
     {
       path: `${root}/03_katha_studio_indian_folklore_engine/scripts/render-batch.mjs`,
@@ -826,6 +842,10 @@ export function collectAllMachinimaEntries(): ZipEntryInput[] {
     {
       path: `${root}/03_katha_studio_indian_folklore_engine/scripts/compile-episode.ts`,
       content: compileEpisodeScriptTs,
+    },
+    {
+      path: `${root}/03_katha_studio_indian_folklore_engine/scripts/sync-llm-docs.ts`,
+      content: syncLlmDocsScriptTs,
     },
     {
       path: `${root}/03_katha_studio_indian_folklore_engine/scripts/run-tests.ts`,

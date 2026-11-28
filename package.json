@@ -11,6 +11,7 @@
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
     "compile-episode": "tsx scripts/compile-episode.ts",
+    "sync-docs": "tsx scripts/sync-llm-docs.ts",
     "test": "tsx scripts/run-tests.ts"
   },
   "dependencies": {

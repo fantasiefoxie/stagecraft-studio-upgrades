@@ -12,7 +12,29 @@
 
 import { ACTING_MACRO_CATALOG } from './actingMacros';
 import { ACT_ARC_PRESETS, BACKDROP_THEMES, CUSTOM_PROP_PRESETS } from './backdropGenerator';
-import { HEADWEAR_CATALOG, SURFACE_PATTERN_CATALOG, TOP_STYLE_CATALOG } from './characterDna';
+import {
+  BACK_GEAR_CATALOG,
+  BODY_MARK_CATALOG,
+  EAR_JEWELRY_CATALOG,
+  EYEBROW_STYLE_CATALOG,
+  EYELASH_STYLE_CATALOG,
+  EYEWEAR_CATALOG,
+  FACE_MARK_CATALOG,
+  FACIAL_HAIR_CATALOG,
+  FOOTWEAR_CATALOG,
+  GLOVE_CATALOG,
+  HAIR_STYLE_CATALOG,
+  HEADWEAR_CATALOG,
+  MOUTH_STYLE_CATALOG,
+  NECKWEAR_CATALOG,
+  OUTERWEAR_CATALOG,
+  PUPIL_STYLE_CATALOG,
+  SLEEVE_CATALOG,
+  SURFACE_PATTERN_CATALOG,
+  TOP_STYLE_CATALOG,
+  WAIST_CATALOG,
+  WRISTWEAR_CATALOG,
+} from './characterDna';
 import { SPRITE_WORKSHOP_PRESETS } from './spriteWorkshopPresets';
 import {
   ARCHETYPE_CATALOG,
@@ -374,7 +396,7 @@ function buildCatalogIndex(): Bm25Index {
     );
   }
 
-  // 14. CharacterDNA Modular Parts (Headwear, Tops, Surface Patterns)
+  // 14. CharacterDNA Modular & Wave 7 Granular Parts
   for (const hw of HEADWEAR_CATALOG) {
     addDocument(docs, `headwear:${hw.id}`, 'dna_part', hw.label, 'DNA Headwear', `${hw.label} character headwear`, 'dna headwear hat helmet');
   }
@@ -383,6 +405,75 @@ function buildCatalogIndex(): Bm25Index {
   }
   for (const pat of SURFACE_PATTERN_CATALOG) {
     addDocument(docs, `pattern:${pat.id}`, 'dna_part', pat.label, 'DNA Pattern', `${pat.label} garment surface pattern`, 'dna pattern texture');
+  }
+  for (const item of EYEBROW_STYLE_CATALOG) {
+    addDocument(docs, `eyebrow:${item.id}`, 'dna_part', item.label, 'DNA Eyebrows', `${item.label} character eyebrow style`, 'dna face eyebrow brow');
+  }
+  for (const item of PUPIL_STYLE_CATALOG) {
+    addDocument(docs, `pupil:${item.id}`, 'dna_part', item.label, 'DNA Pupils', `${item.label} character eye pupil iris`, 'dna face eye pupil iris');
+  }
+  for (const item of EYELASH_STYLE_CATALOG) {
+    if (item.id === 'none') continue;
+    addDocument(docs, `eyelash:${item.id}`, 'dna_part', item.label, 'DNA Eyelashes', `${item.label} eyelash eyeliner makeup`, 'dna face eyelash liner');
+  }
+  for (const item of MOUTH_STYLE_CATALOG) {
+    addDocument(docs, `mouth:${item.id}`, 'dna_part', item.label, 'DNA Mouth & Lips', `${item.label} mouth lips fangs expression`, 'dna face mouth lips fangs');
+  }
+  for (const item of HAIR_STYLE_CATALOG) {
+    if (item.id === 'none') continue;
+    addDocument(docs, `hair:${item.id}`, 'dna_part', item.label, 'DNA Hair', `${item.label} hairstyle hair mane`, 'dna hair hairstyle cut');
+  }
+  for (const item of FACIAL_HAIR_CATALOG) {
+    if (item.id === 'none') continue;
+    addDocument(docs, `facial_hair:${item.id}`, 'dna_part', item.label, 'DNA Facial Hair', `${item.label} beard mustache stubble`, 'dna facial hair beard mustache');
+  }
+  for (const item of FACE_MARK_CATALOG) {
+    if (item.id === 'none') continue;
+    addDocument(docs, `face_mark:${item.id}`, 'dna_part', item.label, 'DNA Face Mark', `${item.label} face scar tattoo freckles paint`, 'dna face mark scar tattoo paint');
+  }
+  for (const item of BODY_MARK_CATALOG) {
+    if (item.id === 'none') continue;
+    addDocument(docs, `body_mark:${item.id}`, 'dna_part', item.label, 'DNA Body Mark', `${item.label} body tattoo scar cyber implant henna`, 'dna body mark tattoo scar implant');
+  }
+  for (const item of OUTERWEAR_CATALOG) {
+    if (item.id === 'none') continue;
+    addDocument(docs, `outerwear:${item.id}`, 'dna_part', item.label, 'DNA Outerwear', `${item.label} jacket coat cloak vest outerwear`, 'dna outfit outerwear jacket coat');
+  }
+  for (const item of SLEEVE_CATALOG) {
+    if (item.id === 'auto') continue;
+    addDocument(docs, `sleeve:${item.id}`, 'dna_part', item.label, 'DNA Sleeves', `${item.label} sleeve cut arm garment`, 'dna outfit sleeve');
+  }
+  for (const item of WAIST_CATALOG) {
+    if (item.id === 'none') continue;
+    addDocument(docs, `waist:${item.id}`, 'dna_part', item.label, 'DNA Waist & Belt', `${item.label} belt sash obi corset holster`, 'dna outfit waist belt sash');
+  }
+  for (const item of GLOVE_CATALOG) {
+    if (item.id === 'none') continue;
+    addDocument(docs, `glove:${item.id}`, 'dna_part', item.label, 'DNA Gloves', `${item.label} gloves gauntlet bracer hand wraps`, 'dna outfit glove handwear');
+  }
+  for (const item of FOOTWEAR_CATALOG) {
+    if (item.id === 'auto') continue;
+    addDocument(docs, `footwear:${item.id}`, 'dna_part', item.label, 'DNA Footwear', `${item.label} boots sandals sneakers greaves shoes`, 'dna outfit footwear boots shoes');
+  }
+  for (const item of EYEWEAR_CATALOG) {
+    if (item.id === 'none') continue;
+    addDocument(docs, `eyewear:${item.id}`, 'dna_part', item.label, 'DNA Eyewear', `${item.label} glasses shades monocle visor eyepatch goggles`, 'dna accessory eyewear glasses shades');
+  }
+  for (const item of EAR_JEWELRY_CATALOG) {
+    if (item.id === 'none') continue;
+    addDocument(docs, `ear_jewelry:${item.id}`, 'dna_part', item.label, 'DNA Ear & Face Jewelry', `${item.label} earrings hoops nose ring piercing cuff`, 'dna accessory jewelry earrings piercing');
+  }
+  for (const item of NECKWEAR_CATALOG) {
+    if (item.id === 'none') continue;
+    addDocument(docs, `neckwear:${item.id}`, 'dna_part', item.label, 'DNA Neckwear', `${item.label} pendant choker chain scarf amulet bow tie`, 'dna accessory neckwear necklace');
+  }
+  for (const item of WRISTWEAR_CATALOG) {
+    if (item.id === 'none') continue;
+    addDocument(docs, `wristwear:${item.id}`, 'dna_part', item.label, 'DNA Wristwear', `${item.label} watch bangles cuff bracelet holo wristband`, 'dna accessory wristwear watch bracelet');
+  }
+  for (const item of BACK_GEAR_CATALOG) {
+    if (item.id === 'none') continue;
+    addDocument(docs, `back_gear:${item.id}`, 'dna_part', item.label, 'DNA Back Gear', `${item.label} backpack katana quiver jetpack shield guitar wings`, 'dna accessory back gear weapon pack');
   }
 
   // 15. SFX, Music Raag Engines, Shots & Look Presets
