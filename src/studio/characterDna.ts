@@ -152,7 +152,10 @@ export type HairStyleId =
   | 'twin_buns'
   | 'mohawk_punk'
   | 'messy_anime'
-  | 'silver_bun_elder';
+  | 'silver_bun_elder'
+  | 'side_part_classic'
+  | 'curtain_bangs'
+  | 'wolf_cut';
 
 export type FacialHairId =
   | 'none'
@@ -410,7 +413,10 @@ export type HeadwearStyleId =
   | 'nurse_cap'
   | 'cowboy_hat'
   | 'diver_helmet'
-  | 'elf_circlet';
+  | 'elf_circlet'
+  | 'baseball_cap'
+  | 'beanie_knit'
+  | 'beret_artist';
 
 export type SurfacePatternId =
   | 'solid'
@@ -825,6 +831,9 @@ export const HAIR_STYLE_CATALOG: Array<{ id: HairStyleId; label: string }> = [
   { id: 'mohawk_punk', label: 'Punk Mohawk' },
   { id: 'messy_anime', label: 'Messy Shonen Spikes' },
   { id: 'silver_bun_elder', label: 'Elder Chignon Bun' },
+  { id: 'side_part_classic', label: 'Classic Side Part' },
+  { id: 'curtain_bangs', label: 'Curtain Bangs' },
+  { id: 'wolf_cut', label: 'Layered Wolf Cut' },
 ];
 
 export const FACIAL_HAIR_CATALOG: Array<{ id: FacialHairId; label: string }> = [
@@ -1101,6 +1110,9 @@ export const HEADWEAR_CATALOG: Array<{ id: HeadwearStyleId; label: string }> = [
   { id: 'cowboy_hat', label: 'Frontier Cowboy Hat' },
   { id: 'diver_helmet', label: 'Deep-Sea Brass Helmet' },
   { id: 'elf_circlet', label: 'Elven Starlight Circlet' },
+  { id: 'baseball_cap', label: 'Classic Baseball Cap' },
+  { id: 'beanie_knit', label: 'Knit Beanie' },
+  { id: 'beret_artist', label: 'Artist Beret' },
 ];
 
 export const SURFACE_PATTERN_CATALOG: Array<{ id: SurfacePatternId; label: string }> = [
@@ -2359,6 +2371,14 @@ function applyNaturalTraitHints(dna: CharacterDNA, traitsText: string): void {
   else if (/\btwin\s*buns|odango\b/.test(t)) dna.head.hairStyle = 'twin_buns';
   else if (/\bmohawk\b/.test(t)) dna.head.hairStyle = 'mohawk_punk';
   else if (/\bmessy\s*(anime|hair)\b/.test(t)) dna.head.hairStyle = 'messy_anime';
+  else if (/\bside[\s-]*part\b/.test(t)) dna.head.hairStyle = 'side_part_classic';
+  else if (/\bcurtain\s*bangs?\b/.test(t)) dna.head.hairStyle = 'curtain_bangs';
+  else if (/\bwolf\s*cut\b/.test(t)) dna.head.hairStyle = 'wolf_cut';
+
+  // Wave 9 Casual Global Headwear Hints
+  if (/\bbaseball\s*cap|ball\s*cap|snapback\b/.test(t)) dna.outfit.headwear = 'baseball_cap';
+  else if (/\bknit\s*beanie|beanie|toque\s*knit\b/.test(t)) dna.outfit.headwear = 'beanie_knit';
+  else if (/\bartist\s*beret|beret\b/.test(t)) dna.outfit.headwear = 'beret_artist';
 
   if (/\bstubble\b/.test(t)) dna.head.facialHair = 'stubble_5oclock';
   else if (/\bviking\s*beard\b/.test(t)) dna.head.facialHair = 'full_viking_beard';

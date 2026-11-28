@@ -22,11 +22,19 @@ import path from 'node:path';
 import { PRESET_EPISODES } from '../src/studio/presets';
 import {
   STAGECRAFT_QA_BUNDLE_SCHEMA,
+  STAGECRAFT_STUDIO_VERSION,
   buildStagecraftQaBundle,
   computeDnaSilhouetteSignature,
   hasGranularCharacterDna,
   serializeStagecraftQaBundle,
 } from '../src/studio/shotInspectorBridge';
+import {
+  computePaletteContrastLuma,
+  computeSecondaryMotionSway,
+  resolveActorGazeVector,
+  resolveActorHeadOrientation,
+  resolveActorRigForBeat,
+} from '../src/studio/characterRigging';
 import {
   STAGECRAFT_PATCH_SCHEMA,
   parseStagecraftPatchPayload,
@@ -3577,7 +3585,7 @@ test('62. Wave 7 Upgrades 36–39: All 18 granular DNA catalogs have exact count
   assert.equal(PUPIL_STYLE_CATALOG.length, 8);
   assert.equal(EYELASH_STYLE_CATALOG.length, 5);
   assert.equal(MOUTH_STYLE_CATALOG.length, 8);
-  assert.equal(HAIR_STYLE_CATALOG.length, 21);
+  assert.equal(HAIR_STYLE_CATALOG.length, 24);
   assert.equal(FACIAL_HAIR_CATALOG.length, 13);
   assert.equal(FACE_MARK_CATALOG.length, 22);
   assert.equal(BODY_MARK_CATALOG.length, 16);
@@ -4281,6 +4289,545 @@ test('71. Wave 8 End-to-End: Export QA bundle -> simulate Shot-Inspector RFC 690
     'Rebuilt QA bundle must confirm reading CPS dropped after patch'
   );
   assert.equal(applied.nextEpisode.beats[0].cameraFocusX, 0.16);
+});
+
+// ---------------------------------------------------------------------------
+// Test 72 (Wave 9 · Upgrade 47): Dynamic Eye-Gaze, Head-Tracking & Schema Sanitization
+// ---------------------------------------------------------------------------
+test('72. Wave 9 Upgrade 47: resolveActorHeadOrientation & resolveActorGazeVector are deterministic, bounded & validateEpisodeScript sanitizes new fields', () => {
+  const riggingSrc = fs
+    .readFileSync(path.join(process.cwd(), 'src/studio/characterRigging.ts'), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/\/\/.*$/gm, '');
+  assert.equal(/\bMath\.random\s*\(/.test(riggingSrc), false, 'characterRigging.ts must never call Math.random()');
+  assert.equal(/createElement\s*\(\s*['"]canvas['"]/.test(riggingSrc), false, 'characterRigging.ts must never allocate canvases');
+
+  const actorA = {
+    castId: 'hero',
+    slot: 'left' as const,
+    facing: 'right' as const,
+    pose: 'stand' as const,
+    expression: 'calm' as const,
+    motion: 'still' as const,
+  };
+  const actorB = {
+    castId: 'rival',
+    slot: 'right' as const,
+    facing: 'left' as const,
+    pose: 'stand' as const,
+    expression: 'calm' as const,
+    motion: 'still' as const,
+  };
+
+  // 'auto' picks front on closeup, three_quarter on two_shot with partner, profile when walking/crossing
+  const closeupHead = resolveActorHeadOrientation(
+    { shot: 'closeup_left', actors: [actorA, actorB], speakerId: 'hero' },
+    actorA,
+    actorB
+  );
+  assert.equal(closeupHead.headAngle, 'front');
+  assert.equal(closeupHead.yawBias, 0);
+
+  const twoShotHead = resolveActorHeadOrientation(
+    { shot: 'two_shot', actors: [actorA, actorB], speakerId: 'hero' },
+    actorA,
+    actorB
+  );
+  assert.equal(twoShotHead.headAngle, 'three_quarter');
+  assert.ok(twoShotHead.yawBias > 0.3, 'Left actor in two_shot should turn 3/4 toward right partner');
+
+  const walkHead = resolveActorHeadOrientation(
+    { shot: 'wide_stage', actors: [{ ...actorA, pose: 'walk', motion: 'cross_stage' }], speakerId: 'hero' },
+    { ...actorA, pose: 'walk', motion: 'cross_stage' }
+  );
+  assert.equal(walkHead.headAngle, 'profile');
+  assert.ok(Math.abs(walkHead.yawBias) >= 0.85);
+
+  // Explicit headAngle override takes precedence
+  const forcedProfile = resolveActorHeadOrientation(
+    { shot: 'closeup_left', actors: [{ ...actorA, headAngle: 'profile' }], speakerId: 'hero' },
+    { ...actorA, headAngle: 'profile' }
+  );
+  assert.equal(forcedProfile.headAngle, 'profile');
+
+  // Gaze vector determinism & strict bounds across targets and timestamps
+  const targets = ['auto', 'camera', 'partner', 'left', 'right', 'up', 'down'] as const;
+  for (const gazeTarget of targets) {
+    const g1 = resolveActorGazeVector(
+      { shot: 'two_shot', actors: [actorA, actorB], speakerId: 'hero' },
+      { ...actorA, gazeTarget },
+      actorB,
+      2.35
+    );
+    const g2 = resolveActorGazeVector(
+      { shot: 'two_shot', actors: [actorA, actorB], speakerId: 'hero' },
+      { ...actorA, gazeTarget },
+      actorB,
+      2.35
+    );
+    assert.deepEqual(g1, g2, `Gaze vector for ${gazeTarget} must be bit-exact deterministic`);
+    assert.ok(g1.lookX >= -1 && g1.lookX <= 1, `lookX out of bounds: ${g1.lookX}`);
+    assert.ok(g1.lookY >= -0.6 && g1.lookY <= 0.6, `lookY out of bounds: ${g1.lookY}`);
+  }
+
+  // validateEpisodeScript preserves valid Wave 9 fields and strips invalid values safely
+  const ep = clone(PRESET_EPISODES[0]);
+  ep.beats[0].actors[0] = {
+    ...ep.beats[0].actors[0],
+    gazeTarget: 'partner',
+    headAngle: 'three_quarter',
+    heldProp: 'khanda_sword',
+    heldHand: 'front',
+  };
+  if (ep.beats[0].actors[1]) {
+    ep.beats[0].actors[1] = {
+      ...ep.beats[0].actors[1],
+      gazeTarget: 'invalid_gaze' as never,
+      headAngle: 'upside_down' as never,
+      heldProp: 'not_a_real_prop_xyz' as never,
+      heldHand: 'foot' as never,
+    };
+  }
+  const validated = validateEpisodeScript(ep);
+  assert.equal(validated.ok, true);
+  if (!validated.ok) return;
+  assert.equal(validated.script.beats[0].actors[0].gazeTarget, 'partner');
+  assert.equal(validated.script.beats[0].actors[0].headAngle, 'three_quarter');
+  assert.equal(validated.script.beats[0].actors[0].heldProp, 'khanda_sword');
+  assert.equal(validated.script.beats[0].actors[0].heldHand, 'front');
+  if (validated.script.beats[0].actors[1]) {
+    assert.equal(validated.script.beats[0].actors[1].gazeTarget, undefined);
+    assert.equal(validated.script.beats[0].actors[1].headAngle, undefined);
+    assert.equal(validated.script.beats[0].actors[1].heldProp, undefined);
+    assert.equal(validated.script.beats[0].actors[1].heldHand, undefined);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Test 73 (Wave 9 · Upgrade 48): True 3/4 & Profile Head/Torso Orientation Rendering
+// ---------------------------------------------------------------------------
+test('73. Wave 9 Upgrade 48: Modular full-body & close-up render distinct, deterministic, zero-NaN geometry across front, 3/4 & profile', () => {
+  const mock = createAuditedMockCanvas2D();
+  const baseDna = createBaseDna('humanoid');
+  const dna = {
+    ...baseDna,
+    head: {
+      ...baseDna.head,
+      hairStyle: 'wolf_cut' as const,
+      eyebrowStyle: 'high_arched' as const,
+      pupilStyle: 'slit_cat' as const,
+    },
+    outfit: {
+      ...baseDna.outfit,
+      headwear: 'beret_artist' as const,
+      capeStyle: 'royal_cape' as const,
+    },
+  };
+  const member = syncMemberWithDna(
+    {
+      id: 'turnaround_hero',
+      name: 'Turnaround Hero',
+      archetype: 'king',
+      primaryColor: '#1e3a8a',
+      accentColor: '#f59e0b',
+    },
+    dna
+  );
+
+  const renderFull = (headAngle: 'front' | 'three_quarter' | 'profile', yawBias: number) => {
+    mock.reset();
+    drawModularEntityFullBody(
+      mock.ctx,
+      member,
+      dna,
+      400,
+      540,
+      1,
+      'stand',
+      'calm',
+      'right',
+      2,
+      0.7,
+      1.2,
+      0.5,
+      'still',
+      undefined,
+      undefined,
+      undefined,
+      { headAngle, yawBias, lookX: yawBias * 0.6, lookY: -0.1 }
+    );
+    assert.equal(mock.getNanCount(), 0, `Full-body ${headAngle} produced NaN coordinates`);
+    assert.ok(mock.getOps() > 20, `Full-body ${headAngle} drew too few ops`);
+    return mock.getSignature();
+  };
+
+  const frontFullA = renderFull('front', 0);
+  const frontFullB = renderFull('front', 0);
+  const tqFull = renderFull('three_quarter', 0.55);
+  const profFull = renderFull('profile', 0.92);
+  assert.equal(frontFullA, frontFullB, 'Repeated full-body render must be bit-exact deterministic');
+  assert.notEqual(frontFullA, tqFull, '3/4 full-body orientation must produce distinct geometry from front');
+  assert.notEqual(tqFull, profFull, 'Profile full-body orientation must produce distinct geometry from 3/4');
+
+  const renderClose = (headAngle: 'front' | 'three_quarter' | 'profile', yawBias: number) => {
+    mock.reset();
+    drawModularEntityCloseUp(
+      mock.ctx,
+      member,
+      dna,
+      'calm',
+      2,
+      0.7,
+      'right',
+      1.2,
+      { headAngle, yawBias, lookX: yawBias * 0.5, lookY: 0.05 }
+    );
+    assert.equal(mock.getNanCount(), 0, `Close-up ${headAngle} produced NaN coordinates`);
+    assert.ok(mock.getOps() > 15, `Close-up ${headAngle} drew too few ops`);
+    return mock.getSignature();
+  };
+
+  const frontCloseA = renderClose('front', 0);
+  const frontCloseB = renderClose('front', 0);
+  const tqClose = renderClose('three_quarter', 0.55);
+  const profClose = renderClose('profile', 0.92);
+  assert.equal(frontCloseA, frontCloseB, 'Repeated close-up render must be bit-exact deterministic');
+  assert.notEqual(frontCloseA, tqClose, '3/4 close-up orientation must produce distinct geometry from front');
+  assert.notEqual(tqClose, profClose, 'Profile close-up orientation must produce distinct geometry from 3/4');
+});
+
+// ---------------------------------------------------------------------------
+// Test 74 (Wave 9 · Upgrades 49 & 50): Hand-Held Prop Rigging & Stateless Secondary Motion Physics
+// ---------------------------------------------------------------------------
+test('74. Wave 9 Upgrades 49 & 50: Hand-held props anchor on front/back/both hands & secondary motion physics is scrubbable and storm-reactive', () => {
+  const mock = createAuditedMockCanvas2D();
+  const baseDna = createBaseDna('humanoid');
+  const dna = {
+    ...baseDna,
+    outfit: { ...baseDna.outfit, capeStyle: 'royal_cape' as const },
+    appendages: { ...baseDna.appendages, tail: 'fox_bushy' as const },
+  };
+  const member = syncMemberWithDna(
+    {
+      id: 'prop_holder',
+      name: 'Lantern Bearer',
+      archetype: 'sage',
+      primaryColor: '#1f2937',
+      accentColor: '#fbbf24',
+    },
+    dna
+  );
+
+  // Upgrade 49: Compare draw ops for none vs front vs back vs both heldProp
+  const renderWithHeld = (heldProp?: 'none' | 'diya_lamp', heldHand?: 'front' | 'back' | 'both') => {
+    mock.reset();
+    drawActorFullBody(
+      mock.ctx,
+      member,
+      400,
+      540,
+      1,
+      'stand',
+      'calm',
+      'right',
+      0,
+      0,
+      1.5,
+      0.5,
+      'still',
+      undefined,
+      undefined,
+      undefined,
+      heldProp ? { heldProp, heldHand } : undefined
+    );
+    assert.equal(mock.getNanCount(), 0, `Held prop (${heldProp}/${heldHand}) produced NaN`);
+    return { ops: mock.getOps(), sig: mock.getSignature() };
+  };
+
+  const noneRes = renderWithHeld('none', 'front');
+  const frontRes = renderWithHeld('diya_lamp', 'front');
+  const backRes = renderWithHeld('diya_lamp', 'back');
+  const bothRes = renderWithHeld('diya_lamp', 'both');
+  assert.ok(frontRes.ops > noneRes.ops, 'Front heldProp must render additional prop draw ops');
+  assert.ok(backRes.ops > noneRes.ops, 'Back heldProp must render additional prop draw ops');
+  assert.ok(bothRes.ops > frontRes.ops, 'Both-hands heldProp must draw on both wrists');
+  assert.notEqual(frontRes.sig, backRes.sig, 'Front and back heldHand must anchor at different wrist coordinates');
+
+  // Upgrade 50: Stateless analytical secondary motion physics scrubbability & weather/pose scaling
+  const calmT1 = computeSecondaryMotionSway('hero_a', 1.25, 'stand', 'still', 'none', 0);
+  // Scrub forward then back to exact same timestamp -> must be bit-identical
+  computeSecondaryMotionSway('hero_a', 9.75, 'soar', 'leap_arc', 'blizzard_gale', 1);
+  const calmT1Again = computeSecondaryMotionSway('hero_a', 1.25, 'stand', 'still', 'none', 0);
+  assert.deepEqual(calmT1, calmT1Again, 'Secondary motion must be stateless and scrubbable to identical output');
+
+  const stormSoar = computeSecondaryMotionSway('hero_a', 1.25, 'soar', 'leap_arc', 'blizzard_gale', 0.8);
+  assert.ok(calmT1.energy >= 0 && calmT1.energy <= 1, 'Calm energy must stay within [0, 1]');
+  assert.ok(stormSoar.energy >= 0 && stormSoar.energy <= 1, 'Storm energy must stay within [0, 1]');
+  assert.ok(
+    stormSoar.energy > calmT1.energy + 0.4,
+    `Expected storm+soar energy (${stormSoar.energy}) >> calm+stand energy (${calmT1.energy})`
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Test 75 (Wave 9 · Upgrade 51): Global Casual DNA Additions & NLP Mapping
+// ---------------------------------------------------------------------------
+test('75. Wave 9 Upgrade 51: Casual hairstyles & headwear exist in catalogs, parse from natural traits & render zero-NaN', () => {
+  const newHairs = ['side_part_classic', 'curtain_bangs', 'wolf_cut'] as const;
+  const newHats = ['baseball_cap', 'beanie_knit', 'beret_artist'] as const;
+
+  for (const h of newHairs) {
+    assert.ok(HAIR_STYLE_CATALOG.some((item) => item.id === h), `Missing hair style ${h}`);
+  }
+  for (const hat of newHats) {
+    assert.ok(HEADWEAR_CATALOG.some((item) => item.id === hat), `Missing headwear ${hat}`);
+  }
+
+  // NLP trait parsing
+  const p1 = parseNaturalLanguageDnaTraits('young designer with curtain bangs and artist beret');
+  assert.equal(p1.head?.hairStyle, 'curtain_bangs');
+  assert.equal(p1.outfit?.headwear, 'beret_artist');
+
+  const p2 = parseNaturalLanguageDnaTraits('skater with wolf cut and knit beanie');
+  assert.equal(p2.head?.hairStyle, 'wolf_cut');
+  assert.equal(p2.outfit?.headwear, 'beanie_knit');
+
+  const p3 = parseNaturalLanguageDnaTraits('journalist with classic side part and baseball cap');
+  assert.equal(p3.head?.hairStyle, 'side_part_classic');
+  assert.equal(p3.outfit?.headwear, 'baseball_cap');
+
+  // Zero-NaN Canvas 2D smoke render of all 6 new assets
+  const mock = createAuditedMockCanvas2D();
+  const baseDna = createBaseDna('humanoid');
+  for (let i = 0; i < 3; i++) {
+    const dna = {
+      ...baseDna,
+      head: { ...baseDna.head, hairStyle: newHairs[i] },
+      outfit: { ...baseDna.outfit, headwear: newHats[i] },
+    };
+    const member = syncMemberWithDna(
+      {
+        id: `casual_${i}`,
+        name: `Casual ${i}`,
+        archetype: 'journalist',
+        primaryColor: '#334155',
+        accentColor: '#38bdf8',
+      },
+      dna
+    );
+    mock.reset();
+    drawModularEntityFullBody(
+      mock.ctx,
+      member,
+      dna,
+      360,
+      520,
+      1,
+      'stand',
+      'calm',
+      'right',
+      0,
+      0,
+      0.8,
+      0.5,
+      'still',
+      undefined,
+      undefined,
+      undefined,
+      {
+        headAngle: 'three_quarter',
+        yawBias: 0.55,
+        heldProp: 'royal_scroll',
+        heldHand: 'front',
+      }
+    );
+    assert.equal(mock.getNanCount(), 0, `Casual DNA combo ${newHairs[i]} + ${newHats[i]} produced NaN`);
+    assert.ok(mock.getOps() > 20, `Casual DNA combo ${newHairs[i]} + ${newHats[i]} drew too few ops`);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Test 76 (Wave 9 · Upgrade 52): Wave 9 Shot-Inspector Telemetry & Extended Patch Allowlist
+// ---------------------------------------------------------------------------
+test('76. Wave 9 Upgrade 52: Shot-Inspector bundle emits 9.0.0 actor rigging/contrast telemetry & patch applier enforces Wave 9 allowlist', () => {
+  assert.equal(STAGECRAFT_STUDIO_VERSION, '9.0.0');
+  assert.equal(computePaletteContrastLuma('#000000'), 0);
+  assert.equal(computePaletteContrastLuma('#ffffff'), 1);
+  assert.ok(computePaletteContrastLuma('#f59e0b') > 0.3 && computePaletteContrastLuma('#f59e0b') < 0.7);
+
+  const ep = clone(PRESET_EPISODES[0]);
+  ep.cast[0] = { ...ep.cast[0], primaryColor: '#1e293b', accentColor: '#38bdf8' };
+  ep.beats[0].actors[0] = {
+    ...ep.beats[0].actors[0],
+    facing: 'right',
+    gazeTarget: 'partner',
+    headAngle: 'three_quarter',
+    heldProp: 'diya_lamp',
+    heldHand: 'front',
+  };
+
+  const bundle = buildStagecraftQaBundle(ep, { aspect: '16:9' });
+  assert.equal(bundle.studioVersion, '9.0.0');
+  const actor0 = bundle.telemetry.beatTimeline[0].actors[0];
+  assert.equal(actor0.facing, 'right');
+  assert.equal(actor0.resolvedHeadAngle, 'three_quarter');
+  assert.equal(actor0.resolvedGazeTarget, 'partner');
+  assert.equal(actor0.heldProp, 'diya_lamp');
+  assert.ok(typeof actor0.secondaryMotionEnergy === 'number' && actor0.secondaryMotionEnergy >= 0 && actor0.secondaryMotionEnergy <= 1);
+  assert.equal(actor0.paletteContrastLuma, computePaletteContrastLuma('#1e293b'));
+
+  // Resolve actor rig convenience wrapper sanity check
+  const rigInfo = resolveActorRigForBeat(ep.beats[0], ep.beats[0].actors[0], 1.1, 0.4);
+  assert.equal(rigInfo.orientation.headAngle, 'three_quarter');
+  assert.equal(rigInfo.rig.heldProp, 'diya_lamp');
+
+  // Wave 9 RFC 6902 patch allowlist: actor rigging + cast primaryColor/accentColor allowed
+  const validWave9Patch = [
+    { op: 'replace' as const, path: '/beats/0/actors/0/gazeTarget', value: 'camera' },
+    { op: 'replace' as const, path: '/beats/0/actors/0/headAngle', value: 'front' },
+    { op: 'replace' as const, path: '/beats/0/actors/0/heldProp', value: 'khanda_sword' },
+    { op: 'replace' as const, path: '/beats/0/actors/0/heldHand', value: 'both' },
+    { op: 'replace' as const, path: '/beats/0/actors/0/facing', value: 'left' },
+    { op: 'replace' as const, path: '/cast/0/primaryColor', value: '#2563eb' },
+    { op: 'replace' as const, path: '/cast/0/accentColor', value: '#facc15' },
+  ];
+  const applied = previewAndApplyStagecraftPatch(ep, validWave9Patch);
+  assert.equal(applied.ok, true, `Valid Wave 9 patch failed: ${applied.ok ? '' : applied.errors.join('; ')}`);
+  if (!applied.ok) return;
+  assert.equal(applied.nextEpisode.beats[0].actors[0].gazeTarget, 'camera');
+  assert.equal(applied.nextEpisode.beats[0].actors[0].headAngle, 'front');
+  assert.equal(applied.nextEpisode.beats[0].actors[0].heldProp, 'khanda_sword');
+  assert.equal(applied.nextEpisode.beats[0].actors[0].heldHand, 'both');
+  assert.equal(applied.nextEpisode.beats[0].actors[0].facing, 'left');
+  assert.equal(applied.nextEpisode.cast[0].primaryColor, '#2563eb');
+  assert.equal(applied.nextEpisode.cast[0].accentColor, '#facc15');
+
+  // Invalid Wave 9 & security paths must still be rejected atomically
+  const invalidWave9Cases: Array<[string, Array<{ op: 'replace'; path: string; value: unknown }>]> = [
+    ['bad hex primaryColor', [{ op: 'replace', path: '/cast/0/primaryColor', value: '#xyz' }]],
+    ['bad hex accentColor', [{ op: 'replace', path: '/cast/0/accentColor', value: 'red' }]],
+    ['disallowed /cast/0/name', [{ op: 'replace', path: '/cast/0/name', value: 'Hacked' }]],
+    ['disallowed /cast/0/archetype', [{ op: 'replace', path: '/cast/0/archetype', value: 'king' }]],
+    ['invalid gazeTarget enum', [{ op: 'replace', path: '/beats/0/actors/0/gazeTarget', value: 'behind' }]],
+    ['invalid headAngle enum', [{ op: 'replace', path: '/beats/0/actors/0/headAngle', value: 'top_down' }]],
+    ['invalid heldProp id', [{ op: 'replace', path: '/beats/0/actors/0/heldProp', value: 'fake_prop_999' }]],
+    ['out-of-range actor index', [{ op: 'replace', path: '/beats/0/actors/99/gazeTarget', value: 'camera' }]],
+    ['out-of-range cast index', [{ op: 'replace', path: '/cast/99/primaryColor', value: '#112233' }]],
+    ['prototype pollution', [{ op: 'replace', path: '/cast/__proto__/primaryColor', value: '#112233' }]],
+  ];
+  for (const [label, ops] of invalidWave9Cases) {
+    const res = previewAndApplyStagecraftPatch(ep, ops);
+    assert.equal(res.ok, false, `Expected "${label}" to be rejected`);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Test 77 (Wave 9 · Upgrade 52): End-to-End Closed-Loop CLI --auto-heal-qa
+// ---------------------------------------------------------------------------
+test('77. Wave 9 End-to-End: render-batch.mjs --auto-heal-qa executes closed-loop audit -> patch -> re-audit & persists .healed.json', () => {
+  const batchPath = path.join(process.cwd(), 'scripts/render-batch.mjs');
+  const batchSrc = fs.readFileSync(batchPath, 'utf8');
+  assert.ok(batchSrc.includes('--auto-heal-qa'), 'render-batch.mjs must support --auto-heal-qa');
+  assert.ok(batchSrc.includes('--target-score'), 'render-batch.mjs must support --target-score');
+  assert.equal(/\bexec\s*\(/.test(batchSrc), false, 'render-batch.mjs must never use shell string exec()');
+
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'stagecraft-autoheal-w9-'));
+  try {
+    const ep = clone(PRESET_EPISODES[0]);
+    const epPath = path.join(tmpDir, `${ep.id}.json`);
+    const outDir = path.join(tmpDir, 'out');
+    const mockInspectorDir = path.join(tmpDir, 'mock-shot-inspector');
+    const mockScriptsDir = path.join(mockInspectorDir, 'scripts');
+    fs.mkdirSync(mockScriptsDir, { recursive: true });
+    fs.writeFileSync(epPath, JSON.stringify(ep, null, 2), 'utf8');
+
+    // Mock scripts/qa-studio-audit.mjs:
+    // Pass 1: inspects bundle studioVersion 9.0.0 & actor telemetry, emits valid Wave 9 patch & score 72.
+    // Pass 2: verifies patch took effect in refreshed bundle & returns score 94 (>= target 85).
+    const mockAuditScript = `
+import fs from 'node:fs';
+const args = process.argv.slice(2);
+let bundlePath = '';
+let emitPatchPath = '';
+for (let i = 0; i < args.length; i++) {
+  if (args[i] === '--stagecraft-bundle') bundlePath = args[++i];
+  if (args[i] === '--emit-patch') emitPatchPath = args[++i];
+}
+const bundle = JSON.parse(fs.readFileSync(bundlePath, 'utf8'));
+const actor0 = bundle.telemetry.beatTimeline[0].actors[0];
+const cast0 = bundle.episode.cast[0];
+const isHealed =
+  bundle.studioVersion === '9.0.0' &&
+  actor0.resolvedGazeTarget === 'camera' &&
+  actor0.resolvedHeadAngle === 'front' &&
+  actor0.heldProp === 'diya_lamp' &&
+  cast0.primaryColor === '#2563eb';
+if (!isHealed) {
+  const patchDoc = {
+    schema: 'stagecraft-patch/v1',
+    summary: 'Auto-heal beat 1 actor gaze, head angle, held prop & cast contrast',
+    beforeScore: 72,
+    afterScore: 94,
+    patch: [
+      { op: 'replace', path: '/beats/0/actors/0/gazeTarget', value: 'camera' },
+      { op: 'replace', path: '/beats/0/actors/0/headAngle', value: 'front' },
+      { op: 'replace', path: '/beats/0/actors/0/heldProp', value: 'diya_lamp' },
+      { op: 'replace', path: '/cast/0/primaryColor', value: '#2563eb' },
+    ],
+  };
+  fs.writeFileSync(emitPatchPath, JSON.stringify(patchDoc, null, 2), 'utf8');
+  console.log(JSON.stringify({ score: 72, findings: 4 }));
+} else {
+  console.log(JSON.stringify({ score: 94, findings: 0 }));
+}
+`;
+    fs.writeFileSync(path.join(mockScriptsDir, 'qa-studio-audit.mjs'), mockAuditScript, 'utf8');
+
+    const stdout = execFileSync(
+      process.execPath,
+      [
+        batchPath,
+        epPath,
+        '--out',
+        outDir,
+        '--qa-bundle',
+        '--shot-inspector-dir',
+        mockInspectorDir,
+        '--auto-heal-qa',
+        '--target-score',
+        '85',
+      ],
+      {
+        cwd: process.cwd(),
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'pipe'],
+        timeout: 30_000,
+      }
+    );
+
+    assert.ok(stdout.includes('auto-heal QA PASS'), `Expected PASS log in stdout, got: ${stdout}`);
+    assert.ok(stdout.includes('72 -> 94/100'), `Expected score delta in stdout, got: ${stdout}`);
+
+    const healedPath = path.join(outDir, `${ep.id}.healed.json`);
+    const bundlePath = path.join(outDir, `${ep.id}.qa-bundle.json`);
+    assert.equal(fs.existsSync(healedPath), true, 'Expected .healed.json to be written');
+    assert.equal(fs.existsSync(bundlePath), true, 'Expected refreshed .qa-bundle.json to exist');
+
+    const healedEp = JSON.parse(fs.readFileSync(healedPath, 'utf8'));
+    assert.equal(healedEp.beats[0].actors[0].gazeTarget, 'camera');
+    assert.equal(healedEp.beats[0].actors[0].headAngle, 'front');
+    assert.equal(healedEp.beats[0].actors[0].heldProp, 'diya_lamp');
+    assert.equal(healedEp.cast[0].primaryColor, '#2563eb');
+
+    const refreshedBundle = JSON.parse(fs.readFileSync(bundlePath, 'utf8'));
+    assert.equal(refreshedBundle.studioVersion, '9.0.0');
+    assert.equal(refreshedBundle.telemetry.beatTimeline[0].actors[0].resolvedGazeTarget, 'camera');
+    assert.equal(refreshedBundle.telemetry.beatTimeline[0].actors[0].resolvedHeadAngle, 'front');
+    assert.equal(refreshedBundle.telemetry.beatTimeline[0].actors[0].heldProp, 'diya_lamp');
+    assert.equal(refreshedBundle.telemetry.beatTimeline[0].actors[0].paletteContrastLuma, computePaletteContrastLuma('#2563eb'));
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
 });
 
 // ---------------------------------------------------------------------------

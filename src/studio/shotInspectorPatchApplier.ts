@@ -9,7 +9,14 @@
  *
  * Pure deterministic TypeScript — zero dependencies, zero in-place mutation.
  */
-import { EpisodeScript, validateEpisodeScript } from './types';
+import {
+  ACTOR_GAZE_TARGET_LIST,
+  ACTOR_HEAD_ANGLE_LIST,
+  ACTOR_HELD_HAND_LIST,
+  EpisodeScript,
+  PROP_CATALOG,
+  validateEpisodeScript,
+} from './types';
 
 export const STAGECRAFT_PATCH_SCHEMA = 'stagecraft-patch/v1' as const;
 
@@ -60,6 +67,13 @@ const FORBIDDEN_KEYS = new Set<string>(['__proto__', 'constructor', 'prototype']
 const VALID_LOCATION_POSITIONS = new Set<string>(['top_left', 'bottom_left', 'top_right']);
 const VALID_LOCATION_STYLES = new Set<string>(['cinematic_bar', 'scroll_ribbon', 'minimal_tag']);
 const VALID_SLOTS = new Set<string>(['left', 'center', 'right', 'overhead']);
+const VALID_GAZE_TARGETS = new Set<string>(ACTOR_GAZE_TARGET_LIST);
+const VALID_HEAD_ANGLES = new Set<string>(ACTOR_HEAD_ANGLE_LIST);
+const VALID_HELD_HANDS = new Set<string>(ACTOR_HELD_HAND_LIST);
+const VALID_FACINGS = new Set<string>(['left', 'right']);
+const VALID_PROP_IDS = new Set<string>(PROP_CATALOG.map((p) => p.id));
+const ALLOWED_CAST_COLOR_FIELDS = new Set<string>(['primaryColor', 'accentColor']);
+const STRICT_HEX6_RE = /^#[0-9a-fA-F]{6}$/;
 
 function isCanonicalNonNegInt(segment: string): boolean {
   return /^(0|[1-9]\d*)$/.test(segment);
@@ -150,9 +164,39 @@ function validateAllowedTargetPath(
     return { ok: true };
   }
 
+  if (root === 'cast') {
+    if (tokens.length !== 3) {
+      return {
+        ok: false,
+        error: `Disallowed path "/${tokens.join('/')}": only /cast/<index>/primaryColor or /cast/<index>/accentColor edits are allowed.`,
+      };
+    }
+    const idxSeg = tokens[1];
+    if (!isCanonicalNonNegInt(idxSeg)) {
+      return {
+        ok: false,
+        error: `Invalid cast index "${idxSeg}" in "/${tokens.join('/')}".`,
+      };
+    }
+    const castIdx = Number(idxSeg);
+    if (castIdx < 0 || castIdx >= episode.cast.length) {
+      return {
+        ok: false,
+        error: `Cast index ${castIdx} out of bounds (episode has ${episode.cast.length} cast members).`,
+      };
+    }
+    if (!ALLOWED_CAST_COLOR_FIELDS.has(tokens[2])) {
+      return {
+        ok: false,
+        error: `Disallowed cast field "/${tokens.join('/')}": only primaryColor and accentColor may be patched.`,
+      };
+    }
+    return { ok: true };
+  }
+
   return {
     ok: false,
-    error: `Disallowed patch root "/${root}": only /beats/... and /visualStyle/... paths are permitted.`,
+    error: `Disallowed patch root "/${root}": only /beats/..., /visualStyle/..., and /cast/<index>/(primaryColor|accentColor) paths are permitted.`,
   };
 }
 
@@ -185,6 +229,16 @@ function validateDomainValueConstraint(
       if (requiredBeatFields.has(tokens[2])) {
         return `Cannot remove required beat field "${tokens[2]}".`;
       }
+    }
+    if (tokens[0] === 'cast') {
+      return `Cannot remove required cast color field "${tokens[2]}".`;
+    }
+    return null;
+  }
+
+  if (tokens[0] === 'cast' && tokens.length === 3) {
+    if (typeof value !== 'string' || !STRICT_HEX6_RE.test(value)) {
+      return `Invalid cast ${tokens[2]} "${String(value)}": must be a strict #rrggbb hex color.`;
     }
     return null;
   }
@@ -239,6 +293,21 @@ function validateDomainValueConstraint(
       }
       if (sub === 'slot' && (typeof value !== 'string' || !VALID_SLOTS.has(value))) {
         return `Invalid actor slot "${String(value)}".`;
+      }
+      if (sub === 'gazeTarget' && (typeof value !== 'string' || !VALID_GAZE_TARGETS.has(value))) {
+        return `Invalid actor gazeTarget "${String(value)}".`;
+      }
+      if (sub === 'headAngle' && (typeof value !== 'string' || !VALID_HEAD_ANGLES.has(value))) {
+        return `Invalid actor headAngle "${String(value)}".`;
+      }
+      if (sub === 'heldProp' && (typeof value !== 'string' || (value !== 'none' && !VALID_PROP_IDS.has(value)))) {
+        return `Invalid actor heldProp "${String(value)}".`;
+      }
+      if (sub === 'heldHand' && (typeof value !== 'string' || !VALID_HELD_HANDS.has(value))) {
+        return `Invalid actor heldHand "${String(value)}".`;
+      }
+      if (sub === 'facing' && (typeof value !== 'string' || !VALID_FACINGS.has(value))) {
+        return `Invalid actor facing "${String(value)}": must be "left" or "right".`;
       }
     }
   }

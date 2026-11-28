@@ -357,10 +357,10 @@ Stagecraft Studio expands beyond folklore into **any genre** (Sci-Fi, Noir, Fant
 <!-- STAGECRAFT_AUTO_SYNC_START -->
 ## 14. Live Studio Catalog Sync Snapshot (Auto-Generated)
 
-> **Catalog Fingerprint**: `eec2ee463dfa4c76` — Generated deterministically by `npm run sync-docs` from live runtime catalogs. Do not hand-edit this block.
+> **Catalog Fingerprint**: `a337d54129404ea7` — Generated deterministically by `npm run sync-docs` from live runtime catalogs. Do not hand-edit this block.
 
 - **Core World Catalogs**: **20** Art Engines · **160** Cast Archetypes · **150** Stage Backdrops · **185** Props · **40** Moods · **30** Weathers · **30** Crowds · **36** Beat FX · **6** Transitions · **10** SFX · **13** Music Engines · **9** Shots · **12** Acting Macros
 - **Procedural Generators & Presets**: **192** Curated CharacterDNA Sprite Presets (12 genres) · **84** Backdrop Themes · **84** Custom Prop Presets · **25** 4-Act Visual Arcs
-- **Wave 7 Sims-Grade CharacterDNA Parts**: **10** Eyebrows · **8** Pupils · **5** Eyelashes · **8** Mouths · **21** Hair/Manes · **13** Beards/Mustaches · **22** Face Marks (primary + secondary + blush) · **16** Body Marks (up to 3 combinable) · **14** Outerwear · **7** Sleeves · **10** Waist/Belts · **9** Gloves · **12** Footwear · **12** Eyewear · **9** Ear/Face Jewelry · **10** Neckwear · **7** Wristwear · **12** Back Gear · **12** Face Sculpt Morphs · **10-Channel** Color Palette
+- **Wave 7 Sims-Grade CharacterDNA Parts**: **10** Eyebrows · **8** Pupils · **5** Eyelashes · **8** Mouths · **24** Hair/Manes · **13** Beards/Mustaches · **22** Face Marks (primary + secondary + blush) · **16** Body Marks (up to 3 combinable) · **14** Outerwear · **7** Sleeves · **10** Waist/Belts · **9** Gloves · **12** Footwear · **12** Eyewear · **9** Ear/Face Jewelry · **10** Neckwear · **7** Wristwear · **12** Back Gear · **12** Face Sculpt Morphs · **10-Channel** Color Palette
 - **Full Master Reference**: See `STAGECRAFT_LLM_INSTRUCTIONS.md` (Section 5.7 for Sims-Grade CharacterDNA JSON authoring).
 <!-- STAGECRAFT_AUTO_SYNC_END -->

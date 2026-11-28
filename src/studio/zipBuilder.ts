@@ -134,6 +134,7 @@ import studioCatalogSearchIndexTs from './catalogSearchIndex.ts?raw';
 import studioStoryRemixEngineTs from './storyRemixEngine.ts?raw';
 import studioGranularCharacterLayersTs from './granularCharacterLayers.ts?raw';
 import studioLlmMasterGuideBuilderTs from './llmMasterGuideBuilder.ts?raw';
+import studioCharacterRiggingTs from './characterRigging.ts?raw';
 import studioShotInspectorBridgeTs from './shotInspectorBridge.ts?raw';
 import studioShotInspectorPatchApplierTs from './shotInspectorPatchApplier.ts?raw';
 import studioShotInspectorHostClientTs from './shotInspectorHostClient.ts?raw';
@@ -821,6 +822,10 @@ export function collectAllMachinimaEntries(): ZipEntryInput[] {
     {
       path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/llmMasterGuideBuilder.ts`,
       content: studioLlmMasterGuideBuilderTs,
+    },
+    {
+      path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/characterRigging.ts`,
+      content: studioCharacterRiggingTs,
     },
     {
       path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/shotInspectorBridge.ts`,

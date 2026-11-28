@@ -55,6 +55,7 @@ import {
 } from './kineticCaptions';
 import { drawLocationLowerThird } from './lowerThirds';
 import { computeHitstopState, drawImpactShockOverlay } from './impactVfx';
+import { resolveActorRigForBeat } from './characterRigging';
 import {
   AnalyticalActorAnchor,
   drawAnalyticalBeatVfxLayer,
@@ -2617,6 +2618,12 @@ export function renderEpisodeFrame(
               fCtx.translate(-pos.x, -pos.y);
             }
           }
+          const actorRigResolved = resolveActorRigForBeat(
+            beat,
+            a,
+            actorAnimT,
+            isSpeaking ? speechEnergy : 0
+          );
           drawActorFullBody(
             fCtx,
             c,
@@ -2633,7 +2640,8 @@ export function renderEpisodeFrame(
             a.motion,
             activeRenderStyle,
             lighting,
-            motionProfile
+            motionProfile,
+            actorRigResolved.rig
           );
           fCtx.restore();
         }
@@ -2761,6 +2769,12 @@ export function renderEpisodeFrame(
         applyParallaxCamera(fCtx, w, h, cam, 1.0);
         fCtx.translate(w * 0.5, h * (isVert ? 0.46 : 0.52));
         fCtx.scale(s * 1.45, s * 1.45);
+        const cuResolved = resolveActorRigForBeat(
+          beat,
+          focusActor,
+          cuSteppedT,
+          isSpeaking ? speechEnergy : 0
+        );
         drawActorCloseUp(
           fCtx,
           c,
@@ -2768,7 +2782,15 @@ export function renderEpisodeFrame(
           isSpeaking ? viseme : 0,
           isSpeaking ? speechEnergy : 0,
           beat.lightSide,
-          cuSteppedT
+          cuSteppedT,
+          {
+            headAngle: cuResolved.orientation.headAngle,
+            yawBias: cuResolved.orientation.yawBias,
+            lookX: cuResolved.gaze.lookX,
+            lookY: cuResolved.gaze.lookY,
+            secondaryMotion: cuResolved.secondaryMotion,
+            weather: beat.weather,
+          }
         );
         fCtx.restore();
       },
@@ -2848,7 +2870,24 @@ export function renderEpisodeFrame(
         fCtx.clip();
         fCtx.translate(w * 0.26, h * 0.52);
         fCtx.scale(s * (isVert ? 0.92 : 1.24), s * (isVert ? 0.92 : 1.24));
-        drawActorCloseUp(fCtx, cL, exprFor(actor0), speakL ? viseme : 0, speakL ? speechEnergy : 0, 'right', splitSteppedT);
+        const splitLResolved = resolveActorRigForBeat(beat, actor0, splitSteppedT, speakL ? speechEnergy : 0);
+        drawActorCloseUp(
+          fCtx,
+          cL,
+          exprFor(actor0),
+          speakL ? viseme : 0,
+          speakL ? speechEnergy : 0,
+          'right',
+          splitSteppedT,
+          {
+            headAngle: splitLResolved.orientation.headAngle,
+            yawBias: splitLResolved.orientation.yawBias,
+            lookX: splitLResolved.gaze.lookX,
+            lookY: splitLResolved.gaze.lookY,
+            secondaryMotion: splitLResolved.secondaryMotion,
+            weather: beat.weather,
+          }
+        );
         fCtx.restore();
 
         // Right panel actor
@@ -2862,7 +2901,24 @@ export function renderEpisodeFrame(
         fCtx.clip();
         fCtx.translate(w * 0.74, h * 0.52);
         fCtx.scale(s * (isVert ? 0.92 : 1.24), s * (isVert ? 0.92 : 1.24));
-        drawActorCloseUp(fCtx, cR, exprFor(actor1), speakR ? viseme : 0, speakR ? speechEnergy : 0, 'left', splitSteppedT);
+        const splitRResolved = resolveActorRigForBeat(beat, actor1, splitSteppedT, speakR ? speechEnergy : 0);
+        drawActorCloseUp(
+          fCtx,
+          cR,
+          exprFor(actor1),
+          speakR ? viseme : 0,
+          speakR ? speechEnergy : 0,
+          'left',
+          splitSteppedT,
+          {
+            headAngle: splitRResolved.orientation.headAngle,
+            yawBias: splitRResolved.orientation.yawBias,
+            lookX: splitRResolved.gaze.lookX,
+            lookY: splitRResolved.gaze.lookY,
+            secondaryMotion: splitRResolved.secondaryMotion,
+            weather: beat.weather,
+          }
+        );
         fCtx.restore();
 
         // Golden diagonal clash divider with subtle outer dark contour
@@ -2903,7 +2959,15 @@ export function renderEpisodeFrame(
         fCtx.translate(w * 0.5 + sfxChoreo.shakeX * 0.6, stripY + stripH * 0.62 + sfxChoreo.shakeY * 0.6);
         const zoom = lerp(2.2, 2.48, smoothstep(u));
         fCtx.scale(s * zoom, s * zoom);
-        drawActorCloseUp(fCtx, c, exprFor(focus), 0, speechEnergy, beat.lightSide, eyeSteppedT);
+        const eyeResolved = resolveActorRigForBeat(beat, focus, eyeSteppedT, speechEnergy);
+        drawActorCloseUp(fCtx, c, exprFor(focus), 0, speechEnergy, beat.lightSide, eyeSteppedT, {
+          headAngle: eyeResolved.orientation.headAngle,
+          yawBias: eyeResolved.orientation.yawBias,
+          lookX: eyeResolved.gaze.lookX,
+          lookY: eyeResolved.gaze.lookY,
+          secondaryMotion: eyeResolved.secondaryMotion,
+          weather: beat.weather,
+        });
         fCtx.restore();
 
         fCtx.fillStyle = pal.accent;
@@ -2949,6 +3013,7 @@ export function renderEpisodeFrame(
       drawForeground: (fCtx) => {
         fCtx.save();
         applyParallaxCamera(fCtx, w, h, cam, 1.0);
+        const groundRig = resolveActorRigForBeat(beat, groundActor, animT, 0);
         drawActorFullBody(
           fCtx,
           cG,
@@ -2965,7 +3030,8 @@ export function renderEpisodeFrame(
           groundActor.motion,
           activeRenderStyle,
           lighting,
-          motionProfile
+          motionProfile,
+          groundRig.rig
         );
 
         const eu = easeOutCubic(u);
@@ -2993,6 +3059,7 @@ export function renderEpisodeFrame(
           fCtx.stroke();
         }
 
+        const flyRig = resolveActorRigForBeat(beat, flyActor, animT, speechEnergy);
         drawActorFullBody(
           fCtx,
           cF,
@@ -3009,7 +3076,8 @@ export function renderEpisodeFrame(
           flyActor.motion,
           activeRenderStyle,
           lighting,
-          motionProfile
+          motionProfile,
+          flyRig.rig
         );
         fCtx.restore();
 
@@ -3075,6 +3143,7 @@ export function renderEpisodeFrame(
         if (actor0) {
           const c = getCast(actor0.castId);
           const isSpeaking = beat.speakerId === actor0.castId;
+          const spotRig = resolveActorRigForBeat(beat, actor0, animT, isSpeaking ? speechEnergy : 0);
           drawActorFullBody(
             fCtx,
             c,
@@ -3091,7 +3160,8 @@ export function renderEpisodeFrame(
             actor0.motion,
             activeRenderStyle,
             lighting,
-            motionProfile
+            motionProfile,
+            spotRig.rig
           );
         }
 

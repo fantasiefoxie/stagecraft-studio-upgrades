@@ -1277,9 +1277,10 @@ export function drawGranularHairBehind(
   ctx: CanvasRenderingContext2D,
   hairStyle: HairStyleId,
   hairHex: string,
-  t: number
+  t: number,
+  swayRad = 0
 ): boolean {
-  const sway = Math.sin(t * 2.5) * 3.5;
+  const sway = Math.sin(t * 2.5) * 3.5 + swayRad * 26;
   ctx.save();
   ctx.fillStyle = hairHex;
   switch (hairStyle) {
@@ -1403,6 +1404,49 @@ export function drawGranularHairBehind(
       ctx.fill();
       ctx.restore();
       return true;
+    case 'side_part_classic':
+      ctx.beginPath();
+      ctx.moveTo(-74, -44);
+      ctx.quadraticCurveTo(-48, -96, 8, -94);
+      ctx.quadraticCurveTo(72, -92, 76, -38);
+      ctx.lineTo(72, 18);
+      ctx.lineTo(54, 10);
+      ctx.lineTo(-54, 10);
+      ctx.lineTo(-72, 22);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+      return true;
+    case 'curtain_bangs':
+      ctx.beginPath();
+      ctx.moveTo(-78, -48);
+      ctx.quadraticCurveTo(0, -102, 78, -48);
+      ctx.quadraticCurveTo(86, 8, 76 + sway * 0.4, 58);
+      ctx.lineTo(-76 + sway * 0.4, 58);
+      ctx.quadraticCurveTo(-86, 8, -78, -48);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+      return true;
+    case 'wolf_cut':
+      ctx.beginPath();
+      ctx.moveTo(-78, -46);
+      ctx.quadraticCurveTo(0, -104, 78, -46);
+      ctx.lineTo(94, 4);
+      ctx.lineTo(76, 18);
+      ctx.lineTo(98 + sway * 0.65, 76);
+      ctx.lineTo(66 + sway * 0.5, 62);
+      ctx.lineTo(58 + sway * 0.8, 102);
+      ctx.lineTo(0 + sway * 0.6, 84);
+      ctx.lineTo(-58 + sway * 0.8, 102);
+      ctx.lineTo(-66 + sway * 0.5, 62);
+      ctx.lineTo(-98 + sway * 0.65, 76);
+      ctx.lineTo(-76, 18);
+      ctx.lineTo(-94, 4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+      return true;
     default:
       ctx.restore();
       return false;
@@ -1460,6 +1504,41 @@ export function drawGranularHairFront(
       ctx.lineTo(14, -84);
       ctx.stroke();
     }
+  } else if (hairStyle === 'side_part_classic') {
+    // Clean parted sweep across the brow
+    ctx.beginPath();
+    ctx.moveTo(-66, -46);
+    ctx.quadraticCurveTo(-24, -86, 24, -74);
+    ctx.quadraticCurveTo(56, -64, 68, -40);
+    ctx.quadraticCurveTo(22, -46, -22, -62);
+    ctx.quadraticCurveTo(-48, -52, -66, -34);
+    ctx.closePath();
+    ctx.fill();
+  } else if (hairStyle === 'curtain_bangs') {
+    // Center-parted soft swooping curtain locks framing both temples
+    for (const s of [-1, 1]) {
+      ctx.beginPath();
+      ctx.moveTo(0, -68);
+      ctx.quadraticCurveTo(s * 34, -78, s * 68, -46);
+      ctx.quadraticCurveTo(s * 54, -22, s * 28, -28);
+      ctx.quadraticCurveTo(s * 14, -44, 0, -56);
+      ctx.closePath();
+      ctx.fill();
+    }
+  } else if (hairStyle === 'wolf_cut') {
+    // Feathered choppy fringe with airy side wisps
+    ctx.beginPath();
+    ctx.moveTo(-68, -44);
+    ctx.quadraticCurveTo(0, -86, 68, -44);
+    ctx.lineTo(54, -24);
+    ctx.lineTo(36, -38);
+    ctx.lineTo(18, -20);
+    ctx.lineTo(0, -42);
+    ctx.lineTo(-18, -20);
+    ctx.lineTo(-36, -38);
+    ctx.lineTo(-54, -24);
+    ctx.closePath();
+    ctx.fill();
   }
   ctx.restore();
 }
@@ -1659,7 +1738,10 @@ export function drawGranularEyesLayer(
   speechEnergy: number,
   castSeed: number,
   baseEyeX: number,
-  baseEyeY: number
+  baseEyeY: number,
+  lookX = 0,
+  lookY = 0,
+  yawBias = 0
 ): void {
   const fm = resolveFaceMorph(dna);
   const recipe = getExpressionRecipe(expression);
@@ -1677,11 +1759,20 @@ export function drawGranularEyesLayer(
   const lashStyle: EyelashStyleId = dna.head.eyelashStyle || 'none';
   const isGlowing = dna.head.eyeStyle === 'glowing_orb' || pupilStyle === 'blank_glow';
   const blink = shouldBlink(t, castSeed, expression);
+  const clampedLookX = clamp(Number.isFinite(lookX) ? lookX : 0, -1, 1);
+  const clampedLookY = clamp(Number.isFinite(lookY) ? lookY : 0, -0.6, 0.6);
+  const clampedYaw = clamp(Number.isFinite(yawBias) ? yawBias : 0, -1, 1);
+  const absYaw = Math.abs(clampedYaw);
 
   for (const side of [-1, 1] as const) {
-    const cx = side * eyeX;
+    const isFarEye = absYaw > 0.1 && Math.sign(side) === Math.sign(clampedYaw);
+    if (absYaw > 0.78 && isFarEye) continue;
+    const perspScaleX = isFarEye
+      ? Math.max(0.56, 1 - absYaw * 0.42)
+      : Math.max(0.84, 1 - absYaw * 0.12);
+    const cx = side * eyeX * (isFarEye ? Math.max(0.64, 1 - absYaw * 0.34) : 1);
     const irisColor = side === 1 && pal.eyeSecondary ? pal.eyeSecondary : pal.eye || pal.accent;
-    const rx = Math.max(4, 15.5 * baseScale);
+    const rx = Math.max(4, 15.5 * baseScale * perspScaleX);
     const ry = Math.max(2, (dna.head.eyeStyle === 'owl_disc' ? 14 : 9.5) * baseScale * recipe.eyeOpen);
     const tilt = side * fm.eyeTilt;
 
@@ -1722,15 +1813,20 @@ export function drawGranularEyesLayer(
     ctx.clip();
 
     const irisR = Math.max(3, Math.min(rx, ry) * 0.78);
+    const gazePx = clampedLookX * Math.max(2.2, rx * 0.42);
+    const gazePy = clampedLookY * Math.max(1.8, ry * 0.48);
     if (!isGlowing) {
       ctx.fillStyle = irisColor;
       ctx.beginPath();
-      ctx.arc(0, 0, irisR, 0, Math.PI * 2);
+      ctx.arc(gazePx, gazePy, irisR, 0, Math.PI * 2);
       ctx.fill();
     }
 
     // Pupil
+    ctx.save();
+    ctx.translate(gazePx, gazePy);
     drawPupilShape(ctx, pupilStyle, irisR * 0.56 * recipe.pupilScale, irisColor);
+    ctx.restore();
 
     // Upper eyelid cover for expression & heavy-lidded eye style
     const lidCover = clamp(
@@ -1750,7 +1846,7 @@ export function drawGranularEyesLayer(
     // Catchlight sparkle
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.arc(side * -2.8, -ry * 0.34, Math.max(1.6, irisR * 0.28), 0, Math.PI * 2);
+    ctx.arc(side * -2.8 + gazePx * 0.65, -ry * 0.34 + gazePy * 0.5, Math.max(1.6, irisR * 0.28), 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
 

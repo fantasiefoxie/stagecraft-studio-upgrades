@@ -22,9 +22,15 @@ import {
 import { resolveEffectiveMotionFps } from './animationEngine';
 import { measureDialogueReadingRate } from './continuityAuditor';
 import type { CharacterDNA } from './characterDna';
+import {
+  computePaletteContrastLuma,
+  computeSecondaryMotionSway,
+  resolveActorGazeVector,
+  resolveActorHeadOrientation,
+} from './characterRigging';
 
 export const STAGECRAFT_QA_BUNDLE_SCHEMA = 'stagecraft-shot-inspector/v1' as const;
-export const STAGECRAFT_STUDIO_VERSION = '8.0.0' as const;
+export const STAGECRAFT_STUDIO_VERSION = '9.0.0' as const;
 
 /** Deterministic fallback timestamp when caller omits `exportedAt` (keeps repeated calls bit-exact). */
 export const DEFAULT_DETERMINISTIC_EXPORTED_AT = '2026-01-01T00:00:00.000Z';
@@ -65,6 +71,18 @@ export interface StagecraftActorTelemetryV1 {
   offsetY: number;
   hasGranularDna: boolean;
   dnaSilhouetteSignature: string;
+  /** Wave 9 (Upgrade 52): Actor facing direction */
+  facing?: 'left' | 'right';
+  /** Wave 9 (Upgrade 52): Deterministically resolved head orientation */
+  resolvedHeadAngle?: 'front' | 'three_quarter' | 'profile';
+  /** Wave 9 (Upgrade 52): Deterministically resolved eye-gaze target */
+  resolvedGazeTarget?: string;
+  /** Wave 9 (Upgrade 52): Hand-held prop anchored to wrist joint, or null */
+  heldProp?: string | null;
+  /** Wave 9 (Upgrade 52): Analytical secondary motion kinetic energy (0..1) */
+  secondaryMotionEnergy?: number;
+  /** Wave 9 (Upgrade 52): WCAG 2.1 sRGB relative luminance (0..1) of cast member's primaryColor */
+  paletteContrastLuma?: number;
 }
 
 export interface StagecraftBeatTelemetryV1 {
@@ -514,8 +532,24 @@ export function buildStagecraftQaBundle(
           }
         : null;
 
+    const beatMidSec = roundSec(startSec + durationSec * 0.5);
     const actors: StagecraftActorTelemetryV1[] = (beat.actors || []).map((actor) => {
       const member = castById.get(actor.castId);
+      const partner = (beat.actors || []).find((other) => other.castId !== actor.castId);
+      const orientation = resolveActorHeadOrientation(beat, actor, partner);
+      const gaze = resolveActorGazeVector(beat, actor, partner, beatMidSec);
+      const isSpeaking = beat.speakerId === actor.castId && Boolean(speechWindow);
+      const secondary = computeSecondaryMotionSway(
+        actor.castId,
+        beatMidSec,
+        actor.pose,
+        actor.motion || 'still',
+        beat.weather || 'none',
+        isSpeaking ? 0.55 : 0
+      );
+      const resolvedFacing: 'left' | 'right' =
+        actor.facing || (actor.slot === 'right' ? 'left' : 'right');
+      const primaryHex = member?.dna?.palette?.primary || member?.primaryColor || '#334155';
       return {
         castId: actor.castId,
         slot: actor.slot,
@@ -531,6 +565,12 @@ export function buildStagecraftQaBundle(
             : 0,
         hasGranularDna: hasGranularCharacterDna(member),
         dnaSilhouetteSignature: computeDnaSilhouetteSignature(member),
+        facing: resolvedFacing,
+        resolvedHeadAngle: orientation.headAngle,
+        resolvedGazeTarget: gaze.gazeTarget,
+        heldProp: actor.heldProp && actor.heldProp !== 'none' ? actor.heldProp : null,
+        secondaryMotionEnergy: roundNum(secondary.energy, 3),
+        paletteContrastLuma: roundNum(computePaletteContrastLuma(primaryHex), 4),
       };
     });
 

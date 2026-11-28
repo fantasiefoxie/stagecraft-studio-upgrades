@@ -25,6 +25,8 @@ import {
   MoodId,
   POSE_LIST,
   PoseId,
+  PROP_CATALOG,
+  PropId,
   RENDER_STYLE_CATALOG,
   RenderStyleId,
   resolveVisualStyle,
@@ -408,6 +410,9 @@ export const EntityWorkshopModal: React.FC<EntityWorkshopModalProps> = ({
       : 'full';
   }, [viewMode, activeTab]);
 
+  const [previewAngle, setPreviewAngle] = useState<'front' | 'three_quarter_left' | 'three_quarter_right'>('front');
+  const [previewHeldProp, setPreviewHeldProp] = useState<PropId | 'none'>('none');
+
   // Live 60fps animated Workshop stage canvas
   const previewRef = useRef({
     draftMember,
@@ -419,6 +424,8 @@ export const EntityWorkshopModal: React.FC<EntityWorkshopModalProps> = ({
     isTalking,
     renderStyle,
     mood,
+    previewAngle,
+    previewHeldProp,
   });
 
   useEffect(() => {
@@ -432,8 +439,22 @@ export const EntityWorkshopModal: React.FC<EntityWorkshopModalProps> = ({
       isTalking,
       renderStyle,
       mood,
+      previewAngle,
+      previewHeldProp,
     };
-  }, [draftMember, dna, effectiveViewMode, pose, expression, facing, isTalking, renderStyle, mood]);
+  }, [
+    draftMember,
+    dna,
+    effectiveViewMode,
+    pose,
+    expression,
+    facing,
+    isTalking,
+    renderStyle,
+    mood,
+    previewAngle,
+    previewHeldProp,
+  ]);
 
   useEffect(() => {
     let rafId = 0;
@@ -468,6 +489,27 @@ export const EntityWorkshopModal: React.FC<EntityWorkshopModalProps> = ({
             },
             drawForeground: (fctx) => {
               const lightSide = p.facing === 'right' ? 'right' : 'left';
+              const worldYaw =
+                p.previewAngle === 'three_quarter_left'
+                  ? -0.55
+                  : p.previewAngle === 'three_quarter_right'
+                    ? 0.55
+                    : 0;
+              const flipSign = p.facing === 'left' ? -1 : 1;
+              const previewRig = {
+                headAngle: p.previewAngle === 'front' ? ('front' as const) : ('three_quarter' as const),
+                yawBias: worldYaw * flipSign,
+                lookX: worldYaw * flipSign * 0.65,
+                lookY: 0,
+                heldProp: p.previewHeldProp,
+                heldHand: 'front' as const,
+              };
+              const closeUpRig = {
+                headAngle: p.previewAngle === 'front' ? ('front' as const) : ('three_quarter' as const),
+                yawBias: worldYaw * flipSign,
+                lookX: worldYaw * flipSign * 0.65,
+                lookY: 0,
+              };
               if (p.viewMode === 'full') {
                 drawModularEntityFullBody(
                   fctx,
@@ -484,7 +526,10 @@ export const EntityWorkshopModal: React.FC<EntityWorkshopModalProps> = ({
                   t,
                   (t * 0.25) % 1,
                   undefined,
-                  p.renderStyle
+                  p.renderStyle,
+                  undefined,
+                  undefined,
+                  previewRig
                 );
               } else if (p.viewMode === 'closeup') {
                 fctx.save();
@@ -499,7 +544,8 @@ export const EntityWorkshopModal: React.FC<EntityWorkshopModalProps> = ({
                   viseme,
                   speechEnergy,
                   lightSide,
-                  t
+                  t,
+                  closeUpRig
                 );
                 fctx.restore();
               } else {
@@ -519,7 +565,10 @@ export const EntityWorkshopModal: React.FC<EntityWorkshopModalProps> = ({
                   t,
                   (t * 0.25) % 1,
                   undefined,
-                  p.renderStyle
+                  p.renderStyle,
+                  undefined,
+                  undefined,
+                  previewRig
                 );
                 // Hairline divider
                 fctx.save();
@@ -540,7 +589,8 @@ export const EntityWorkshopModal: React.FC<EntityWorkshopModalProps> = ({
                   viseme,
                   speechEnergy,
                   lightSide,
-                  t
+                  t,
+                  closeUpRig
                 );
                 fctx.restore();
               }
@@ -913,6 +963,29 @@ export const EntityWorkshopModal: React.FC<EntityWorkshopModalProps> = ({
                     <span>Flip</span>
                   </button>
 
+                  <div className="inline-flex rounded border border-white/10 overflow-hidden bg-[#13182b]">
+                    {(
+                      [
+                        ['front', 'Front'],
+                        ['three_quarter_left', '3/4 Left'],
+                        ['three_quarter_right', '3/4 Right'],
+                      ] as const
+                    ).map(([angId, angLabel]) => (
+                      <button
+                        key={angId}
+                        type="button"
+                        onClick={() => setPreviewAngle(angId)}
+                        className={`h-7 px-2 text-[10px] font-semibold cursor-pointer transition-colors ${
+                          previewAngle === angId
+                            ? 'bg-[#2a2315] text-[#f2c85b]'
+                            : 'text-[#9aa3bd] hover:text-white'
+                        }`}
+                      >
+                        {angLabel}
+                      </button>
+                    ))}
+                  </div>
+
                   {isNew && (
                     <label className="inline-flex items-center gap-1.5 ml-1 text-[11px] text-[#c5cde0] cursor-pointer">
                       <input
@@ -927,7 +1000,7 @@ export const EntityWorkshopModal: React.FC<EntityWorkshopModalProps> = ({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                 <label className="block">
                   <span className="block text-[10px] text-[#7f89a6] mb-0.5">Pose</span>
                   <select
@@ -953,6 +1026,22 @@ export const EntityWorkshopModal: React.FC<EntityWorkshopModalProps> = ({
                     {EXPRESSION_CATALOG.map((ex) => (
                       <option key={ex.id} value={ex.id}>
                         {ex.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="block">
+                  <span className="block text-[10px] text-[#7f89a6] mb-0.5">Held Prop</span>
+                  <select
+                    value={previewHeldProp}
+                    onChange={(e) => setPreviewHeldProp(e.target.value as PropId | 'none')}
+                    className="w-full h-7 px-2 rounded bg-[#13182b] border border-white/10 text-[11px] text-white"
+                  >
+                    <option value="none">None</option>
+                    {PROP_CATALOG.filter((pr) => pr.id !== 'none').map((pr) => (
+                      <option key={pr.id} value={pr.id}>
+                        {pr.label}
                       </option>
                     ))}
                   </select>

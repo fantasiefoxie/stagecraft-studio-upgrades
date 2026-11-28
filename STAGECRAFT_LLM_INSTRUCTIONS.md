@@ -1,6 +1,6 @@
 # Stagecraft Studio — Master LLM Episode & Character Authoring Instructions
 
-> **Auto-Generated Living Document** · Catalog Fingerprint: `eec2ee463dfa4c76`  
+> **Auto-Generated Living Document** · Catalog Fingerprint: `a337d54129404ea7`  
 > Sync command: `npm run sync-docs` · Drift audit: `npm run sync-docs -- --check` (enforced by Test 61).
 
 ---
@@ -41,6 +41,12 @@
 - `visualStyle.hitstopEnabled: true`: deterministic 2–4 frame strike freeze + shockwave ring.
 - `visualStyle.depthOfField`, `visualStyle.lightShafts`, `visualStyle.foregroundFraming`, `visualStyle.spatialAudio`.
 - Per-beat `audioLeadSec` (`-0.6..+0.6`), `cameraKeyframes`, `actionCues`, `expressionCues`, `locationCard`, `customPropSheet`.
+- **Wave 9 Living Character Rigging (`beat.actors[]` optional fields)**:
+  - `gazeTarget`: `auto` | `camera` | `partner` | `left` | `right` | `up` | `down` (deterministic iris/pupil tracking + organic micro-saccades)
+  - `headAngle`: `auto` | `front` | `three_quarter` | `profile` (true 3/4 & profile feature/shoulder foreshortening across all 20 art engines)
+  - `heldProp`: any `PropId` | `none` anchored directly to the character's articulated 2-bone wrist joint
+  - `heldHand`: `front` | `back` | `both`
+  - Stateless analytical secondary motion physics automatically drives hair, capes, and tails from pose, motion, weather wind force, and speech energy (100% scrubbable).
 
 ## 4. Cast Member Schema & Natural-Language `traits` Auto-Mapping
 Every entry in `episode.cast[]` accepts either:
@@ -71,7 +77,7 @@ All fields below are **optional** on `CharacterDNA` (`version: 1`). Omit any fie
 - **Pupil / Iris Styles (8)** (`dna.head.pupilStyle`): `round`, `slit_cat`, `star_sparkle`, `ring_cyber`, `crosshair`, `blank_glow`, `spiral_hypno`, `heart_cute`
 - **Eyelash / Liner Styles (5)** (`dna.head.eyelashStyle`): `none`, `natural`, `winged_liner`, `dramatic_long`, `kohl_kajal`
 - **Mouth & Lip Styles (8)** (`dna.head.mouthStyle`): `classic`, `full_lips`, `thin_stern`, `wide_grin`, `fangs_vampire`, `tusks_boar`, `beak_line`, `stitched_gothic`
-- **Expanded Hair / Mane (21)** (`dna.head.hairStyle`): `none`, `short_crop`, `swept_royal`, `long_flowing`, `topknot_bun`, `braided_twin`, `wild_spiky`, `lion_mane`, `feather_crest`, `dreadlocks`, `hooded_cowl`, `bob_cut`, `pixie_short`, `curly_afro`, `ponytail_high`, `side_shave_undercut`, `wavy_shoulder`, `twin_buns`, `mohawk_punk`, `messy_anime`, `silver_bun_elder`
+- **Expanded Hair / Mane (24)** (`dna.head.hairStyle`): `none`, `short_crop`, `swept_royal`, `long_flowing`, `topknot_bun`, `braided_twin`, `wild_spiky`, `lion_mane`, `feather_crest`, `dreadlocks`, `hooded_cowl`, `bob_cut`, `pixie_short`, `curly_afro`, `ponytail_high`, `side_shave_undercut`, `wavy_shoulder`, `twin_buns`, `mohawk_punk`, `messy_anime`, `silver_bun_elder`, `side_part_classic`, `curtain_bangs`, `wolf_cut`
 - **Expanded Facial Hair (13)** (`dna.head.facialHair`): `none`, `royal_mustache`, `handlebar`, `short_trimmed`, `sage_long_beard`, `goatee`, `whiskers`, `stubble_5oclock`, `full_viking_beard`, `van_dyke`, `mutton_chops`, `soul_patch`, `braided_dwarf_beard`
 - **12 Face Sculpt Morphs (`dna.faceMorph`)**:
   - `jawWidth` (`0.7..1.3`, default `1`), `chinLength` (`0.7..1.3`, default `1`), `cheekboneWidth` (`0.75..1.3`, default `1`)
@@ -85,7 +91,7 @@ All fields below are **optional** on `CharacterDNA` (`version: 1`). Omit any fie
 - **Body Marks (16)** (`dna.bodyMarks`, array of up to 3 active IDs excluding `none`): `none`, `tribal_arm_bands`, `sleeve_tattoo_ink`, `cyber_circuit_veins`, `glowing_magic_runes`, `battle_scars_chest`, `vitiligo_body`, `henna_mehndi_hands`, `dragon_coil_tattoo`, `sacred_ash_stripes`, `tiger_body_stripes`, `starlight_freckles`, `stitch_seams`, `cracked_stone_veins`, `biolum_spots`, `anchor_sailor_tattoo`
 
 #### Layered Clothing & Footwear (`dna.outfit`)
-- **Headwear (24)** (`dna.outfit.headwear`): `none`, `golden_mukut`, `royal_turban`, `mughal_pagri`, `ten_crown`, `battle_helm`, `kabuto_crest`, `wizard_hat`, `laurel_wreath`, `floral_tiara`, `bandana`, `straw_conical`, `fedora`, `cyber_visor`, `astronaut_helmet`, `tricorn_hat`, `samurai_kabuto`, `chef_toque`, `grad_cap`, `viking_horns`, `nurse_cap`, `cowboy_hat`, `diver_helmet`, `elf_circlet`
+- **Headwear (27)** (`dna.outfit.headwear`): `none`, `golden_mukut`, `royal_turban`, `mughal_pagri`, `ten_crown`, `battle_helm`, `kabuto_crest`, `wizard_hat`, `laurel_wreath`, `floral_tiara`, `bandana`, `straw_conical`, `fedora`, `cyber_visor`, `astronaut_helmet`, `tricorn_hat`, `samurai_kabuto`, `chef_toque`, `grad_cap`, `viking_horns`, `nurse_cap`, `cowboy_hat`, `diver_helmet`, `elf_circlet`, `baseball_cap`, `beanie_knit`, `beret_artist`
 - **Upper Garments (22)** (`dna.outfit.topStyle`): `none_fur`, `royal_angarkha`, `saree_drape`, `sage_wrap`, `plate_armor`, `samurai_cuirass`, `peasant_tunic`, `scholar_robe`, `toga_chiton`, `kente_wrap`, `mystic_vest`, `trench_coat`, `lab_coat`, `cyber_jacket`, `space_suit`, `business_suit`, `space_exo`, `kimono_robe`, `hoodie_street`, `medieval_plate`, `pirate_coat`, `sports_jersey`
 - **Outerwear Layers (14)** (`dna.outfit.outerwear`): `none`, `leather_biker`, `denim_vest`, `royal_sherwani_coat`, `bomber_jacket`, `puffer_vest`, `tactical_rig`, `fur_collared_coat`, `academic_blazer`, `shawl_wrap`, `chainmail_hauberk`, `cyber_exovest`, `hooded_poncho`, `apron_artisan`
 - **Sleeve Cuts (7)** (`dna.outfit.sleeveStyle`): `auto`, `sleeveless`, `short_sleeve`, `rolled_cuff`, `long_fitted`, `bell_wide`, `puffed_royal`
@@ -174,10 +180,11 @@ All fields below are **optional** on `CharacterDNA` (`version: 1`). Omit any fie
 }
 ```
 
-## 6. Shot-Inspector QA Bridge, Telemetry Bundle & RFC 6902 Patches (Wave 8)
-- **Deterministic QA Bundle (`stagecraft-shot-inspector/v1`)**: Export via Storyboard QA -> Shot-Inspector Bridge -> `Export QA Bundle` (or CLI `node scripts/render-batch.mjs <ep.json> --out ./renders --qa-bundle [--shot-inspector-dir ../shot-inspector]`).
-- Contains 60fps integer beat timings, `effectiveCadenceFps` (`12 | 24 | 60`), `hitstopWindows`, `vfxBurstWindows`, `speechWindow` (with `audioLeadSec` J/L-cut offsets & `estimatedCps`), `locationCard`, per-actor `hasGranularDna` & `dnaSilhouetteSignature`, and broadcast audio targets (`-14 LUFS`, `-1.5 dBTP`).
-- **Safe RFC 6902 Auto-Patch Format (`stagecraft-patch/v1`)**: Import either `{ "schema": "stagecraft-patch/v1", "summary": "...", "patch": [ ... ] }` or a raw RFC 6902 array (`add` / `replace` / `remove`). Only `/beats/<index>/...` and `/visualStyle/<field>` paths are permitted; prototype-pollution keys and out-of-bounds indices are rejected atomically before `validateEpisodeScript()`.
+## 6. Shot-Inspector QA Bridge, Telemetry Bundle & Closed-Loop Auto-Heal (Waves 8–9)
+- **Deterministic QA Bundle (`stagecraft-shot-inspector/v1`, `studioVersion: "9.0.0"`)**: Export via Storyboard QA -> Shot-Inspector Bridge -> `Export QA Bundle` (or CLI `node scripts/render-batch.mjs <ep.json> --out ./renders --qa-bundle [--shot-inspector-dir ../shot-inspector] [--auto-heal-qa] [--target-score 85]`).
+- Contains 60fps integer beat timings, `effectiveCadenceFps` (`12 | 24 | 60`), `hitstopWindows`, `vfxBurstWindows`, `speechWindow` (with `audioLeadSec` J/L-cut offsets & `estimatedCps`), `locationCard`, broadcast audio targets (`-14 LUFS`, `-1.5 dBTP`), and Wave 9 per-actor rigging/contrast telemetry (`hasGranularDna`, `dnaSilhouetteSignature`, `facing`, `resolvedHeadAngle`, `resolvedGazeTarget`, `heldProp`, `secondaryMotionEnergy`, `paletteContrastLuma`).
+- **Safe RFC 6902 Auto-Patch Format (`stagecraft-patch/v1`)**: Import either `{ "schema": "stagecraft-patch/v1", "summary": "...", "patch": [ ... ] }` or a raw RFC 6902 array (`add` / `replace` / `remove`). Permitted paths include `/beats/<index>/...` (including `/beats/<index>/actors/<actorIdx>/(gazeTarget|headAngle|heldProp|heldHand|facing)`), `/visualStyle/<field>`, and `/cast/<castIdx>/(primaryColor|accentColor)` (strict `#RRGGBB` hex); prototype-pollution keys, disallowed cast mutations (`/cast/<idx>/name`), and out-of-bounds indices are rejected atomically before `validateEpisodeScript()`.
+- **Closed-Loop CLI Auto-Heal (`--auto-heal-qa --target-score <N>`)**: Runs up to 2 Shot-Inspector audit passes via safe `execFileSync` argument arrays, applies validated `stagecraft-patch/v1` fixes, writes `<episode>.healed.json`, refreshes `<episode>.qa-bundle.json`, and reports before/after QA score delta.
 - **Live Bidirectional Bridge (`cutscene-qa-bridge/v1`)**: Origin-verified `postMessage` host handling `QA_PING` -> `QA_PONG`, `QA_RUN_AUDIT` -> `QA_PUSH_STAGECRAFT_BUNDLE`, `QA_SEEK_TIME`, and `QA_APPLY_PATCH` (dry-run & Undo-preserving commit -> `QA_PATCH_RESULT`).
 
 ## 7. Mandatory Quality & Verification Gate

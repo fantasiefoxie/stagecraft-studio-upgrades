@@ -1141,6 +1141,27 @@ export interface MotionCardConfig {
   accentColor?: string;
 }
 
+export type ActorGazeTargetId = 'auto' | 'camera' | 'partner' | 'left' | 'right' | 'up' | 'down';
+export type ActorHeadAngleId = 'auto' | 'front' | 'three_quarter' | 'profile';
+export type ActorHeldHandId = 'front' | 'back' | 'both';
+
+export const ACTOR_GAZE_TARGET_LIST: ActorGazeTargetId[] = [
+  'auto',
+  'camera',
+  'partner',
+  'left',
+  'right',
+  'up',
+  'down',
+];
+export const ACTOR_HEAD_ANGLE_LIST: ActorHeadAngleId[] = [
+  'auto',
+  'front',
+  'three_quarter',
+  'profile',
+];
+export const ACTOR_HELD_HAND_LIST: ActorHeldHandId[] = ['front', 'back', 'both'];
+
 export interface ActorPlacement {
   castId: string;
   slot: 'left' | 'center' | 'right' | 'overhead';
@@ -1153,6 +1174,14 @@ export interface ActorPlacement {
   /** Optional fine stage nudge (-0.35 .. +0.35 normalized stage width/height) from interactive drag */
   offsetX?: number;
   offsetY?: number;
+  /** Wave 9 (Upgrade 47): Optional dynamic eye-gaze target ('auto' tracks partner in multi-actor shots or camera on close-ups) */
+  gazeTarget?: ActorGazeTargetId;
+  /** Wave 9 (Upgrade 47/48): Optional head & torso orientation ('auto' adapts to shot & movement) */
+  headAngle?: ActorHeadAngleId;
+  /** Wave 9 (Upgrade 49): Optional prop rigged directly to the articulated 2-bone wrist/hand joint */
+  heldProp?: PropId | 'none';
+  /** Wave 9 (Upgrade 49): Which articulated hand holds heldProp (default 'front') */
+  heldHand?: ActorHeldHandId;
 }
 
 export type LocationCardPosition = 'top_left' | 'bottom_left' | 'top_right';
@@ -3242,6 +3271,24 @@ export function validateEpisodeScript(raw: unknown): { ok: true; script: Episode
 
         const offX = Number(ao.offsetX);
         const offY = Number(ao.offsetY);
+        const rawGaze = typeof ao.gazeTarget === 'string' ? ao.gazeTarget.trim().toLowerCase() : '';
+        const gazeTarget = ACTOR_GAZE_TARGET_LIST.includes(rawGaze as ActorGazeTargetId)
+          ? (rawGaze as ActorGazeTargetId)
+          : undefined;
+        const rawHeadAngle = typeof ao.headAngle === 'string' ? ao.headAngle.trim().toLowerCase() : '';
+        const headAngle = ACTOR_HEAD_ANGLE_LIST.includes(rawHeadAngle as ActorHeadAngleId)
+          ? (rawHeadAngle as ActorHeadAngleId)
+          : undefined;
+        const rawHeldProp = typeof ao.heldProp === 'string' ? ao.heldProp.trim() : '';
+        const heldProp =
+          rawHeldProp === 'none' || validProps.has(rawHeldProp as PropId)
+            ? (rawHeldProp as PropId | 'none')
+            : undefined;
+        const rawHeldHand = typeof ao.heldHand === 'string' ? ao.heldHand.trim().toLowerCase() : '';
+        const heldHand = ACTOR_HELD_HAND_LIST.includes(rawHeldHand as ActorHeldHandId)
+          ? (rawHeldHand as ActorHeldHandId)
+          : undefined;
+
         return {
           castId: cid,
           slot: (['left', 'center', 'right', 'overhead'].includes(String(ao.slot))
@@ -3258,6 +3305,10 @@ export function validateEpisodeScript(raw: unknown): { ok: true; script: Episode
           ...(Number.isFinite(offY) && offY !== 0
             ? { offsetY: Number(Math.max(-0.35, Math.min(0.35, offY)).toFixed(3)) }
             : {}),
+          ...(gazeTarget ? { gazeTarget } : {}),
+          ...(headAngle ? { headAngle } : {}),
+          ...(heldProp ? { heldProp } : {}),
+          ...(heldHand ? { heldHand } : {}),
         };
       })
       .filter((x): x is ActorPlacement => x !== null);

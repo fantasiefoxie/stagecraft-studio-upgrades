@@ -189,6 +189,12 @@ export interface EyePairOptions {
   noBrows?: boolean;
   castSeed?: number;
   eyeScale?: number;
+  /** Wave 9 (Upgrade 47/48): Explicit horizontal pupil gaze in [-1, 1] */
+  lookX?: number;
+  /** Wave 9 (Upgrade 47/48): Explicit vertical pupil gaze in [-0.6, 0.6] */
+  lookY?: number;
+  /** Wave 9 (Upgrade 48): Signed head yaw bias in [-1, 1] for 3/4 and profile eye foreshortening */
+  yawBias?: number;
 }
 
 export interface MouthOptions {
@@ -297,43 +303,65 @@ export function drawUnifiedEyePair(
         ? 0.08
         : 1;
 
-  // Organic saccadic micro-gaze
+  // Organic saccadic micro-gaze blended with Wave 9 dynamic gaze vector
   const gazeBucket = Math.floor((t + (seed % 17) * 0.31) / 1.85);
   const autoGaze =
     (gazeBucket * 13 + seed) % 5 === 0 ? -2.2 : (gazeBucket * 7 + seed) % 4 === 0 ? 2.2 : 0;
-  const gazeX =
-    expression === 'sly'
+  const hasExplicitLookX = typeof options.lookX === 'number' && Number.isFinite(options.lookX);
+  const hasExplicitLookY = typeof options.lookY === 'number' && Number.isFinite(options.lookY);
+  const baseGazeX = hasExplicitLookX
+    ? Math.max(-1, Math.min(1, options.lookX!)) * 5.2
+    : expression === 'sly'
       ? 3.8
       : expression === 'curious'
         ? 2.6
         : expression === 'angry' || expression === 'stern'
           ? 0
           : autoGaze;
-  const gazeY =
-    expression === 'grief'
+  const gazeX = Math.max(-5.6, Math.min(5.6, baseGazeX));
+  const baseGazeY = hasExplicitLookY
+    ? Math.max(-0.6, Math.min(0.6, options.lookY!)) * 4.5
+    : expression === 'grief'
       ? 2.2
       : expression === 'awe'
         ? -1.6
         : expression === 'shocked'
           ? -0.8
           : 0;
+  const gazeY = Math.max(-3.6, Math.min(3.6, baseGazeY));
+
+  const yaw = typeof options.yawBias === 'number' && Number.isFinite(options.yawBias)
+    ? Math.max(-1, Math.min(1, options.yawBias))
+    : 0;
+  const absYaw = Math.abs(yaw);
 
   // Subtle rosy cheek warmth on joyful / warm / awe expressions
   if (expression === 'joy' || expression === 'warm') {
     ctx.save();
     ctx.fillStyle = expression === 'joy' ? 'rgba(242, 108, 114, 0.24)' : 'rgba(242, 128, 122, 0.16)';
     for (const side of [-1, 1]) {
+      const isFarSide = absYaw > 0.15 && Math.sign(side) === Math.sign(yaw);
+      if (absYaw > 0.78 && isFarSide) continue;
+      const cheekCompress = isFarSide ? Math.max(0.55, 1 - absYaw * 0.4) : 1;
       ctx.beginPath();
-      ctx.ellipse(side * (eyeX + 8), eyeY + 20 * sc, 13 * sc, 7 * sc, 0, 0, Math.PI * 2);
+      ctx.ellipse(side * (eyeX + 8) * cheekCompress, eyeY + 20 * sc, 13 * sc * cheekCompress, 7 * sc, 0, 0, Math.PI * 2);
       ctx.fill();
     }
     ctx.restore();
   }
 
   for (const side of [-1, 1]) {
+    // In profile (|yaw| > 0.78), hide the far-side eye on the turned-away edge; in 3/4, foreshorten it
+    const isFarEye = absYaw > 0.1 && Math.sign(side) === Math.sign(yaw);
+    if (absYaw > 0.78 && isFarEye) continue;
+    const eyePerspectiveX = isFarEye
+      ? Math.max(0.54, 1 - absYaw * 0.42)
+      : Math.max(0.84, 1 - absYaw * 0.12);
+    const localEyeX = side * eyeX * (isFarEye ? Math.max(0.62, 1 - absYaw * 0.34) : 1);
+
     ctx.save();
-    ctx.translate(side * eyeX, eyeY);
-    ctx.scale(sc, sc * blink);
+    ctx.translate(localEyeX, eyeY);
+    ctx.scale(sc * eyePerspectiveX, sc * blink);
 
     if (options.roundOwl) {
       ctx.fillStyle = accent;

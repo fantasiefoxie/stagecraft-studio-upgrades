@@ -441,6 +441,50 @@ function cliComputeDnaSilhouetteSignature(castMember) {
   return `dna_${cliFnv1aHex(parts.join('|'))}`;
 }
 
+const CLI_CLOSEUP_SHOTS = new Set(['closeup_left', 'closeup_right', 'eye_strip', 'motion_card']);
+const CLI_CONV_SHOTS = new Set(['two_shot', 'wide_stage', 'split_faceoff', 'prop_spotlight', 'low_angle_swoop']);
+const CLI_PROFILE_MOTIONS = new Set(['enter_left', 'enter_right', 'exit_left', 'exit_right', 'cross_stage']);
+
+function cliComputeLuma(hexColor) {
+  const clean = typeof hexColor === 'string' ? hexColor.trim() : '';
+  const m = clean.match(/^#([0-9a-fA-F]{6})$/);
+  if (!m) return 0.5;
+  const num = parseInt(m[1], 16);
+  const lin = (c8) => {
+    const s = c8 / 255;
+    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+  };
+  return Number(Math.max(0, Math.min(1, 0.2126 * lin((num >> 16) & 255) + 0.7152 * lin((num >> 8) & 255) + 0.0722 * lin(num & 255))).toFixed(4));
+}
+
+function cliResolveHeadAngle(beat, actor, partner) {
+  const req = actor.headAngle || 'auto';
+  if (req === 'front' || req === 'three_quarter' || req === 'profile') return req;
+  if (CLI_PROFILE_MOTIONS.has(String(actor.motion || 'still')) || actor.pose === 'walk') return 'profile';
+  if (CLI_CLOSEUP_SHOTS.has(String(beat.shot)) || (!partner && actor.slot === 'center')) return 'front';
+  if (partner && CLI_CONV_SHOTS.has(String(beat.shot))) return 'three_quarter';
+  if (actor.slot === 'left' || actor.slot === 'right') return 'three_quarter';
+  return 'front';
+}
+
+function cliResolveGazeTarget(beat, actor, partner) {
+  const req = actor.gazeTarget || 'auto';
+  if (req !== 'auto') return req;
+  if (CLI_CLOSEUP_SHOTS.has(String(beat.shot)) || !partner) return 'camera';
+  return 'partner';
+}
+
+function cliSecondaryEnergy(pose, motion, weather, isSpeaking) {
+  const poseMap = { soar: 0.85, attack: 0.78, walk: 0.56, recoil: 0.64, hover: 0.45, point: 0.3, command: 0.3, bow: 0.14, kneel: 0.14, sit: 0.14 };
+  const motionMap = { cross_stage: 0.52, enter_left: 0.52, enter_right: 0.52, exit_left: 0.52, exit_right: 0.52, swoop_in: 0.76, lunge_forward: 0.76, leap_arc: 0.76, step_back: 0.48, recoil_shake: 0.48, float_hover: 0.3 };
+  const weatherMap = { blizzard_gale: 0.92, sandstorm: 0.92, storm_lightning: 0.92, monsoon_rain: 0.72, rain_heavy: 0.72, wind_gusts: 0.72, ash_fall: 0.72, tornado_debris: 0.72, snow_drift: 0.42, autumn_leaves: 0.42, sakura_petals: 0.42, petals: 0.42, embers: 0.42, rain_light: 0.42, rain: 0.42, mist: 0.16, fireflies: 0.16, dust_motes: 0.16, sparkles: 0.16, starlight: 0.16 };
+  const pF = poseMap[pose] ?? 0.12;
+  const mF = motionMap[motion] ?? 0;
+  const wF = weatherMap[weather] ?? 0.06;
+  const sp = isSpeaking ? 0.55 : 0;
+  return Number(Math.max(0, Math.min(1, pF * 0.45 + mF * 0.4 + wF * 0.45 + sp * 0.18)).toFixed(3));
+}
+
 function buildStagecraftQaBundleCli(ep, aspect = '16:9') {
   const safeAspect = aspect === '9:16' ? '9:16' : '16:9';
   const vs = ep.visualStyle && typeof ep.visualStyle === 'object' ? ep.visualStyle : {};
@@ -605,6 +649,10 @@ function buildStagecraftQaBundleCli(ep, aspect = '16:9') {
 
     const actors = (beat.actors || []).map((a) => {
       const member = castById.get(a.castId);
+      const partner = (beat.actors || []).find((other) => other.castId !== a.castId);
+      const isSpeaking = beat.speakerId === a.castId && Boolean(speechWindow);
+      const resolvedFacing = a.facing === 'left' || a.facing === 'right' ? a.facing : a.slot === 'right' ? 'left' : 'right';
+      const primaryHex = member?.dna?.palette?.primary || member?.primaryColor || '#334155';
       return {
         castId: a.castId,
         slot: a.slot,
@@ -614,6 +662,12 @@ function buildStagecraftQaBundleCli(ep, aspect = '16:9') {
         offsetY: typeof a.offsetY === 'number' && Number.isFinite(a.offsetY) ? roundNum(a.offsetY, 4) : 0,
         hasGranularDna: cliHasGranularDna(member),
         dnaSilhouetteSignature: cliComputeDnaSilhouetteSignature(member),
+        facing: resolvedFacing,
+        resolvedHeadAngle: cliResolveHeadAngle(beat, a, partner),
+        resolvedGazeTarget: cliResolveGazeTarget(beat, a, partner),
+        heldProp: a.heldProp && a.heldProp !== 'none' ? a.heldProp : null,
+        secondaryMotionEnergy: cliSecondaryEnergy(a.pose, a.motion || 'still', beat.weather || 'none', isSpeaking),
+        paletteContrastLuma: cliComputeLuma(primaryHex),
       };
     });
 
@@ -640,7 +694,7 @@ function buildStagecraftQaBundleCli(ep, aspect = '16:9') {
   return {
     schema: 'stagecraft-shot-inspector/v1',
     exportedAt: new Date().toISOString(),
-    studioVersion: '8.0.0',
+    studioVersion: '9.0.0',
     aspect: safeAspect,
     fps: 60,
     episode: JSON.parse(JSON.stringify(ep)),
@@ -653,6 +707,255 @@ function buildStagecraftQaBundleCli(ep, aspect = '16:9') {
         targetTruePeakDbtp: -1.5,
       },
     },
+  };
+}
+
+const CLI_FORBIDDEN_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+const CLI_VALID_GAZE = new Set(['auto', 'camera', 'partner', 'left', 'right', 'up', 'down']);
+const CLI_VALID_HEAD_ANGLE = new Set(['auto', 'front', 'three_quarter', 'profile']);
+const CLI_VALID_HELD_HAND = new Set(['front', 'back', 'both']);
+const CLI_VALID_FACING = new Set(['left', 'right']);
+const CLI_VALID_SLOT = new Set(['left', 'center', 'right', 'overhead']);
+const CLI_HEX6_RE = /^#[0-9a-fA-F]{6}$/;
+
+function cliContainsForbiddenDeep(val, depth = 0) {
+  if (depth > 24 || val === null || typeof val !== 'object') return false;
+  if (Array.isArray(val)) return val.some((x) => cliContainsForbiddenDeep(x, depth + 1));
+  for (const k of Object.getOwnPropertyNames(val)) {
+    if (CLI_FORBIDDEN_KEYS.has(k) || CLI_FORBIDDEN_KEYS.has(k.toLowerCase())) return true;
+    if (cliContainsForbiddenDeep(val[k], depth + 1)) return true;
+  }
+  return false;
+}
+
+/**
+ * Pure-JS safe RFC 6902 patch applier mirroring src/studio/shotInspectorPatchApplier.ts
+ * for Wave 9 closed-loop --auto-heal-qa in plain Node ESM.
+ */
+function applyStagecraftPatchCli(ep, rawPayload) {
+  const ops = Array.isArray(rawPayload)
+    ? rawPayload
+    : rawPayload && typeof rawPayload === 'object' && rawPayload.schema === 'stagecraft-patch/v1' && Array.isArray(rawPayload.patch)
+      ? rawPayload.patch
+      : null;
+  if (!ops || ops.length === 0 || ops.length > 256) {
+    return { ok: false, error: 'Empty or invalid stagecraft-patch/v1 payload.' };
+  }
+  const candidate = JSON.parse(JSON.stringify(ep));
+  if (!candidate.visualStyle || typeof candidate.visualStyle !== 'object') candidate.visualStyle = {};
+
+  for (let i = 0; i < ops.length; i++) {
+    const item = ops[i];
+    if (!item || typeof item !== 'object' || !['add', 'replace', 'remove'].includes(item.op) || typeof item.path !== 'string' || !item.path.startsWith('/')) {
+      return { ok: false, error: `Invalid op #${i + 1}` };
+    }
+    const segs = item.path.slice(1).split('/').map((s) => s.replace(/~1/g, '/').replace(/~0/g, '~'));
+    if (segs.length === 0 || segs.some((s) => !s || CLI_FORBIDDEN_KEYS.has(s) || CLI_FORBIDDEN_KEYS.has(s.toLowerCase()))) {
+      return { ok: false, error: `Unsafe pointer rejected at op #${i + 1}` };
+    }
+    if (item.op !== 'remove' && cliContainsForbiddenDeep(item.value)) {
+      return { ok: false, error: `Forbidden prototype key in op #${i + 1} value` };
+    }
+
+    const root = segs[0];
+    if (root === 'visualStyle') {
+      if (segs.length !== 2) return { ok: false, error: `Disallowed visualStyle path ${item.path}` };
+    } else if (root === 'cast') {
+      if (segs.length !== 3 || !/^(0|[1-9]\d*)$/.test(segs[1]) || !['primaryColor', 'accentColor'].includes(segs[2])) {
+        return { ok: false, error: `Disallowed cast patch path ${item.path}` };
+      }
+      const cIdx = Number(segs[1]);
+      if (cIdx < 0 || cIdx >= (candidate.cast || []).length) {
+        return { ok: false, error: `Cast index out of bounds in ${item.path}` };
+      }
+      if (item.op === 'remove' || typeof item.value !== 'string' || !CLI_HEX6_RE.test(item.value)) {
+        return { ok: false, error: `Invalid hex color in ${item.path}` };
+      }
+    } else if (root === 'beats') {
+      if (segs.length < 3 || !/^(0|[1-9]\d*)$/.test(segs[1])) {
+        return { ok: false, error: `Disallowed beats path ${item.path}` };
+      }
+      const bIdx = Number(segs[1]);
+      if (bIdx < 0 || bIdx >= (candidate.beats || []).length) {
+        return { ok: false, error: `Beat index out of bounds in ${item.path}` };
+      }
+      if (segs[2] === 'actors' && segs.length === 5 && item.op !== 'remove') {
+        const sub = segs[4];
+        if (sub === 'gazeTarget' && !CLI_VALID_GAZE.has(String(item.value))) return { ok: false, error: `Invalid gazeTarget` };
+        if (sub === 'headAngle' && !CLI_VALID_HEAD_ANGLE.has(String(item.value))) return { ok: false, error: `Invalid headAngle` };
+        if (sub === 'heldHand' && !CLI_VALID_HELD_HAND.has(String(item.value))) return { ok: false, error: `Invalid heldHand` };
+        if (sub === 'facing' && !CLI_VALID_FACING.has(String(item.value))) return { ok: false, error: `Invalid facing` };
+        if (sub === 'slot' && !CLI_VALID_SLOT.has(String(item.value))) return { ok: false, error: `Invalid slot` };
+        if ((sub === 'offsetX' || sub === 'offsetY') && (typeof item.value !== 'number' || !Number.isFinite(item.value) || item.value < -0.35 || item.value > 0.35)) {
+          return { ok: false, error: `Invalid actor ${sub}` };
+        }
+      }
+    } else {
+      return { ok: false, error: `Disallowed root /${root}` };
+    }
+
+    let parent = candidate;
+    for (let s = 0; s < segs.length - 1; s++) {
+      const k = segs[s];
+      if (Array.isArray(parent)) {
+        if (!/^(0|[1-9]\d*)$/.test(k)) return { ok: false, error: `Bad index ${k}` };
+        const idx = Number(k);
+        if (idx < 0 || idx >= parent.length) return { ok: false, error: `Index out of bounds ${idx}` };
+        parent = parent[idx];
+      } else if (parent && typeof parent === 'object' && Object.prototype.hasOwnProperty.call(parent, k) && parent[k] && typeof parent[k] === 'object') {
+        parent = parent[k];
+      } else {
+        return { ok: false, error: `Missing parent in ${item.path}` };
+      }
+    }
+    const leaf = segs[segs.length - 1];
+    if (Array.isArray(parent)) {
+      if (!/^(0|[1-9]\d*)$/.test(leaf)) return { ok: false, error: `Bad leaf index ${leaf}` };
+      const idx = Number(leaf);
+      if (idx < 0 || idx >= parent.length) return { ok: false, error: `Leaf index out of bounds ${idx}` };
+      if (item.op === 'remove') parent.splice(idx, 1);
+      else parent[idx] = JSON.parse(JSON.stringify(item.value));
+    } else if (parent && typeof parent === 'object') {
+      if (item.op === 'remove') delete parent[leaf];
+      else parent[leaf] = JSON.parse(JSON.stringify(item.value));
+    } else {
+      return { ok: false, error: `Invalid parent container in ${item.path}` };
+    }
+  }
+
+  return { ok: true, nextEpisode: candidate, appliedCount: ops.length };
+}
+
+function runShotInspectorAutoHealLoop({
+  ep,
+  safeId,
+  qaBundlePath,
+  mp4Path,
+  resolvedBundleAspect,
+  shotInspectorDir,
+  targetScore = 85,
+  resolveSafeOut,
+}) {
+  const resolvedDir = path.resolve(shotInspectorDir);
+  if (!fs.existsSync(resolvedDir) || !fs.statSync(resolvedDir).isDirectory()) {
+    return { ep, note: 'auto-heal QA skipped (shot-inspector directory not found)' };
+  }
+  const tsAudit = path.resolve(resolvedDir, 'scripts', 'qa-studio-audit.ts');
+  const mjsAudit = path.resolve(resolvedDir, 'scripts', 'qa-studio-audit.mjs');
+  const auditScript = fs.existsSync(tsAudit) ? tsAudit : fs.existsSync(mjsAudit) ? mjsAudit : null;
+  if (!auditScript || !auditScript.startsWith(resolvedDir + path.sep)) {
+    return { ep, note: 'auto-heal QA skipped (scripts/qa-studio-audit.{ts,mjs} not found)' };
+  }
+
+  const MAX_PASSES = 2;
+  let currentEp = ep;
+  let firstScore = null;
+  let lastScore = null;
+  let healedPasses = 0;
+  let healedJsonPath = null;
+
+  for (let pass = 1; pass <= MAX_PASSES; pass++) {
+    const patchOutPath = resolveSafeOut(`${safeId}.qa-patch-pass${pass}.json`);
+    const cliArgs = [];
+    if (mp4Path && fs.existsSync(mp4Path)) {
+      cliArgs.push('--video', mp4Path);
+    }
+    cliArgs.push('--stagecraft-bundle', qaBundlePath, '--emit-patch', patchOutPath, '--json');
+
+    let stdout = '';
+    try {
+      if (auditScript.endsWith('.mjs')) {
+        stdout = execFileSync(process.execPath, [auditScript, ...cliArgs], {
+          cwd: resolvedDir,
+          encoding: 'utf8',
+          stdio: ['ignore', 'pipe', 'pipe'],
+          timeout: 180_000,
+        });
+      } else {
+        const npxBin = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+        stdout = execFileSync(npxBin, ['tsx', auditScript, ...cliArgs], {
+          cwd: resolvedDir,
+          encoding: 'utf8',
+          stdio: ['ignore', 'pipe', 'pipe'],
+          timeout: 180_000,
+        });
+      }
+    } catch (err) {
+      // Allow non-zero exit when audit still printed structured JSON report to stdout
+      stdout = typeof err?.stdout === 'string' ? err.stdout : '';
+      if (!stdout.trim()) {
+        return { ep: currentEp, note: `auto-heal QA failed on pass ${pass}` };
+      }
+    }
+
+    let report = null;
+    try {
+      const trimmed = stdout.trim();
+      const jsonStart = trimmed.indexOf('{');
+      report = jsonStart >= 0 ? JSON.parse(trimmed.slice(jsonStart)) : null;
+    } catch {
+      report = null;
+    }
+    const score =
+      typeof report?.score === 'number' && Number.isFinite(report.score)
+        ? report.score
+        : typeof report?.overallScore === 'number' && Number.isFinite(report.overallScore)
+          ? report.overallScore
+          : null;
+
+    if (firstScore === null && score !== null) firstScore = score;
+    if (score !== null) lastScore = score;
+
+    if (score !== null && score >= targetScore) {
+      // Target met — clean up unused pass patch if any
+      try {
+        if (fs.existsSync(patchOutPath)) fs.unlinkSync(patchOutPath);
+      } catch {
+        // ignore cleanup
+      }
+      break;
+    }
+
+    if (pass >= MAX_PASSES) {
+      break;
+    }
+
+    // Read emitted patch and apply safely
+    if (!fs.existsSync(patchOutPath)) {
+      break;
+    }
+    let patchPayload = null;
+    try {
+      patchPayload = JSON.parse(fs.readFileSync(patchOutPath, 'utf8'));
+    } catch {
+      break;
+    }
+    const applied = applyStagecraftPatchCli(currentEp, patchPayload);
+    if (!applied.ok) {
+      return {
+        ep: currentEp,
+        note: `auto-heal QA pass ${pass} patch rejected (${applied.error})`,
+      };
+    }
+
+    currentEp = applied.nextEpisode;
+    healedPasses++;
+    healedJsonPath = resolveSafeOut(`${safeId}.healed.json`);
+    fs.writeFileSync(healedJsonPath, JSON.stringify(currentEp, null, 2), 'utf8');
+    const updatedBundle = buildStagecraftQaBundleCli(currentEp, resolvedBundleAspect);
+    fs.writeFileSync(qaBundlePath, JSON.stringify(updatedBundle, null, 2), 'utf8');
+  }
+
+  const scoreTag =
+    firstScore !== null && lastScore !== null
+      ? firstScore === lastScore
+        ? `${lastScore}/100`
+        : `${firstScore} -> ${lastScore}/100 (delta ${lastScore - firstScore >= 0 ? '+' : ''}${lastScore - firstScore})`
+      : 'completed';
+  const healedTag = healedJsonPath ? ` + ${path.basename(healedJsonPath)}` : '';
+  return {
+    ep: currentEp,
+    note: `auto-heal QA ${lastScore !== null && lastScore >= targetScore ? 'PASS' : 'DONE'} (${scoreTag}, ${healedPasses} heal pass${healedPasses === 1 ? '' : 'es'}${healedTag})`,
   };
 }
 
@@ -1178,8 +1481,22 @@ async function processEpisode(
 
   let shotInspectorNote = '';
   if (qaBundlePath && qaOpts?.shotInspectorDir) {
-    const siRes = runOptionalShotInspectorQa(qaBundlePath, emittedMp4Path, qaOpts.shotInspectorDir);
-    if (siRes) shotInspectorNote = ` | ${siRes}`;
+    if (qaOpts?.autoHealQa) {
+      const healRes = runShotInspectorAutoHealLoop({
+        ep,
+        safeId,
+        qaBundlePath,
+        mp4Path: emittedMp4Path,
+        resolvedBundleAspect,
+        shotInspectorDir: qaOpts.shotInspectorDir,
+        targetScore: qaOpts.targetScore ?? 85,
+        resolveSafeOut,
+      });
+      if (healRes?.note) shotInspectorNote = ` | ${healRes.note}`;
+    } else {
+      const siRes = runOptionalShotInspectorQa(qaBundlePath, emittedMp4Path, qaOpts.shotInspectorDir);
+      if (siRes) shotInspectorNote = ` | ${siRes}`;
+    }
   }
 
   const warnings = [];
@@ -1266,6 +1583,8 @@ let requestedEncoder = (process.env.FFMPEG_ENCODER || 'auto').trim();
 let shortsExpDir = (process.env.SHORTS_EXP_DIR || '').trim();
 let emitQaBundle = false;
 let shotInspectorDir = (process.env.SHOT_INSPECTOR_DIR || '').trim();
+let autoHealQa = false;
+let targetScore = 85;
 const files = [];
 
 for (let i = 0; i < args.length; i++) {
@@ -1286,6 +1605,14 @@ for (let i = 0; i < args.length; i++) {
   } else if (args[i] === '--shot-inspector-dir' && args[i + 1]) {
     shotInspectorDir = args[++i].trim();
     emitQaBundle = true;
+  } else if (args[i] === '--auto-heal-qa') {
+    autoHealQa = true;
+    emitQaBundle = true;
+  } else if (args[i] === '--target-score' && args[i + 1]) {
+    const parsedScore = Number(args[++i]);
+    if (Number.isFinite(parsedScore)) {
+      targetScore = Math.max(1, Math.min(100, Math.round(parsedScore)));
+    }
   } else if (args[i] === '--render-mp4') {
     renderMp4 = true;
   } else if (args[i] === '--url' && args[i + 1]) {
@@ -1324,8 +1651,8 @@ for (let i = 0; i < args.length; i++) {
 if (files.length === 0) {
   console.log(
     'Usage:\n' +
-      '  Batch JSON/.katha: node scripts/render-batch.mjs <ep1.json|ep1.katha> [...] --out ./renders [--qa-bundle] [--shot-inspector-dir ../shot-inspector] [--webm-dir ./recordings] [--voices-dir ./voices] [--encoder auto|libx264|h264_nvenc|h264_amf|h264_videotoolbox] [--shorts-exp-dir ../shorts-exp] [--validate]\n' +
-      '  Headless Factory:  node scripts/render-batch.mjs <ep1.json|ep1.katha> --out ./renders --render-mp4 [--qa-bundle] [--shot-inspector-dir ../shot-inspector] [--auto-shorts 3] [--thumbnails] [--contact-sheet] [--voices-dir ./voices] [--url http://localhost:3000] [--fps 30|60] [--aspect 16:9|9:16] [--no-captions] [--no-audio] [--encoder auto]\n' +
+      '  Batch JSON/.katha: node scripts/render-batch.mjs <ep1.json|ep1.katha> [...] --out ./renders [--qa-bundle] [--shot-inspector-dir ../shot-inspector] [--auto-heal-qa] [--target-score 85] [--webm-dir ./recordings] [--voices-dir ./voices] [--encoder auto|libx264|h264_nvenc|h264_amf|h264_videotoolbox] [--shorts-exp-dir ../shorts-exp] [--validate]\n' +
+      '  Headless Factory:  node scripts/render-batch.mjs <ep1.json|ep1.katha> --out ./renders --render-mp4 [--qa-bundle] [--shot-inspector-dir ../shot-inspector] [--auto-heal-qa] [--target-score 85] [--auto-shorts 3] [--thumbnails] [--contact-sheet] [--voices-dir ./voices] [--url http://localhost:3000] [--fps 30|60] [--aspect 16:9|9:16] [--no-captions] [--no-audio] [--encoder auto]\n' +
       '  Long-Form Join:    node scripts/render-batch.mjs ch01.webm ch02.webm ch03.webm --concat ./renders/full_20min.mp4 [--encoder auto]'
   );
   process.exit(0);
@@ -1427,7 +1754,7 @@ async function main() {
             videoEncoder,
             shortsExpDir,
             headlessOpts,
-            { emitQaBundle, shotInspectorDir, aspect: headlessAspect }
+            { emitQaBundle, shotInspectorDir, autoHealQa, targetScore, aspect: headlessAspect }
           );
         }
         succeeded++;

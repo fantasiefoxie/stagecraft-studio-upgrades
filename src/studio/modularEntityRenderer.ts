@@ -76,8 +76,73 @@ import type {
   MotionId,
   MotionProfileId,
   PoseId,
+  PropId,
   RenderStyleId,
 } from './types';
+import {
+  ActorRigRenderOptions,
+  computeSecondaryMotionSway,
+} from './characterRigging';
+
+export type HeldPropRendererFn = (
+  ctx: CanvasRenderingContext2D,
+  prop: PropId,
+  x: number,
+  y: number,
+  scale: number,
+  t: number,
+  beatU: number
+) => void;
+
+let registeredHeldPropRenderer: HeldPropRendererFn | null = null;
+
+/**
+ * Registers the story prop renderer (called once by renderAssets.ts at module init)
+ * so drawModularEntityFullBody can render any of the 185 PropIds directly on the wrist joint
+ * with zero circular imports.
+ */
+export function setHeldPropRenderer(fn: HeldPropRendererFn): void {
+  registeredHeldPropRenderer = fn;
+}
+
+function drawAnchoredHeldProp(
+  ctx: CanvasRenderingContext2D,
+  prop: PropId | 'none' | undefined,
+  wristY: number,
+  t: number,
+  beatU: number,
+  pose: PoseId,
+  handSide: 'front' | 'back',
+  accent: string
+): void {
+  if (!prop || prop === 'none') return;
+  ctx.save();
+  ctx.translate(0, wristY + 2);
+  // Orient prop cleanly relative to the forearm axis + attack/gesture follow-through
+  const gestureRot =
+    pose === 'attack'
+      ? -0.95 + Math.sin(beatU * Math.PI) * 0.42
+      : pose === 'gesture'
+        ? -0.68
+        : pose === 'walk'
+          ? -0.45 + Math.sin(t * 6.2) * 0.12
+          : -0.58;
+  ctx.rotate(handSide === 'back' ? gestureRot - 0.18 : gestureRot);
+  if (registeredHeldPropRenderer) {
+    registeredHeldPropRenderer(ctx, prop, 16, 0, 0.36, t, beatU);
+  } else {
+    // Deterministic lightweight vector fallback when called in isolated unit tests
+    ctx.fillStyle = accent || '#f5bf38';
+    ctx.beginPath();
+    ctx.roundRect(0, -4, 34, 8, 3);
+    ctx.fill();
+    ctx.fillStyle = '#f8fafc';
+    ctx.beginPath();
+    ctx.arc(32, 0, 5.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
 
 function clamp(v: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, v));
@@ -588,11 +653,12 @@ function drawModularTail(
   t: number,
   seed: number,
   ox: number,
-  oy: number
+  oy: number,
+  tailWaveRad = 0
 ): void {
   if (tail === 'none') return;
-  const w1 = Math.sin(t * 4.4 + seed) * 10;
-  const w2 = Math.sin(t * 4.4 - 1.1 + seed) * 17;
+  const w1 = Math.sin(t * 4.4 + seed) * 10 + tailWaveRad * 20;
+  const w2 = Math.sin(t * 4.4 - 1.1 + seed) * 17 + tailWaveRad * 34;
 
   ctx.save();
   if (tail === 'monkey_curled') {
@@ -689,10 +755,11 @@ function drawModularCape(
   capeDrag: number,
   t: number,
   seed: number,
-  shoulderY: number
+  shoulderY: number,
+  capeLagRad = 0
 ): void {
   if (cape === 'none') return;
-  const motionDrag = (pose === 'walk' ? 18 : pose === 'soar' ? 32 : pose === 'attack' ? 24 : 6) * capeDrag;
+  const motionDrag = (pose === 'walk' ? 18 : pose === 'soar' ? 32 : pose === 'attack' ? 24 : 6) * capeDrag + capeLagRad * 36 * capeDrag;
   const waveMid = Math.sin(t * 4.8 + seed) * 8 * capeDrag + motionDrag * 0.5;
   const waveTip = Math.sin(t * 4.8 - 1.15 + seed) * 14 * capeDrag + motionDrag;
 
@@ -864,28 +931,41 @@ function drawModularEars(
   ears: EarStyleId,
   skin: string,
   primary: string,
-  accent: string
+  accent: string,
+  yawBias = 0
 ): void {
   if (ears === 'none') return;
+  const yaw = clamp(yawBias, -1, 1);
+  const absYaw = Math.abs(yaw);
+  const sides: Array<-1 | 1> = ([-1, 1] as Array<-1 | 1>).filter((s) => {
+    // In true profile (|yaw| > 0.72), hide the far ear turned away from the viewer
+    const isFar = absYaw > 0.72 && Math.sign(s) === Math.sign(yaw);
+    return !isFar;
+  });
+
   ctx.save();
-  if (ears === 'human') {
-    ctx.fillStyle = skin;
-    ctx.beginPath();
-    ctx.ellipse(-62, 2, 12, 20, 0, 0, Math.PI * 2);
-    ctx.ellipse(62, 2, 12, 20, 0, 0, Math.PI * 2);
-    ctx.fill();
-  } else if (ears === 'pointed_elf') {
-    ctx.fillStyle = skin;
-    for (const s of [-1, 1]) {
+  for (const s of sides) {
+    const isFar = absYaw > 0.12 && Math.sign(s) === Math.sign(yaw);
+    const earOffsetX = isFar ? -yaw * 10 : -yaw * 16;
+    const earScaleX = isFar ? Math.max(0.55, 1 - absYaw * 0.45) : 1;
+    ctx.save();
+    ctx.translate(earOffsetX, 0);
+    ctx.scale(earScaleX, 1);
+
+    if (ears === 'human') {
+      ctx.fillStyle = skin;
+      ctx.beginPath();
+      ctx.ellipse(s * 62, 2, 12, 20, 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (ears === 'pointed_elf') {
+      ctx.fillStyle = skin;
       ctx.beginPath();
       ctx.moveTo(s * 56, -10);
       ctx.lineTo(s * 98, -28);
       ctx.lineTo(s * 58, 18);
       ctx.closePath();
       ctx.fill();
-    }
-  } else if (ears === 'fox_tall') {
-    for (const s of [-1, 1]) {
+    } else if (ears === 'fox_tall') {
       ctx.fillStyle = primary;
       ctx.beginPath();
       ctx.moveTo(s * 54, -36);
@@ -900,10 +980,8 @@ function drawModularEars(
       ctx.lineTo(s * 24, -58);
       ctx.closePath();
       ctx.fill();
-    }
-  } else if (ears === 'lion_round') {
-    ctx.fillStyle = skin;
-    for (const s of [-1, 1]) {
+    } else if (ears === 'lion_round') {
+      ctx.fillStyle = skin;
       ctx.beginPath();
       ctx.arc(s * 62, -26, 24, 0, Math.PI * 2);
       ctx.fill();
@@ -911,20 +989,15 @@ function drawModularEars(
       ctx.beginPath();
       ctx.arc(s * 62, -26, 13, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = skin;
-    }
-  } else if (ears === 'elephant_fan') {
-    ctx.fillStyle = primary;
-    for (const s of [-1, 1]) {
+    } else if (ears === 'elephant_fan') {
+      ctx.fillStyle = primary;
       ctx.beginPath();
       ctx.moveTo(s * 60, -48);
       ctx.quadraticCurveTo(s * 144, -64, s * 134, 24);
       ctx.quadraticCurveTo(s * 114, 72, s * 56, 32);
       ctx.closePath();
       ctx.fill();
-    }
-  } else if (ears === 'hare_long') {
-    for (const s of [-1, 1]) {
+    } else if (ears === 'hare_long') {
       ctx.fillStyle = skin;
       ctx.beginPath();
       ctx.ellipse(s * 34, -104, 18, 56, s * 0.14, 0, Math.PI * 2);
@@ -933,17 +1006,13 @@ function drawModularEars(
       ctx.beginPath();
       ctx.ellipse(s * 34, -104, 9, 40, s * 0.14, 0, Math.PI * 2);
       ctx.fill();
-    }
-  } else if (ears === 'cow_side') {
-    ctx.fillStyle = skin;
-    for (const s of [-1, 1]) {
+    } else if (ears === 'cow_side') {
+      ctx.fillStyle = skin;
       ctx.beginPath();
       ctx.ellipse(s * 76, -24, 24, 12, s * -0.22, 0, Math.PI * 2);
       ctx.fill();
-    }
-  } else if (ears === 'fin_frill') {
-    ctx.fillStyle = accent;
-    for (const s of [-1, 1]) {
+    } else if (ears === 'fin_frill') {
+      ctx.fillStyle = accent;
       ctx.beginPath();
       ctx.moveTo(s * 54, -36);
       ctx.lineTo(s * 108, -48);
@@ -953,6 +1022,7 @@ function drawModularEars(
       ctx.closePath();
       ctx.fill();
     }
+    ctx.restore();
   }
   ctx.restore();
 }
@@ -1024,10 +1094,16 @@ function drawModularHairBehind(
   ctx: CanvasRenderingContext2D,
   hair: HairStyleId,
   hairColor: string,
-  t: number
+  t: number,
+  hairSwayRad = 0,
+  yawBias = 0
 ): void {
   if (hair === 'none') return;
+  const swayPx = hairSwayRad * 26;
   ctx.save();
+  // Subtle opposite-yaw volume shift so back hair mass reads convincingly in 3/4 & profile
+  ctx.translate(-clamp(yawBias, -1, 1) * 10, 0);
+  ctx.rotate(clamp(hairSwayRad, -0.45, 0.45) * 0.25);
   ctx.fillStyle = hairColor;
 
   if (hair === 'lion_mane') {
@@ -1043,7 +1119,7 @@ function drawModularHairBehind(
     ctx.closePath();
     ctx.fill();
   } else if (hair === 'wild_spiky') {
-    const spike = Math.sin(t * 5) * 6;
+    const spike = Math.sin(t * 5) * 6 + swayPx * 0.35;
     ctx.beginPath();
     ctx.moveTo(-98, -118);
     ctx.lineTo(98, -118);
@@ -1060,16 +1136,16 @@ function drawModularHairBehind(
     ctx.beginPath();
     ctx.moveTo(-78, -56);
     ctx.lineTo(78, -56);
-    ctx.quadraticCurveTo(106, 40, 96, 136);
-    ctx.lineTo(-96, 136);
-    ctx.quadraticCurveTo(-106, 40, -78, -56);
+    ctx.quadraticCurveTo(106 + swayPx * 0.5, 40, 96 + swayPx, 136);
+    ctx.lineTo(-96 + swayPx, 136);
+    ctx.quadraticCurveTo(-106 + swayPx * 0.5, 40, -78, -56);
     ctx.closePath();
     ctx.fill();
   } else if (hair === 'braided_twin') {
     for (const s of [-1, 1]) {
       for (let i = 0; i < 5; i++) {
         ctx.beginPath();
-        ctx.arc(s * (72 + i * 3), -12 + i * 28, 17 - i * 1.4, 0, Math.PI * 2);
+        ctx.arc(s * (72 + i * 3) + swayPx * (i * 0.2), -12 + i * 28, 17 - i * 1.4, 0, Math.PI * 2);
         ctx.fill();
       }
     }
@@ -1080,7 +1156,7 @@ function drawModularHairBehind(
     for (let i = -4; i <= 4; i++) {
       ctx.beginPath();
       ctx.moveTo(i * 16, -54);
-      ctx.quadraticCurveTo(i * 22, 26, i * 24 + Math.sin(t * 3 + i) * 5, 118);
+      ctx.quadraticCurveTo(i * 22 + swayPx * 0.4, 26, i * 24 + Math.sin(t * 3 + i) * 5 + swayPx, 118);
       ctx.stroke();
     }
   } else if (hair === 'hooded_cowl') {
@@ -1094,8 +1170,8 @@ function drawModularHairBehind(
     ctx.beginPath();
     ctx.moveTo(-74, -56);
     ctx.lineTo(74, -56);
-    ctx.lineTo(hair === 'swept_royal' ? 84 : 74, hair === 'swept_royal' ? 54 : 18);
-    ctx.lineTo(hair === 'swept_royal' ? -84 : -74, hair === 'swept_royal' ? 54 : 18);
+    ctx.lineTo((hair === 'swept_royal' ? 84 : 74) + swayPx * 0.2, hair === 'swept_royal' ? 54 : 18);
+    ctx.lineTo((hair === 'swept_royal' ? -84 : -74) + swayPx * 0.2, hair === 'swept_royal' ? 54 : 18);
     ctx.closePath();
     ctx.fill();
   } else if (hair === 'topknot_bun') {
@@ -1107,14 +1183,14 @@ function drawModularHairBehind(
     for (let i = -2; i <= 2; i++) {
       ctx.save();
       ctx.translate(i * 12, -56);
-      ctx.rotate(i * 0.22);
+      ctx.rotate(i * 0.22 + hairSwayRad * 0.3);
       ctx.beginPath();
       ctx.ellipse(0, -32, 10, 34, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
     }
   } else {
-    drawGranularHairBehind(ctx, hair, hairColor, t);
+    drawGranularHairBehind(ctx, hair, hairColor, t, hairSwayRad);
   }
   ctx.restore();
 }
@@ -1335,6 +1411,68 @@ function drawModularHeadwear(
     ctx.beginPath(); ctx.arc(0, -34, 68, Math.PI * 1.15, Math.PI * 1.85); ctx.stroke();
     ctx.fillStyle = '#38bdf8';
     ctx.beginPath(); ctx.moveTo(0, -74); ctx.lineTo(10, -58); ctx.lineTo(0, -42); ctx.lineTo(-10, -58); ctx.closePath(); ctx.fill();
+  } else if (headwear === 'baseball_cap') {
+    // Classic rounded baseball cap dome + front button + curved visor bill
+    ctx.fillStyle = primary;
+    ctx.beginPath();
+    ctx.arc(0, -48, 68, Math.PI, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = darkenHex(primary, 0.72);
+    ctx.beginPath();
+    ctx.ellipse(24, -48, 62, 14, -0.06, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = accent;
+    ctx.beginPath();
+    ctx.arc(0, -116, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillRect(-16, -74, 32, 14);
+  } else if (headwear === 'beanie_knit') {
+    // Soft knit beanie dome + ribbed fold-over cuff + top pom
+    ctx.fillStyle = primary;
+    ctx.beginPath();
+    ctx.arc(0, -52, 70, Math.PI * 1.04, Math.PI * -0.04);
+    ctx.lineTo(72, -38);
+    ctx.lineTo(-72, -38);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = darkenHex(primary, 0.78);
+    ctx.beginPath();
+    ctx.roundRect(-74, -56, 148, 22, 9);
+    ctx.fill();
+    ctx.strokeStyle = accent;
+    ctx.lineWidth = 2.5;
+    for (let rx = -58; rx <= 58; rx += 16) {
+      ctx.beginPath();
+      ctx.moveTo(rx, -54);
+      ctx.lineTo(rx, -36);
+      ctx.stroke();
+    }
+    ctx.fillStyle = accent;
+    ctx.beginPath();
+    ctx.arc(0, -124, 12, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (headwear === 'beret_artist') {
+    // Tilted French artist beret with center stem
+    ctx.save();
+    ctx.translate(6, -78);
+    ctx.rotate(0.16);
+    ctx.fillStyle = primary;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 84, 30, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = darkenHex(primary, 0.7);
+    ctx.beginPath();
+    ctx.ellipse(-4, 18, 66, 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = accent;
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(0, -28);
+    ctx.lineTo(4, -40);
+    ctx.stroke();
+    ctx.restore();
   }
   ctx.restore();
 }
@@ -1513,12 +1651,18 @@ export function drawModularEntityCloseUp(
   viseme: number,
   speechEnergy: number,
   lightSide: 'left' | 'right',
-  t: number
+  t: number,
+  rig?: ActorRigRenderOptions
 ): void {
   const ts = snap24(t);
   const lightRight = lightSide === 'right';
   const pal = dna.palette;
   const skinShadow = dna.chassis === 'ethereal' ? darkenHex(pal.primary, 0.55) : darkenHex(pal.skin, 0.58);
+  const yaw = clamp(typeof rig?.yawBias === 'number' && Number.isFinite(rig.yawBias) ? rig.yawBias : 0, -1, 1);
+  const absYaw = Math.abs(yaw);
+  const lookX = clamp(typeof rig?.lookX === 'number' && Number.isFinite(rig.lookX) ? rig.lookX : 0, -1, 1);
+  const lookY = clamp(typeof rig?.lookY === 'number' && Number.isFinite(rig.lookY) ? rig.lookY : 0, -0.6, 0.6);
+  const hairSwayRad = rig?.secondaryMotion?.hairSwayRad ?? 0;
 
   let castSeed = 0;
   for (let i = 0; i < cast.id.length; i++) {
@@ -1539,8 +1683,10 @@ export function drawModularEntityCloseUp(
   const acc = resolveAccessories(dna);
   const useGranularFace = hasGranularFaceOverrides(dna);
 
-  // Shoulders / Hood / Collar bust base
+  // Shoulders / Hood / Collar bust base (with deterministic 3/4 & profile shoulder foreshortening)
   const shW = 128 * clamp(dna.morph.shoulderWidth, 0.78, 1.38);
+  const leftShW = shW * (yaw > 0 ? Math.max(0.76, 1 - absYaw * 0.22) : 1 + absYaw * 0.06);
+  const rightShW = shW * (yaw < 0 ? Math.max(0.76, 1 - absYaw * 0.22) : 1 + absYaw * 0.06);
   if (dna.head.headShape === 'serpent_hood') {
     ctx.fillStyle = pal.primary;
     ctx.beginPath();
@@ -1563,10 +1709,10 @@ export function drawModularEntityCloseUp(
   } else {
     ctx.fillStyle = dna.outfit.topStyle === 'none_fur' ? pal.primary : pal.primary;
     ctx.beginPath();
-    ctx.moveTo(-shW * 1.4, 224);
-    ctx.lineTo(-shW, 74);
-    ctx.lineTo(shW, 74);
-    ctx.lineTo(shW * 1.4, 224);
+    ctx.moveTo(-leftShW * 1.4, 224);
+    ctx.lineTo(-leftShW, 74);
+    ctx.lineTo(rightShW, 74);
+    ctx.lineTo(rightShW * 1.4, 224);
     ctx.closePath();
     ctx.fill();
     paintSurfacePatternClipped(ctx, dna.outfit.surfacePattern, pal.patternTint, -shW * 1.4, 70, shW * 2.8, 160);
@@ -1622,20 +1768,20 @@ export function drawModularEntityCloseUp(
   ctx.save();
   ctx.translate(0, neckLift);
 
-  // Hair / Mane behind head
-  drawModularHairBehind(ctx, dna.head.hairStyle, pal.hair, ts);
+  // Hair / Mane behind head (driven by Wave 9 secondary motion sway + yaw volume offset)
+  drawModularHairBehind(ctx, dna.head.hairStyle, pal.hair, ts, hairSwayRad, yaw);
 
   // Horns & Antlers
   drawModularHorns(ctx, dna.head.horns, pal.accent);
 
-  // Ears (scaled by Wave 7 earScale morph)
+  // Ears (scaled by Wave 7 earScale morph + Wave 9 near/far ear visibility)
   ctx.save();
   ctx.scale(fm.earScale, fm.earScale);
-  drawModularEars(ctx, dna.head.ears, pal.skin, pal.primary, pal.accent);
+  drawModularEars(ctx, dna.head.ears, pal.skin, pal.primary, pal.accent, yaw);
   ctx.restore();
 
   // Head silhouette + Surface pattern + Chiaroscuro shadow split (sculpted by Wave 7 jawWidth/cheekboneWidth/chinLength)
-  const headMorphX = clamp(fm.cheekboneWidth * 0.52 + fm.jawWidth * 0.48, 0.74, 1.32);
+  const headMorphX = clamp(fm.cheekboneWidth * 0.52 + fm.jawWidth * 0.48, 0.74, 1.32) * (1 - absYaw * 0.08);
   const headMorphY = clamp(0.62 + fm.chinLength * 0.38, 0.82, 1.24);
   const isFurHead =
     dna.head.headShape === 'canine_snout' ||
@@ -1696,14 +1842,31 @@ export function drawModularEntityCloseUp(
     }
   }
 
-  // Forehead / Cheek Marks (Primary + Wave 7 Secondary + Blush!)
+  // Forehead / Cheek Marks (Primary + Wave 7 Secondary + Blush, shifted by Wave 9 yaw!)
+  ctx.save();
+  ctx.translate(yaw * 13, 0);
   drawGranularFaceMarksLayer(ctx, dna, drawModularFaceMarks);
+  ctx.restore();
 
-  // Eyes & Eyebrows
+  // Eyes & Eyebrows (Wave 9 3/4 & profile perspective + dynamic eye-gaze tracking)
   const baseEyeX = dna.head.headShape === 'serpent_hood' ? 24 : 28;
   const baseEyeY = -8;
+  ctx.save();
+  ctx.translate(yaw * 15, 0);
   if (useGranularFace) {
-    drawGranularEyesLayer(ctx, dna, expression, ts, speechEnergy, castSeed, baseEyeX, baseEyeY);
+    drawGranularEyesLayer(
+      ctx,
+      dna,
+      expression,
+      ts,
+      speechEnergy,
+      castSeed,
+      baseEyeX,
+      baseEyeY,
+      lookX,
+      lookY,
+      yaw
+    );
   } else {
     const isGlowing = dna.head.eyeStyle === 'glowing_orb' || dna.head.eyeStyle === 'slit_reptile';
     const eyeScale =
@@ -1721,6 +1884,9 @@ export function drawModularEntityCloseUp(
       noBrows: dna.head.headShape === 'serpent_hood' || dna.head.headShape === 'arachnid_mandible',
       castSeed,
       eyeScale,
+      lookX,
+      lookY,
+      yawBias: yaw,
     });
 
     // Extra spider eyes if multi_eyes
@@ -1737,20 +1903,24 @@ export function drawModularEntityCloseUp(
     if (dna.head.eyeStyle === 'slit_reptile') {
       ctx.fillStyle = '#070914';
       for (const s of [-1, 1]) {
+        if (absYaw > 0.78 && Math.sign(s) === Math.sign(yaw)) continue;
         ctx.beginPath();
-        ctx.ellipse(s * 26, -8, 2.5, 9, 0, 0, Math.PI * 2);
+        ctx.ellipse(s * 26 + lookX * 3.5, -8 + lookY * 2.5, 2.5, 9, 0, 0, Math.PI * 2);
         ctx.fill();
       }
     }
   }
+  ctx.restore();
 
-  // Nose / Snout Tip / Beak (scaled by Wave 7 noseScale morph)
+  // Nose / Snout Tip / Beak (scaled by Wave 7 noseScale morph + Wave 9 yaw perspective)
   if (dna.head.headShape === 'curved_beak' || dna.head.headShape === 'raptor_beak') {
     const beakOpen = getVisemeAperture(viseme) * 5;
+    ctx.save();
+    ctx.translate(yaw * 20, 0);
     ctx.fillStyle = pal.accent;
     ctx.beginPath();
     ctx.moveTo(-16, 4);
-    ctx.quadraticCurveTo(0, dna.head.headShape === 'raptor_beak' ? 46 : 58, 16, 4);
+    ctx.quadraticCurveTo(yaw * 10, dna.head.headShape === 'raptor_beak' ? 46 : 58, 16, 4);
     ctx.closePath();
     ctx.fill();
     if (beakOpen > 0) {
@@ -1758,15 +1928,16 @@ export function drawModularEntityCloseUp(
       ctx.beginPath();
       ctx.moveTo(-10, 18);
       ctx.lineTo(10, 18);
-      ctx.lineTo(0, 24 + beakOpen * 1.4);
+      ctx.lineTo(yaw * 6, 24 + beakOpen * 1.4);
       ctx.closePath();
       ctx.fill();
     }
+    ctx.restore();
   } else {
     // Nose bridge
     if (dna.head.noseStyle !== 'none') {
       ctx.save();
-      ctx.translate(0, 14);
+      ctx.translate(yaw * 19, 14);
       ctx.scale(fm.noseScale, fm.noseScale);
       ctx.translate(0, -14);
       ctx.fillStyle = darkenHex(pal.skin, 0.72);
@@ -1784,17 +1955,21 @@ export function drawModularEntityCloseUp(
         ctx.ellipse(0, 16, 11, 7, 0, 0, Math.PI * 2);
         ctx.fill();
       } else {
+        const noseDir = yaw < -0.15 ? -1 : 1;
         ctx.beginPath();
         ctx.moveTo(0, -4);
-        ctx.lineTo(dna.head.noseStyle === 'aquiline' ? 9 : 6, 18);
-        ctx.lineTo(-4, 18);
+        ctx.lineTo(noseDir * (dna.head.noseStyle === 'aquiline' ? 9 + absYaw * 4 : 6 + absYaw * 3), 18);
+        ctx.lineTo(noseDir * -4, 18);
         ctx.closePath();
         ctx.fill();
       }
       ctx.restore();
     }
 
-    // Facial hair / Whiskers
+    // Facial hair / Whiskers + Mouth (shifted & slightly foreshortened with yaw)
+    ctx.save();
+    ctx.translate(yaw * 14, 0);
+    ctx.scale(Math.max(0.76, 1 - absYaw * 0.22), 1);
     drawModularFacialHair(ctx, dna.head.facialHair, pal.hair);
 
     // Unified 6-shape phoneme lip-sync mouth
@@ -1819,17 +1994,24 @@ export function drawModularEntityCloseUp(
         fanged,
       });
     }
+    ctx.restore();
   }
 
-  // Front hair bangs / ties for Wave 7 hair styles
+  // Front hair bangs / ties for Wave 7 & Wave 9 hair styles
+  ctx.save();
+  ctx.translate(yaw * 9, 0);
   drawGranularHairFront(ctx, dna.head.hairStyle, pal.hair, pal.accent);
 
   // Wave 7 Eyewear & Ear/Face Jewelry
   drawEyewearLayer(ctx, acc.eyewear, pal, baseEyeX * fm.eyeSpacing, baseEyeY, fm.eyeSize);
   drawEarAndFaceJewelryLayer(ctx, acc.earJewelry, pal, fm.earScale, fm.noseScale);
+  ctx.restore();
 
-  // Headwear / Crown / Turban / Helm
+  // Headwear / Crown / Turban / Helm / Casual Caps
+  ctx.save();
+  ctx.translate(yaw * 5, 0);
   drawModularHeadwear(ctx, dna.outfit.headwear, pal.primary, pal.accent);
+  ctx.restore();
 
   ctx.restore(); // end neckLift
   ctx.restore();
@@ -1856,7 +2038,8 @@ export function drawModularEntityFullBody(
   motion?: MotionId,
   renderStyle?: RenderStyleId,
   lighting?: SceneLightingState,
-  motionProfile?: MotionProfileId
+  motionProfile?: MotionProfileId,
+  rig?: ActorRigRenderOptions
 ): void {
   const ts = snapStyleTime(t, renderStyle);
   const styleGrammar = getStyleAnimationGrammar(renderStyle);
@@ -1868,6 +2051,23 @@ export function drawModularEntityFullBody(
   for (let i = 0; i < cast.id.length; i++) {
     bodySeed = (bodySeed * 31 + cast.id.charCodeAt(i)) % 997;
   }
+
+  const secondarySway =
+    rig?.secondaryMotion ??
+    computeSecondaryMotionSway(
+      bodySeed,
+      ts,
+      pose,
+      motion || 'still',
+      rig?.weather || 'none',
+      speechEnergy
+    );
+  const headRig: ActorRigRenderOptions = {
+    ...(rig || {}),
+    secondaryMotion: secondarySway,
+  };
+  const bodyYaw = clamp(typeof rig?.yawBias === 'number' && Number.isFinite(rig.yawBias) ? rig.yawBias : 0, -1, 1);
+  const absBodyYaw = Math.abs(bodyYaw);
 
   const env = computePoseEnvelope(
     pose,
@@ -1936,7 +2136,7 @@ export function drawModularEntityFullBody(
     const bodyH = 42 * shScale;
 
     drawModularWings(ctx, dna.appendages.wings, pal.primary, pal.accent, pose, ts, bodySeed, -legH - bodyH * 0.75, 0.85);
-    drawModularTail(ctx, dna.appendages.tail, pal.primary, pal.accent, ts, bodySeed, -bodyW * 0.9, -legH - bodyH * 0.4);
+    drawModularTail(ctx, dna.appendages.tail, pal.primary, pal.accent, ts, bodySeed, -bodyW * 0.9, -legH - bodyH * 0.4, secondarySway.tailWaveRad);
 
     // Back legs
     ctx.fillStyle = darkenHex(pal.primary, 0.62);
@@ -1964,7 +2164,7 @@ export function drawModularEntityFullBody(
 
     // Optional saddle/cape/garment blanket on quadruped
     if (dna.outfit.capeStyle !== 'none') {
-      drawModularCape(ctx, dna.outfit.capeStyle, pal.secondary, pal.primary, pal.accent, pose, kin.capeDrag, ts, bodySeed, -legH - bodyH);
+      drawModularCape(ctx, dna.outfit.capeStyle, pal.secondary, pal.primary, pal.accent, pose, kin.capeDrag, ts, bodySeed, -legH - bodyH, secondarySway.capeLagRad);
     }
     if (dna.outfit.collarAccessory !== 'none') {
       ctx.strokeStyle = pal.accent;
@@ -1985,7 +2185,7 @@ export function drawModularEntityFullBody(
     ctx.translate(bodyW * 0.85, -legH - bodyH * 1.04 - chestRise);
     ctx.rotate(talkPulse * 0.06);
     ctx.scale(headScale * 1.15, headScale * 1.15);
-    drawModularEntityCloseUp(ctx, cast, dna, expression, viseme, speechEnergy, 'right', ts);
+    drawModularEntityCloseUp(ctx, cast, dna, expression, viseme, speechEnergy, 'right', ts, headRig);
     ctx.restore();
 
     ctx.restore();
@@ -2000,7 +2200,7 @@ export function drawModularEntityFullBody(
     const bodyRx = 26 * bulkScale;
     const bodyRy = 38 * shScale;
 
-    drawModularTail(ctx, dna.appendages.tail, pal.primary, pal.accent, ts, bodySeed, -bodyRx * 0.7, -legH - 12);
+    drawModularTail(ctx, dna.appendages.tail, pal.primary, pal.accent, ts, bodySeed, -bodyRx * 0.7, -legH - 12, secondarySway.tailWaveRad);
     drawModularWings(
       ctx,
       dna.appendages.wings === 'none' ? 'raven_dark' : dna.appendages.wings,
@@ -2043,7 +2243,7 @@ export function drawModularEntityFullBody(
     ctx.translate(10, -legH - bodyRy * 1.85 + chestRise);
     ctx.rotate(talkPulse * 0.06);
     ctx.scale(headScale * 1.05, headScale * 1.05);
-    drawModularEntityCloseUp(ctx, cast, dna, expression, viseme, speechEnergy, 'right', ts);
+    drawModularEntityCloseUp(ctx, cast, dna, expression, viseme, speechEnergy, 'right', ts, headRig);
     ctx.restore();
 
     ctx.restore();
@@ -2089,7 +2289,7 @@ export function drawModularEntityFullBody(
     ctx.translate(4 + sway * 0.7, -116 * limbScale);
     ctx.rotate(sway * 0.012 + talkPulse * 0.05);
     ctx.scale(headScale * 1.12, headScale * 1.12);
-    drawModularEntityCloseUp(ctx, cast, dna, expression, viseme, speechEnergy, 'right', ts);
+    drawModularEntityCloseUp(ctx, cast, dna, expression, viseme, speechEnergy, 'right', ts, headRig);
     ctx.restore();
 
     ctx.restore();
@@ -2135,7 +2335,7 @@ export function drawModularEntityFullBody(
     ctx.translate(12, -104 + chestRise);
     ctx.rotate(talkPulse * 0.05);
     ctx.scale(headScale * 1.05, headScale * 1.05);
-    drawModularEntityCloseUp(ctx, cast, dna, expression, viseme, speechEnergy, 'right', ts);
+    drawModularEntityCloseUp(ctx, cast, dna, expression, viseme, speechEnergy, 'right', ts, headRig);
     ctx.restore();
 
     ctx.restore();
@@ -2166,11 +2366,11 @@ export function drawModularEntityFullBody(
   const fullAcc = resolveAccessories(dna);
   const fullBodyMarks = resolveBodyMarks(dna);
 
-  // Behind: Back Gear, Wings, Cape & Tail (Z-order)
+  // Behind: Back Gear, Wings, Cape & Tail (Z-order, driven by Wave 9 secondary motion)
   drawBackGearLayer(ctx, fullAcc.backGear, pal, torsoTopY, waistY, chestW, ts, bodySeed);
   drawModularWings(ctx, dna.appendages.wings, pal.primary, pal.accent, pose, ts, bodySeed, torsoTopY + 14, 1.0);
-  drawModularCape(ctx, dna.outfit.capeStyle, pal.primary, pal.secondary, pal.accent, pose, kin.capeDrag, ts, bodySeed, torsoTopY);
-  drawModularTail(ctx, dna.appendages.tail, pal.primary, pal.accent, ts, bodySeed, -14, waistY + 16);
+  drawModularCape(ctx, dna.outfit.capeStyle, pal.primary, pal.secondary, pal.accent, pose, kin.capeDrag, ts, bodySeed, torsoTopY, secondarySway.capeLagRad);
+  drawModularTail(ctx, dna.appendages.tail, pal.primary, pal.accent, ts, bodySeed, -14, waistY + 16, secondarySway.tailWaveRad);
 
   // Optional Extra Divine/Asura Arms behind torso!
   if (dna.appendages.extraArms === 2) {
@@ -2194,6 +2394,9 @@ export function drawModularEntityFullBody(
     }
   }
 
+  const heldProp = rig?.heldProp;
+  const heldHand = rig?.heldHand || 'front';
+
   // Back 2-bone articulated arm
   ctx.save();
   ctx.translate(armRig.back.shoulderX * shScale, torsoTopY + 10);
@@ -2212,6 +2415,9 @@ export function drawModularEntityFullBody(
   ctx.arc(0, armRig.back.forearmLen * limbScale + 1, 5, 0, Math.PI * 2);
   ctx.fill();
   drawGlovesLayer(ctx, dna.outfit.gloves, pal, armRig.back.forearmLen * limbScale);
+  if (heldProp && heldProp !== 'none' && (heldHand === 'back' || heldHand === 'both')) {
+    drawAnchoredHeldProp(ctx, heldProp, armRig.back.forearmLen * limbScale, ts, beatU, pose, 'back', pal.accent);
+  }
   ctx.restore();
 
   // Lower Body (Ethereal Wisp | Dhoti | Skirt | Greaves | Trousers | Robe)
@@ -2280,12 +2486,14 @@ export function drawModularEntityFullBody(
     ctx.fill();
   }
 
-  // Torso (Top Style + Pattern + Chiaroscuro shadow)
+  // Torso (Top Style + Pattern + Chiaroscuro shadow + Wave 9 3/4 shoulder foreshortening)
+  const torsoLeftW = chestW * (bodyYaw > 0 ? Math.max(0.74, 1 - absBodyYaw * 0.24) : 1 + absBodyYaw * 0.05);
+  const torsoRightW = chestW * (bodyYaw < 0 ? Math.max(0.74, 1 - absBodyYaw * 0.24) : 1 + absBodyYaw * 0.05);
   const torsoCol = dna.outfit.topStyle === 'none_fur' ? pal.skin : pal.primary;
   ctx.fillStyle = torsoCol;
   ctx.beginPath();
-  ctx.moveTo(-chestW, torsoTopY);
-  ctx.lineTo(chestW, torsoTopY);
+  ctx.moveTo(-torsoLeftW, torsoTopY);
+  ctx.lineTo(torsoRightW, torsoTopY);
   ctx.lineTo(waistW, waistY);
   ctx.lineTo(-waistW, waistY);
   ctx.closePath();
@@ -2294,8 +2502,8 @@ export function drawModularEntityFullBody(
   // Apply procedural textile/coat pattern clipped to torso
   ctx.save();
   ctx.beginPath();
-  ctx.moveTo(-chestW, torsoTopY);
-  ctx.lineTo(chestW, torsoTopY);
+  ctx.moveTo(-torsoLeftW, torsoTopY);
+  ctx.lineTo(torsoRightW, torsoTopY);
   ctx.lineTo(waistW, waistY);
   ctx.lineTo(-waistW, waistY);
   ctx.closePath();
@@ -2471,6 +2679,9 @@ export function drawModularEntityFullBody(
   ctx.arc(0, armRig.front.forearmLen * limbScale + 2, 5.8, 0, Math.PI * 2);
   ctx.fill();
   drawGlovesLayer(ctx, dna.outfit.gloves, pal, armRig.front.forearmLen * limbScale);
+  if (heldProp && heldProp !== 'none' && (heldHand === 'front' || heldHand === 'both')) {
+    drawAnchoredHeldProp(ctx, heldProp, armRig.front.forearmLen * limbScale, ts, beatU, pose, 'front', pal.accent);
+  }
   ctx.restore();
 
   // Style-Native Shadow Puppetry Bamboo Control Rods!
@@ -2487,12 +2698,12 @@ export function drawModularEntityFullBody(
     ctx.restore();
   }
 
-  // Scaled Sculpted Modular Head
+  // Scaled Sculpted Modular Head (with Wave 9 orientation, eye-gaze & secondary hair sway)
   ctx.save();
   ctx.translate(2, torsoTopY - 26 + chestRise * 0.15);
   ctx.rotate(talkPulse * 0.055);
   ctx.scale(headScale, headScale);
-  drawModularEntityCloseUp(ctx, cast, dna, expression, viseme, speechEnergy, 'right', ts);
+  drawModularEntityCloseUp(ctx, cast, dna, expression, viseme, speechEnergy, 'right', ts, headRig);
   ctx.restore();
 
   ctx.restore();

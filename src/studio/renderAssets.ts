@@ -46,7 +46,12 @@ import { ATLAS_MOOD_PALETTES } from './renderAssetsAtmosphereAtlas';
 import { drawAtlasActorCloseUp, drawAtlasActorFullBody } from './renderAssetsArchetypesAtlas';
 import { ATLAS_INDOOR_STAGES, drawAtlasStageBackdrop } from './renderAssetsStagesAtlas';
 import { drawAtlasStoryProp } from './renderAssetsPropsAtlas';
-import { drawModularEntityCloseUp, drawModularEntityFullBody } from './modularEntityRenderer';
+import {
+  drawModularEntityCloseUp,
+  drawModularEntityFullBody,
+  setHeldPropRenderer,
+} from './modularEntityRenderer';
+import type { ActorRigRenderOptions } from './characterRigging';
 import {
   drawUnifiedEyePair,
   drawUnifiedMouth,
@@ -1106,10 +1111,11 @@ export function drawActorCloseUp(
   viseme: number,
   speechEnergy: number,
   lightSide: 'left' | 'right',
-  t: number
+  t: number,
+  rig?: ActorRigRenderOptions
 ): void {
   if (cast.dna) {
-    drawModularEntityCloseUp(ctx, cast, cast.dna, expression, viseme, speechEnergy, lightSide, t);
+    drawModularEntityCloseUp(ctx, cast, cast.dna, expression, viseme, speechEnergy, lightSide, t, rig);
     return;
   }
 
@@ -1310,6 +1316,9 @@ export function drawActorCloseUp(
     eyeY: -8,
     noBrows: arch === 'serpent',
     castSeed,
+    lookX: rig?.lookX,
+    lookY: rig?.lookY,
+    yawBias: rig?.yawBias,
   });
 
   // Beard / Mustache
@@ -1370,7 +1379,8 @@ export function drawActorFullBody(
   motion?: MotionId,
   renderStyle?: RenderStyleId,
   lighting?: SceneLightingState,
-  motionProfile?: MotionProfileId
+  motionProfile?: MotionProfileId,
+  rig?: ActorRigRenderOptions
 ): void {
   if (cast.dna) {
     drawModularEntityFullBody(
@@ -1390,7 +1400,8 @@ export function drawActorFullBody(
       motion,
       renderStyle,
       lighting,
-      motionProfile
+      motionProfile,
+      rig
     );
     return;
   }
@@ -1712,6 +1723,13 @@ export function drawActorFullBody(
   ctx.beginPath();
   ctx.arc(0, armRig.front.forearmLen + 2, 5.8, 0, Math.PI * 2);
   ctx.fill();
+  if (rig?.heldProp && rig.heldProp !== 'none' && rig.heldHand !== 'back') {
+    ctx.save();
+    ctx.translate(0, armRig.front.forearmLen + 4);
+    ctx.rotate(pose === 'attack' ? -0.95 : -0.58);
+    drawStoryProp(ctx, rig.heldProp, 16, 0, 0.36, ts, beatU);
+    ctx.restore();
+  }
   ctx.restore();
 
   // Style-Native Shadow Puppetry Bamboo Control Rods extending downward from live wrists!
@@ -1733,7 +1751,7 @@ export function drawActorFullBody(
   ctx.translate(2, -148 + chestRise * 1.15);
   ctx.rotate(talkPulse * 0.055);
   ctx.scale(0.32, 0.32);
-  drawActorCloseUp(ctx, cast, expression, viseme, speechEnergy, 'right', ts);
+  drawActorCloseUp(ctx, cast, expression, viseme, speechEnergy, 'right', ts, rig);
   ctx.restore();
 
   ctx.restore();
@@ -2084,3 +2102,7 @@ export function drawStoryProp(
 
   ctx.restore();
 }
+
+// Register drawStoryProp with modularEntityRenderer for Wave 9 hand-held prop rigging (zero circular imports)
+setHeldPropRenderer(drawStoryProp);
+
