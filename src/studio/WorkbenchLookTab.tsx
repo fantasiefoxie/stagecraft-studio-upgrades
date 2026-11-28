@@ -609,6 +609,55 @@ export const WorkbenchLookTab: React.FC<WorkbenchLookTabProps> = React.memo(
               />
             </label>
 
+            {/* Upgrade 28 & 29: Analytical 2D VFX Intensity & Shockwave Refraction */}
+            <label className="block">
+              <div className="flex items-center justify-between text-[11px] text-[#9aa3bd] mb-1">
+                <span>Analytical 2D VFX &amp; Shockwave</span>
+                <span className="font-mono-tabular text-white">
+                  {Math.round((resolvedStyle.vfxIntensity ?? 0.75) * 100)}%
+                </span>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.05}
+                value={resolvedStyle.vfxIntensity ?? 0.75}
+                onChange={(e) =>
+                  onUpdateVisualStyle({ vfxIntensity: Number(e.target.value) })
+                }
+                className="w-full accent-[#f2c85b] cursor-pointer"
+              />
+            </label>
+
+            {/* Upgrade 30: Miniature Macro Tilt-Shift Blur Band */}
+            <label className="block">
+              <div className="flex items-center justify-between text-[11px] text-[#9aa3bd] mb-1">
+                <span>Miniature Tilt-Shift Blur</span>
+                <span className="font-mono-tabular text-white">
+                  {Math.round(
+                    (episode.visualStyle?.tiltShiftAmount ??
+                      (resolvedStyle.renderStyle === 'papercraft_diorama' ? 0.55 : 0)) * 100
+                  )}
+                  %
+                </span>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.05}
+                value={
+                  episode.visualStyle?.tiltShiftAmount ??
+                  (resolvedStyle.renderStyle === 'papercraft_diorama' ? 0.55 : 0)
+                }
+                onChange={(e) =>
+                  onUpdateVisualStyle({ tiltShiftAmount: Number(e.target.value) })
+                }
+                className="w-full accent-[#c084fc] cursor-pointer"
+              />
+            </label>
+
             {/* Upgrade 21: Deterministic Impact Hit Stop (2-4 Frame Freeze) */}
             <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-white/8">
               <div>

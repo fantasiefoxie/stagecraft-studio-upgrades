@@ -37,6 +37,7 @@ import {
   buildCastMemberFromSpritePreset,
 } from './spriteWorkshopPresets';
 import { AssetThumb } from './AssetThumb';
+import { searchStudioCatalog } from './catalogSearchIndex';
 
 export type AssetCatalogTab = 'cast' | 'stages' | 'props';
 
@@ -153,16 +154,24 @@ export const WorkbenchAssetsTab: React.FC<WorkbenchAssetsTabProps> = React.memo(
     }, [propPresetQuery, procPropPreset]);
 
     const filteredSpritePresets = useMemo(() => {
+      if (!normalizedQuery) {
+        return SPRITE_WORKSHOP_PRESETS.filter(
+          (p) => spriteGenre === 'All' || p.category === spriteGenre
+        );
+      }
+      const hits = searchStudioCatalog(normalizedQuery, { kinds: ['sprite_preset'], limit: 192 });
+      const rankMap = new Map<string, number>();
+      hits.forEach((h, idx) => rankMap.set(h.id, idx));
       return SPRITE_WORKSHOP_PRESETS.filter((p) => {
         if (spriteGenre !== 'All' && p.category !== spriteGenre) return false;
-        if (!normalizedQuery) return true;
         return (
+          rankMap.has(p.id) ||
           p.name.toLowerCase().includes(normalizedQuery) ||
           p.tagline.toLowerCase().includes(normalizedQuery) ||
           p.category.toLowerCase().includes(normalizedQuery) ||
           p.archetype.toLowerCase().includes(normalizedQuery)
         );
-      });
+      }).sort((a, b) => (rankMap.get(a.id) ?? 9999) - (rankMap.get(b.id) ?? 9999));
     }, [spriteGenre, normalizedQuery]);
 
     const filteredArchetypesByGroup = useMemo(() => {
@@ -172,6 +181,12 @@ export const WorkbenchAssetsTab: React.FC<WorkbenchAssetsTabProps> = React.memo(
           : castFilter === 'Quick Sprites'
           ? []
           : [castFilter];
+      const rankMap = new Map<string, number>();
+      if (normalizedQuery) {
+        searchStudioCatalog(normalizedQuery, { kinds: ['archetype'], limit: 160 }).forEach(
+          (h, idx) => rankMap.set(h.id, idx)
+        );
+      }
       return groupsToShow
         .map((group) => ({
           group,
@@ -179,43 +194,64 @@ export const WorkbenchAssetsTab: React.FC<WorkbenchAssetsTabProps> = React.memo(
             if (a.group !== group) return false;
             if (!normalizedQuery) return true;
             return (
+              rankMap.has(a.id) ||
               a.label.toLowerCase().includes(normalizedQuery) ||
               a.stories.toLowerCase().includes(normalizedQuery) ||
               a.id.toLowerCase().includes(normalizedQuery) ||
               a.group.toLowerCase().includes(normalizedQuery)
             );
-          }),
+          }).sort((a, b) =>
+            normalizedQuery ? (rankMap.get(a.id) ?? 9999) - (rankMap.get(b.id) ?? 9999) : 0
+          ),
         }))
         .filter((g) => g.items.length > 0);
     }, [castFilter, normalizedQuery]);
 
     const filteredStages = useMemo(() => {
+      const rankMap = new Map<string, number>();
+      if (normalizedQuery) {
+        searchStudioCatalog(normalizedQuery, { kinds: ['stage'], limit: 150 }).forEach(
+          (h, idx) => rankMap.set(h.id, idx)
+        );
+      }
       return STAGE_CATALOG.filter((st) => {
         const cat = st.category || 'World & Folklore';
         if (stageFilter !== 'All' && cat !== stageFilter) return false;
         if (!normalizedQuery) return true;
         return (
+          rankMap.has(st.id) ||
           st.label.toLowerCase().includes(normalizedQuery) ||
           st.useCase.toLowerCase().includes(normalizedQuery) ||
           cat.toLowerCase().includes(normalizedQuery) ||
           st.id.toLowerCase().includes(normalizedQuery)
         );
-      });
+      }).sort((a, b) =>
+        normalizedQuery ? (rankMap.get(a.id) ?? 9999) - (rankMap.get(b.id) ?? 9999) : 0
+      );
     }, [stageFilter, normalizedQuery]);
 
     const filteredProps = useMemo(() => {
+      const rankMap = new Map<string, number>();
+      if (normalizedQuery) {
+        searchStudioCatalog(normalizedQuery, { kinds: ['prop'], limit: 185 }).forEach(
+          (h, idx) => rankMap.set(h.id, idx)
+        );
+      }
       return PROP_CATALOG.filter((p) => {
         if (p.id === 'none') return false;
         const cat = p.category || 'Folklore & World';
         if (propFilter !== 'All' && cat !== propFilter) return false;
         if (!normalizedQuery) return true;
         return (
+          rankMap.has(p.id) ||
           p.label.toLowerCase().includes(normalizedQuery) ||
           p.note.toLowerCase().includes(normalizedQuery) ||
           cat.toLowerCase().includes(normalizedQuery) ||
           p.id.toLowerCase().includes(normalizedQuery)
         );
-      });
+      }).sort((a, b) =>
+        normalizedQuery ? (rankMap.get(a.id) ?? 9999) - (rankMap.get(b.id) ?? 9999) : 0
+      );
     }, [propFilter, normalizedQuery]);
 
     return (

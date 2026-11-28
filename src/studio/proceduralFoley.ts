@@ -10,10 +10,17 @@
  * and renderEpisodeAudioOffline.
  */
 
-import { STUDIO_FPS, type StageId, type StoryBeat } from './types';
+import { STUDIO_FPS, type RenderStyleId, type StageId, type StoryBeat } from './types';
 import { createSpatialRoute } from './spatialAudio';
 
-export type FoleyKind = 'footstep' | 'whoosh' | 'thunder_rumble' | 'ember_crackle';
+export type FoleyKind =
+  | 'footstep'
+  | 'whoosh'
+  | 'thunder_rumble'
+  | 'ember_crackle'
+  | 'paper_turn'
+  | 'cardstock_fold'
+  | 'hinge_pop';
 
 export interface FoleyEvent {
   /** Offset in seconds from the start of the beat */
@@ -53,10 +60,16 @@ function slotBasePan(slot?: string): number {
 /**
  * Pure deterministic planner returning all scheduled foley events within a single beat.
  */
-export function planBeatFoleyEvents(beat: StoryBeat): FoleyEvent[] {
+export function planBeatFoleyEvents(
+  beat: StoryBeat,
+  renderStyle?: RenderStyleId
+): FoleyEvent[] {
   const dur = Math.max(0.8, Number.isFinite(beat.duration) ? beat.duration : 4);
   const events: FoleyEvent[] = [];
-  const rand = makeLcg(hashString(`foley_${beat.id}_${beat.stage}_${beat.weather}`));
+  const effectiveStyle = beat.renderStyle || renderStyle;
+  const rand = makeLcg(
+    hashString(`foley_${beat.id}_${beat.stage}_${beat.weather}_${beat.transition || 'hard_cut'}_${effectiveStyle || 'default'}`)
+  );
 
   // 1. Stride footsteps & attack/leap whooshes from actor base motions/poses
   for (let aIdx = 0; aIdx < beat.actors.length; aIdx++) {
@@ -176,6 +189,56 @@ export function planBeatFoleyEvents(beat: StoryBeat): FoleyEvent[] {
     }
   }
 
+  // 4. Upgrade 32: Tactile Paper, Crease & Pop-Up Hinge Foley for popup_fold & papercraft_diorama
+  const isPaperScene =
+    beat.transition === 'popup_fold' || effectiveStyle === 'papercraft_diorama';
+  const isSlate = beat.frame === 'chapter_title' || beat.frame === 'end_screen';
+  if (isPaperScene && !isSlate) {
+    // Soft cardstock page-turn swoosh right on the scene cut
+    events.push({
+      offsetSec: 0.02,
+      kind: 'paper_turn',
+      pan: 0,
+      gain: beat.transition === 'popup_fold' ? 0.2 : 0.14,
+      pitch: Number((0.94 + rand() * 0.14).toFixed(3)),
+    });
+
+    // Staggered cardstock fold & spring-hinge pop for entering actors
+    const actorCount = Math.min(3, beat.actors.length);
+    for (let aIdx = 0; aIdx < actorCount; aIdx++) {
+      const actor = beat.actors[aIdx];
+      const pan = slotBasePan(actor.slot);
+      const foldAt = Number(Math.min(dur - 0.18, 0.065 + aIdx * 0.075).toFixed(3));
+      const popAt = Number(Math.min(dur - 0.12, 0.145 + aIdx * 0.075).toFixed(3));
+      events.push({
+        offsetSec: foldAt,
+        kind: 'cardstock_fold',
+        pan,
+        gain: 0.12,
+        pitch: Number((0.92 + rand() * 0.18).toFixed(3)),
+      });
+      events.push({
+        offsetSec: popAt,
+        kind: 'hinge_pop',
+        pan,
+        gain: 0.11,
+        pitch: Number((0.96 + aIdx * 0.06 + (rand() - 0.5) * 0.08).toFixed(3)),
+      });
+    }
+
+    // Subtle hinge pop for hero prop emergence
+    if ((beat.prop && beat.prop !== 'none') || beat.customPropDataUrl) {
+      const propPan = slotBasePan(beat.propSlot);
+      events.push({
+        offsetSec: Number(Math.min(dur - 0.12, 0.21).toFixed(3)),
+        kind: 'hinge_pop',
+        pan: propPan,
+        gain: 0.1,
+        pitch: Number((1.05 + rand() * 0.14).toFixed(3)),
+      });
+    }
+  }
+
   events.sort((a, b) => a.offsetSec - b.offsetSec);
   return events;
 }
@@ -282,6 +345,82 @@ export function scheduleFoleyEventOnContext(
     g.connect(target);
     src.start(t, 0, 1.4);
     src.stop(t + 1.4);
+    return;
+  }
+
+  if (event.kind === 'paper_turn') {
+    // Soft tactile cardstock page-turn swoosh (dual bandpass sweep over deterministic noise)
+    const src = ctx.createBufferSource();
+    src.buffer = noiseBuf;
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.Q.value = 1.45;
+    bp.frequency.setValueAtTime(760 * event.pitch, t);
+    bp.frequency.exponentialRampToValueAtTime(2350 * event.pitch, t + 0.09);
+    bp.frequency.exponentialRampToValueAtTime(920 * event.pitch, t + 0.24);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(event.gain, t + 0.055);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.25);
+    src.connect(bp);
+    bp.connect(g);
+    g.connect(target);
+    src.start(t, 0.22, 0.27);
+    src.stop(t + 0.27);
+    return;
+  }
+
+  if (event.kind === 'cardstock_fold') {
+    // Crisp matte cardstock crease snap (high-Q paper rustle + warm body fold thump)
+    const src = ctx.createBufferSource();
+    src.buffer = noiseBuf;
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.Q.value = 2.8;
+    bp.frequency.setValueAtTime(1750 * event.pitch, t);
+    bp.frequency.exponentialRampToValueAtTime(3600 * event.pitch, t + 0.055);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(event.gain, t + 0.009);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.075);
+    src.connect(bp);
+    bp.connect(g);
+    g.connect(target);
+    src.start(t, 0.41, 0.085);
+    src.stop(t + 0.09);
+    return;
+  }
+
+  if (event.kind === 'hinge_pop') {
+    // Gentle damped pop-up paper hinge settle (wooden/cardstock resonant pop + tiny rustle tail)
+    const osc = ctx.createOscillator();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(285 * event.pitch, t);
+    osc.frequency.exponentialRampToValueAtTime(132 * event.pitch, t + 0.068);
+    const og = ctx.createGain();
+    og.gain.setValueAtTime(0.0001, t);
+    og.gain.linearRampToValueAtTime(event.gain * 0.72, t + 0.006);
+    og.gain.exponentialRampToValueAtTime(0.0001, t + 0.082);
+    osc.connect(og);
+    og.connect(target);
+    osc.start(t);
+    osc.stop(t + 0.09);
+
+    const src = ctx.createBufferSource();
+    src.buffer = noiseBuf;
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.setValueAtTime(2400 * event.pitch, t);
+    bp.Q.value = 2.1;
+    const ng = ctx.createGain();
+    ng.gain.setValueAtTime(0.0001, t);
+    ng.gain.linearRampToValueAtTime(event.gain * 0.42, t + 0.008);
+    ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.055);
+    src.connect(bp);
+    bp.connect(ng);
+    ng.connect(target);
+    src.start(t, 0.56, 0.065);
+    src.stop(t + 0.07);
     return;
   }
 

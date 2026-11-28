@@ -655,7 +655,8 @@ export type TransitionId =
   | 'diagonal_slash'
   | 'crimson_flash'
   | 'silhouette_wipe'
-  | 'ink_fade';
+  | 'ink_fade'
+  | 'popup_fold';
 
 export type ExpressionId =
   | 'calm'
@@ -1046,6 +1047,8 @@ export interface EpisodeVisualStyle {
   spatialAudio?: boolean; // Deterministic stereo panning & stage room acoustics (default true)
   hitstopEnabled?: boolean; // Deterministic 2-4 frame impact freeze + shock envelope on peak strikes (default true)
   foregroundFraming?: number; // 0 .. 1 near-camera foreground parallax silhouette framing (default 0.35)
+  vfxIntensity?: number; // 0 .. 1 analytical 2D particle/ribbon/ring VFX & shockwave refraction intensity (default 0.75)
+  tiltShiftAmount?: number; // 0 .. 1 miniature macro lens tilt-shift blur band (default 0 globally; auto 0.55 in papercraft_diorama)
 }
 
 export interface CastMember {
@@ -1854,6 +1857,7 @@ export const TRANSITION_CATALOG: Array<{ id: TransitionId; label: string }> = [
   { id: 'crimson_flash', label: 'Crimson Shock Flash' },
   { id: 'silhouette_wipe', label: 'Silhouette Wipe' },
   { id: 'ink_fade', label: 'Obsidian Fade' },
+  { id: 'popup_fold', label: 'Pop-Up Cardstock Fold' },
 ];
 
 export const FRAME_CATALOG: Array<{ id: FrameMode; label: string }> = [
@@ -2465,6 +2469,8 @@ export const DEFAULT_VISUAL_STYLE: EpisodeVisualStyle = {
   spatialAudio: true,
   hitstopEnabled: true,
   foregroundFraming: 0.35,
+  vfxIntensity: 0.75,
+  tiltShiftAmount: 0,
 };
 
 export const LOOK_PRESETS: Array<{
@@ -2688,6 +2694,14 @@ export function resolveVisualStyle(partial?: Partial<EpisodeVisualStyle>): Episo
       typeof partial.foregroundFraming === 'number' && Number.isFinite(partial.foregroundFraming)
         ? Math.max(0, Math.min(1, partial.foregroundFraming))
         : DEFAULT_VISUAL_STYLE.foregroundFraming,
+    vfxIntensity:
+      typeof partial.vfxIntensity === 'number' && Number.isFinite(partial.vfxIntensity)
+        ? Math.max(0, Math.min(1, partial.vfxIntensity))
+        : DEFAULT_VISUAL_STYLE.vfxIntensity,
+    tiltShiftAmount:
+      typeof partial.tiltShiftAmount === 'number' && Number.isFinite(partial.tiltShiftAmount)
+        ? Math.max(0, Math.min(1, partial.tiltShiftAmount))
+        : DEFAULT_VISUAL_STYLE.tiltShiftAmount,
   };
 }
 
@@ -3637,6 +3651,14 @@ export function validateEpisodeScript(raw: unknown): { ok: true; script: Episode
       foregroundFraming:
         typeof vs.foregroundFraming === 'number' && Number.isFinite(vs.foregroundFraming)
           ? Math.max(0, Math.min(1, vs.foregroundFraming))
+          : undefined,
+      vfxIntensity:
+        typeof vs.vfxIntensity === 'number' && Number.isFinite(vs.vfxIntensity)
+          ? Math.max(0, Math.min(1, vs.vfxIntensity))
+          : undefined,
+      tiltShiftAmount:
+        typeof vs.tiltShiftAmount === 'number' && Number.isFinite(vs.tiltShiftAmount)
+          ? Math.max(0, Math.min(1, vs.tiltShiftAmount))
           : undefined,
     };
   }

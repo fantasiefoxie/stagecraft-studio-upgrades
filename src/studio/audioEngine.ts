@@ -2,6 +2,7 @@ import {
   AmbienceId,
   EpisodeScript,
   RaagId,
+  RenderStyleId,
   SfxId,
   StoryBeat,
   resolveBeatActionSfxEvents,
@@ -941,8 +942,9 @@ export async function renderEpisodeAudioOffline(
       scheduleSfxOnContext(ctx, cueRoute.input, cueEv.sfx, beatStart + cueEv.offsetSec);
     }
 
-    // Schedule deterministic stride footsteps, attack/leap whooshes & weather foley
-    const foleyEvents = planBeatFoleyEvents(beat);
+    // Schedule deterministic stride footsteps, attack/leap whooshes, weather & paper-theatre foley
+    const beatRenderStyle = beat.renderStyle || episode.visualStyle?.renderStyle;
+    const foleyEvents = planBeatFoleyEvents(beat, beatRenderStyle);
     for (const fEv of foleyEvents) {
       scheduleFoleyEventOnContext(ctx, sfxBus, fEv, beatStart + fEv.offsetSec, beat.stage, spatialAudio);
     }
@@ -1583,7 +1585,8 @@ export class KathaAudioEngine {
     beatLocalT: number,
     isPlaying: boolean,
     speechEnergy: number,
-    nextBeat?: StoryBeat | null
+    nextBeat?: StoryBeat | null,
+    episodeRenderStyle?: RenderStyleId
   ): void {
     if (!this.unlocked || !this.ctx || !isPlaying) return;
 
@@ -1726,9 +1729,9 @@ export class KathaAudioEngine {
       }
     }
 
-    // Procedural Stride Footsteps, Attack/Leap Whooshes & Weather Foley
+    // Procedural Stride Footsteps, Attack/Leap Whooshes, Weather & Paper-Theatre Foley
     if (!this.muted && this.sfxBus) {
-      const foleyEvents = planBeatFoleyEvents(beat);
+      const foleyEvents = planBeatFoleyEvents(beat, beat.renderStyle || episodeRenderStyle);
       for (let fIdx = 0; fIdx < foleyEvents.length; fIdx++) {
         if (this.firedFoleyIndices.has(fIdx)) continue;
         const fEv = foleyEvents[fIdx];

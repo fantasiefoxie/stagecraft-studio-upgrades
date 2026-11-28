@@ -55,6 +55,19 @@ import {
 } from './kineticCaptions';
 import { drawLocationLowerThird } from './lowerThirds';
 import { computeHitstopState, drawImpactShockOverlay } from './impactVfx';
+import {
+  AnalyticalActorAnchor,
+  drawAnalyticalBeatVfxLayer,
+} from './vfxEmitterEngine';
+import {
+  applyPooledShockwaveDistortion,
+  computeShockwaveDistortionSpec,
+} from './vfxDistortionPass';
+import {
+  applyPooledTiltShiftBand,
+  computePopupHingeTransform,
+  drawPopupFoldTransition,
+} from './papercraftCraft';
 import { computeSpriteSheetFrameRect } from './spriteSheetSlicer';
 import {
   ReflectedActorSnapshot,
@@ -1797,6 +1810,9 @@ function drawTransitionOverlay(
         : `rgba(5, 7, 15, ${1 - smoothstep(p)})`;
     ctx.fillStyle = fadeColor;
     ctx.fillRect(0, 0, w, h);
+  } else if (beat.transition === 'popup_fold') {
+    const pal = MOOD_PALETTES[beat.mood] || MOOD_PALETTES.midnight_banyan;
+    drawPopupFoldTransition(ctx, w, h, localT, pal.accent, beat.lightSide);
   }
 }
 
@@ -2302,6 +2318,23 @@ export function renderEpisodeFrame(
     beat.frame !== 'moral_card' &&
     beat.frame !== 'end_screen';
   const fgFramingIntensity = style.foregroundFraming ?? 0.35;
+  const vfxIntensity = style.vfxIntensity ?? 0.75;
+  const explicitTiltShift = episode.visualStyle?.tiltShiftAmount;
+  const resolvedTiltShift =
+    typeof explicitTiltShift === 'number' && Number.isFinite(explicitTiltShift)
+      ? clamp(explicitTiltShift, 0, 1)
+      : activeRenderStyle === 'papercraft_diorama'
+        ? 0.55
+        : 0;
+  const popupHingeActive =
+    (activeRenderStyle === 'papercraft_diorama' || beat.transition === 'popup_fold') &&
+    beat.frame !== 'chapter_title' &&
+    beat.frame !== 'moral_card' &&
+    beat.frame !== 'end_screen' &&
+    beat.shot !== 'motion_card' &&
+    localT < 0.65;
+  const vfxActorAnchors: AnalyticalActorAnchor[] = [];
+  const craftOpts = { lightSide: beat.lightSide, tiltShiftAmount: resolvedTiltShift };
 
   const effectiveActors: ActorPlacement[] = (beat.actors || []).map((a) => {
     const poseOvr = actionState.actorPoseOverrides[a.castId];
@@ -2514,6 +2547,16 @@ export function renderEpisodeFrame(
             fCtx.stroke();
             fCtx.restore();
           }
+          fCtx.save();
+          if (popupHingeActive) {
+            const propHinge = computePopupHingeTransform(localT, 0.14, 0.42);
+            if (!propHinge.settled) {
+              const hingeY = pyPhys + 36 * s;
+              fCtx.translate(pxPhys, hingeY);
+              fCtx.transform(1, 0, propHinge.skewX, propHinge.scaleY, 0, -propHinge.liftPx * s);
+              fCtx.translate(-pxPhys, -hingeY);
+            }
+          }
           drawCustomOrHeroProp(
             fCtx,
             beat,
@@ -2526,13 +2569,16 @@ export function renderEpisodeFrame(
             localT,
             effectiveCadenceFps
           );
+          fCtx.restore();
         }
 
         // Draw Actors with Archetype Kinematics, 12-Principles Envelopes, Tapered Motion Arcs & 2-Bone Arms
-        for (const a of effectiveActors) {
+        for (let aIdx = 0; aIdx < effectiveActors.length; aIdx++) {
+          const a = effectiveActors[aIdx];
           const c = getCast(a.castId);
           const isSpeaking = beat.speakerId === a.castId;
           const pos = computeActorPosition(a, w, h, s, actorMotionU, isVert, motionProfile, activeRenderStyle);
+          vfxActorAnchors.push({ actor: a, x: pos.x, y: pos.y, scale: actorScale });
           if (
             a.motion === 'enter_left' ||
             a.motion === 'enter_right' ||
@@ -2562,6 +2608,15 @@ export function renderEpisodeFrame(
               activeRenderStyle
             );
           }
+          fCtx.save();
+          if (popupHingeActive) {
+            const hinge = computePopupHingeTransform(localT, aIdx * 0.075, 0.42);
+            if (!hinge.settled) {
+              fCtx.translate(pos.x, pos.y);
+              fCtx.transform(1, 0, hinge.skewX, hinge.scaleY, 0, -hinge.liftPx * s);
+              fCtx.translate(-pos.x, -pos.y);
+            }
+          }
           drawActorFullBody(
             fCtx,
             c,
@@ -2580,6 +2635,7 @@ export function renderEpisodeFrame(
             lighting,
             motionProfile
           );
+          fCtx.restore();
         }
 
         if ((beat.prop !== 'none' || beat.customPropDataUrl) && propSpec.isHeld) {
@@ -2636,7 +2692,7 @@ export function renderEpisodeFrame(
           }
         }
       },
-    }, staticCamKey);
+    }, staticCamKey, craftOpts);
   } else if (beat.shot === 'closeup_left' || beat.shot === 'closeup_right') {
     const focusActor = beat.shot === 'closeup_right' ? actor1 : actor0;
     const c = getCast(focusActor.castId);
@@ -2716,7 +2772,7 @@ export function renderEpisodeFrame(
         );
         fCtx.restore();
       },
-    }, cuBgKey);
+    }, cuBgKey, craftOpts);
   } else if (beat.shot === 'split_faceoff') {
     const cL = getCast(actor0.castId);
     const cR = getCast(actor1.castId);
@@ -2824,7 +2880,7 @@ export function renderEpisodeFrame(
         fCtx.stroke();
         fCtx.restore();
       },
-    });
+    }, undefined, craftOpts);
   } else if (beat.shot === 'eye_strip') {
     const focus = actor0;
     const c = getCast(focus.castId);
@@ -2854,7 +2910,7 @@ export function renderEpisodeFrame(
         fCtx.fillRect(0, stripY - 3, w, 3);
         fCtx.fillRect(0, stripY + stripH, w, 3);
       },
-    }, `eye|${beat.id}|${beat.mood}`);
+    }, `eye|${beat.id}|${beat.mood}`, craftOpts);
   } else if (beat.shot === 'low_angle_swoop') {
     const groundActor = actor0;
     const flyActor = actor1;
@@ -2977,7 +3033,7 @@ export function renderEpisodeFrame(
           }
         }
       },
-    });
+    }, undefined, craftOpts);
   } else if (beat.shot === 'prop_spotlight') {
     const rawPropCam = computeCameraTransform(
       w,
@@ -3093,7 +3149,7 @@ export function renderEpisodeFrame(
           }
         }
       },
-    });
+    }, undefined, craftOpts);
   } else if (beat.shot === 'motion_card') {
     // Declarative Kinetic Motion-Graphics Shot (`@0xnicc0`-inspired morphing bar, hero stat & staggered typography)
     const rawCardCam = applyActionCameraPunch(
@@ -3357,7 +3413,7 @@ export function renderEpisodeFrame(
         }
         fCtx.restore();
       },
-    });
+    }, undefined, craftOpts);
   }
 
   // Step 9: Dynamic Environmental Relighting (warm firelight flicker & aquatic caustic shimmer)
@@ -3386,6 +3442,29 @@ export function renderEpisodeFrame(
   drawBeatFx(ctx, w, h, actionState.fxOverride || beat.fx, u, animT);
   drawSfxVisualEffects(ctx, w, h, sfxChoreo, sfxAnchorX, sfxAnchorY, s);
   drawImpactShockOverlay(ctx, w, h, hitstop, sfxAnchorX, sfxAnchorY, pal.accent, s);
+
+  // Upgrade 28: Effekseer-inspired analytical 2D ribbons, rings & burst particles (face/caption safe)
+  drawAnalyticalBeatVfxLayer(ctx, w, h, beat, vfxActorAnchors, localT, animT, pal, vfxIntensity);
+
+  // Upgrade 29: Zero-allocation pooled 2D shockwave refraction & distortion ring on peak impacts
+  const distortionSpec = computeShockwaveDistortionSpec(
+    beat,
+    hitstop,
+    localT,
+    sfxAnchorX,
+    sfxAnchorY,
+    w,
+    h,
+    vfxIntensity
+  );
+  if (distortionSpec.active) {
+    applyPooledShockwaveDistortion(ctx, w, h, distortionSpec);
+  }
+
+  // Upgrade 30: Global pooled miniature tilt-shift blur band (papercraft_diorama already applies it inside its shadowbox mat)
+  if (activeRenderStyle !== 'papercraft_diorama' && resolvedTiltShift > 0.02) {
+    applyPooledTiltShiftBand(ctx, w, h, resolvedTiltShift);
+  }
 
   // Episode Visual Look Finish (Rim Light, Color Grade, Contrast, Ink Weight, Texture, Vignette, Frame Border)
   drawVisualFinishOverlay(ctx, w, h, beat, style, aspect);

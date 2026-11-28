@@ -5,6 +5,7 @@ import {
   StudioCommandItem,
   filterStudioCommands,
 } from './studioShortcuts';
+import { getCatalogIndexSize, searchStudioCatalog } from './catalogSearchIndex';
 
 export interface CommandPaletteModalProps {
   commands: StudioCommandItem[];
@@ -20,6 +21,7 @@ const CATEGORY_LABELS: Record<StudioCommandItem['category'], string> = {
   style: 'Art Engines',
   acting: 'Acting Macros',
   transport: 'Transport',
+  asset: 'BM25 Asset',
 };
 
 export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
@@ -31,7 +33,65 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
   const [activeIdx, setActiveIdx] = useState(0);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const results = useMemo(() => filterStudioCommands(commands, query, 36), [commands, query]);
+  const results = useMemo(() => {
+    const trimmed = query.trim();
+    const baseHits = filterStudioCommands(commands, trimmed, 28);
+    if (trimmed.length < 2) return baseHits;
+
+    const existingIds = new Set(baseHits.map((c) => `${c.actionType}:${String(c.payload ?? c.id)}`));
+    const catalogHits = searchStudioCatalog(trimmed, {
+      kinds: ['stage', 'archetype', 'prop', 'mood', 'render_style', 'acting_macro'],
+      limit: 14,
+    });
+
+    const semanticItems: StudioCommandItem[] = [];
+    for (const hit of catalogHits) {
+      if (hit.id === 'none') continue;
+      let actionType: StudioCommandItem['actionType'] | null = null;
+      let labelPrefix = '';
+      let category: StudioCommandItem['category'] = 'asset';
+
+      if (hit.kind === 'stage') {
+        actionType = 'apply_stage';
+        labelPrefix = 'Stage: ';
+      } else if (hit.kind === 'archetype') {
+        actionType = 'add_archetype';
+        labelPrefix = 'Add Cast: ';
+      } else if (hit.kind === 'prop') {
+        actionType = 'apply_prop';
+        labelPrefix = 'Prop: ';
+      } else if (hit.kind === 'mood') {
+        actionType = 'apply_mood';
+        labelPrefix = 'Mood: ';
+      } else if (hit.kind === 'render_style') {
+        actionType = 'set_render_style';
+        labelPrefix = 'Art Engine: ';
+        category = 'style';
+      } else if (hit.kind === 'acting_macro') {
+        actionType = 'apply_acting_macro';
+        labelPrefix = 'Acting Macro: ';
+        category = 'acting';
+      }
+
+      if (!actionType) continue;
+      const dedupeKey = `${actionType}:${hit.id}`;
+      if (existingIds.has(dedupeKey)) continue;
+      existingIds.add(dedupeKey);
+
+      semanticItems.push({
+        id: `bm25_${hit.kind}_${hit.id}`,
+        label: `${labelPrefix}${hit.label}`,
+        subtitle: hit.description || `${hit.category} · id: ${hit.id}`,
+        category,
+        actionType,
+        payload: hit.id,
+      });
+    }
+
+    return [...baseHits, ...semanticItems].slice(0, 38);
+  }, [commands, query]);
+
+  const totalIndexedAssets = useMemo(() => getCatalogIndexSize(), []);
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -83,7 +143,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Jump to scene, switch art engine, apply acting macro, or run studio tool…"
+            placeholder={`Search commands, scenes, art engines, or ${totalIndexedAssets.toLocaleString()}+ assets semantically…`}
             className="flex-1 bg-transparent text-sm text-white placeholder-[#7d87a3] focus:outline-none"
           />
           <span className="px-1.5 py-0.5 rounded bg-white/8 text-[10px] font-mono text-[#9aa5c4]">

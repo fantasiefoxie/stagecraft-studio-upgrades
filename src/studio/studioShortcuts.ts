@@ -8,7 +8,8 @@ export type StudioCommandCategory =
   | 'acting'
   | 'viewport'
   | 'tools'
-  | 'director';
+  | 'director'
+  | 'asset';
 
 export interface StudioCommandItem {
   id: string;
@@ -21,6 +22,10 @@ export interface StudioCommandItem {
     | 'jump_beat'
     | 'set_render_style'
     | 'apply_acting_macro'
+    | 'apply_stage'
+    | 'apply_mood'
+    | 'apply_prop'
+    | 'add_archetype'
     | 'toggle_safe_zones'
     | 'toggle_onion_skin'
     | 'toggle_move_mode'

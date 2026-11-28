@@ -242,7 +242,43 @@ import {
   formatVisualScorecardMarkdown,
   scoreEpisodeVisualCraft,
 } from '../src/studio/visualScorecard';
-import { buildStagecraftDirectorSkillMd } from '../src/studio/directorSkillExport';
+import {
+  buildRoutedDirectorSkillMd,
+  buildStagecraftDirectorSkillMd,
+  ENGINE_CRAFT_MATRIX,
+  ANTI_SLOP_CRITIQUE_CHECKLIST,
+} from '../src/studio/directorSkillExport';
+import {
+  drawAnalyticalBeatVfxLayer,
+  drawAnalyticalRibbonTrail,
+  drawAnalyticalVfxRing,
+  evalThreePointFCurve,
+  hashVfxSeed,
+  sampleAnalyticalParticle,
+} from '../src/studio/vfxEmitterEngine';
+import {
+  applyPooledShockwaveDistortion,
+  computeShockwaveDistortionSpec,
+  getDistortionPoolAllocationCount,
+} from '../src/studio/vfxDistortionPass';
+import {
+  applyPooledTiltShiftBand,
+  computePopupHingeTransform,
+  drawCardstockCutBevel,
+  drawPapercraftLayeredShadow,
+  drawPopupFoldTransition,
+  getTiltShiftPoolAllocationCount,
+} from '../src/studio/papercraftCraft';
+import {
+  getCatalogIndexSize,
+  recommendScenePaletteForPrompt,
+  searchStudioCatalog,
+} from '../src/studio/catalogSearchIndex';
+import {
+  STORY_REMIX_BLUEPRINTS,
+  remixStoryBlueprint,
+} from '../src/studio/storyRemixEngine';
+import { TRANSITION_CATALOG } from '../src/studio/types';
 import {
   CAMERA_KEYFRAME_PRESETS,
   composeCameraWithKeyframes,
@@ -3076,6 +3112,371 @@ test('52. Wave 5: buildStagecraftDirectorSkillMd reports exact Wave 5 counts (16
   ]) {
     assert.ok(md.includes(token), `Expected Wave 5 Director SKILL.md to include "${token}"`);
   }
+});
+
+// ---------------------------------------------------------------------------
+// Test 53 (Wave 6 · Upgrade 28): Analytical 2D Particle, Ribbon & Ring VFX Engine
+// ---------------------------------------------------------------------------
+test('53. Upgrade 28: Analytical F-curve, stateless particle scrubbing, ribbon/ring rendering & vfxIntensity clamping', () => {
+  const src = fs
+    .readFileSync(path.join(process.cwd(), 'src/studio/vfxEmitterEngine.ts'), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/\/\/.*$/gm, '');
+  assert.equal(/\bMath\.random\s*\(/.test(src), false, 'vfxEmitterEngine.ts must never call Math.random()');
+
+  // 3-point F-curve endpoints and midpoint
+  assert.ok(Math.abs(evalThreePointFCurve(0, 0.2, 1.0, 0.0, 0.4) - 0.2) < 1e-6);
+  assert.ok(Math.abs(evalThreePointFCurve(0.4, 0.2, 1.0, 0.0, 0.4) - 1.0) < 1e-6);
+  assert.ok(Math.abs(evalThreePointFCurve(1, 0.2, 1.0, 0.0, 0.4) - 0.0) < 1e-6);
+
+  // Bit-exact deterministic stateless sampling (forward/backward scrub invariance)
+  const spec = {
+    seed: hashVfxSeed('clash_test'),
+    originX: 640,
+    originY: 360,
+    lifeSec: 1.2,
+    speedMin: 80,
+    speedMax: 240,
+    gravityY: 120,
+    drag: 0.9,
+    vortexTorque: 0.7,
+    turbulenceAmp: 14,
+  };
+  const pA = sampleAnalyticalParticle(5, 24, 0.45, spec);
+  // Scrub elsewhere then return to 0.45
+  sampleAnalyticalParticle(5, 24, 0.95, spec);
+  const pB = sampleAnalyticalParticle(5, 24, 0.45, spec);
+  assert.deepEqual(pA, pB, 'Analytical particle must be bit-identical on backward scrub');
+  assert.ok(Number.isFinite(pA.x) && Number.isFinite(pA.y) && Number.isFinite(pA.alpha));
+  assert.equal(pA.alive, true);
+
+  // Render smoke test with NaN + determinism audit
+  const mockA = createAuditedMockCanvas2D();
+  const mockB = createAuditedMockCanvas2D();
+  const beat = clone(PRESET_EPISODES[0].beats[0]);
+  beat.fx = 'shock_burst';
+  beat.sfx = 'sword_clash';
+  beat.actors = [{ castId: PRESET_EPISODES[0].cast[0].id, slot: 'center', pose: 'attack', expression: 'angry', facing: 'right', motion: 'leap_arc' }];
+  const actors = [
+    {
+      actor: beat.actors[0],
+      x: 640,
+      y: 520,
+      scale: 1.0,
+    },
+  ];
+
+  const runVfx = (m: ReturnType<typeof createAuditedMockCanvas2D>) => {
+    drawAnalyticalRibbonTrail(
+      m.ctx,
+      [
+        { x: 400, y: 360 },
+        { x: 480, y: 320 },
+        { x: 580, y: 310 },
+        { x: 670, y: 350 },
+      ],
+      { widthStart: 2, widthMid: 14, widthEnd: 4, colorStart: '#ff4d6d', colorMid: '#f2c85b', colorEnd: '#ffffff' }
+    );
+    drawAnalyticalVfxRing(m.ctx, 640, 360, 0.42, {
+      innerStart: 16,
+      innerMid: 72,
+      innerEnd: 150,
+      outerStart: 30,
+      outerMid: 102,
+      outerEnd: 180,
+      colorOuter: '#f2c85b',
+      colorInner: '#ffffff',
+      tickCount: 12,
+    });
+    drawAnalyticalBeatVfxLayer(m.ctx, 1280, 720, beat, actors, 0.35, 1.35, MOOD_PALETTES.midnight_banyan, 0.85);
+  };
+  runVfx(mockA);
+  runVfx(mockB);
+  assert.equal(mockA.getNanCount(), 0);
+  assert.equal(mockA.getSignature(), mockB.getSignature());
+  assert.ok(mockA.getOps() > 30);
+
+  // vfxIntensity clamping in resolveVisualStyle & validateEpisodeScript
+  assert.equal(resolveVisualStyle({}).vfxIntensity, 0.75);
+  assert.equal(resolveVisualStyle({ vfxIntensity: 2.5 }).vfxIntensity, 1);
+  assert.equal(resolveVisualStyle({ vfxIntensity: -0.4 }).vfxIntensity, 0);
+  const ep = clone(PRESET_EPISODES[0]);
+  ep.visualStyle = { ...(ep.visualStyle || {}), vfxIntensity: 1.8 };
+  const val = validateEpisodeScript(ep);
+  assert.equal(val.ok, true);
+  if (val.ok) assert.equal(val.script.visualStyle?.vfxIntensity, 1);
+});
+
+// ---------------------------------------------------------------------------
+// Test 54 (Wave 6 · Upgrade 29): Zero-Allocation Pooled 2D Shockwave Refraction Pass
+// ---------------------------------------------------------------------------
+test('54. Upgrade 29: computeShockwaveDistortionSpec triggers on impacts & applyPooledShockwaveDistortion keeps pool <= 1', () => {
+  const src = fs
+    .readFileSync(path.join(process.cwd(), 'src/studio/vfxDistortionPass.ts'), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/\/\/.*$/gm, '');
+  assert.equal(/\bMath\.random\s*\(/.test(src), false, 'vfxDistortionPass.ts must never call Math.random()');
+
+  const beat = clone(PRESET_EPISODES[0].beats[0]);
+  beat.fx = 'shock_burst';
+  beat.sfx = 'sword_clash';
+  const hitstop = computeHitstopState(beat, 12, STUDIO_FPS, true);
+
+  const activeSpec = computeShockwaveDistortionSpec(beat, hitstop, 0.22, 640, 360, 1280, 720, 0.85);
+  assert.equal(activeSpec.active, true, 'Expected active shockwave distortion for shock_burst');
+  assert.ok(activeSpec.radiusPx > 10 && activeSpec.bandWidthPx > 2 && activeSpec.refractionPx > 0);
+
+  const disabledSpec = computeShockwaveDistortionSpec(beat, hitstop, 0.22, 640, 360, 1280, 720, 0);
+  assert.equal(disabledSpec.active, false, 'vfxIntensity=0 must disable shockwave distortion');
+
+  const calmBeat = { ...beat, fx: 'none' as const, sfx: 'none' as const, actionCues: undefined };
+  const calmHitstop = computeHitstopState(calmBeat, 12, STUDIO_FPS, true);
+  const calmSpec = computeShockwaveDistortionSpec(calmBeat, calmHitstop, 0.5, 640, 360, 1280, 720, 0.8);
+  assert.equal(calmSpec.active, false, 'Calm beat must not trigger shockwave distortion');
+
+  const mock = createAuditedMockCanvas2D();
+  for (let i = 0; i < 6; i++) {
+    applyPooledShockwaveDistortion(mock.ctx, 1280, 720, activeSpec);
+  }
+  assert.equal(mock.getNanCount(), 0);
+  assert.ok(getDistortionPoolAllocationCount() <= 1, `Expected distortion pool <= 1, got ${getDistortionPoolAllocationCount()}`);
+});
+
+// ---------------------------------------------------------------------------
+// Test 55 (Wave 6 · Upgrade 30): Tactile Photographed Cardstock Papercraft Overhaul
+// ---------------------------------------------------------------------------
+test('55. Upgrade 30: Papercraft bevel/shadow/tilt-shift render cleanly with pool <= 1 & tiltShiftAmount clamps cleanly', () => {
+  const src = fs
+    .readFileSync(path.join(process.cwd(), 'src/studio/papercraftCraft.ts'), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/\/\/.*$/gm, '');
+  assert.equal(/\bMath\.random\s*\(/.test(src), false, 'papercraftCraft.ts must never call Math.random()');
+
+  const styleSrc = fs.readFileSync(path.join(process.cwd(), 'src/studio/styleEngines.ts'), 'utf8');
+  assert.ok(styleSrc.includes('drawPapercraftLayeredShadow'), 'styleEngines.ts must use drawPapercraftLayeredShadow');
+  assert.ok(styleSrc.includes('drawCardstockCutBevel'), 'styleEngines.ts must use drawCardstockCutBevel');
+  assert.ok(styleSrc.includes('applyPooledTiltShiftBand'), 'styleEngines.ts must use applyPooledTiltShiftBand');
+
+  const mock = createAuditedMockCanvas2D();
+  const dummyCutout = { width: 640, height: 360 } as unknown as HTMLCanvasElement;
+  drawPapercraftLayeredShadow(mock.ctx, dummyCutout, 'right', '#2a1b12', 1.0);
+  drawCardstockCutBevel(mock.ctx, dummyCutout, 'right', 1.0);
+  applyPooledTiltShiftBand(mock.ctx, 640, 360, 0.55);
+  assert.equal(mock.getNanCount(), 0);
+  assert.ok(mock.getOps() >= 3, 'Expected cardstock shadow & bevel draw ops');
+  assert.ok(getTiltShiftPoolAllocationCount() <= 1, `Expected tilt-shift pool <= 1, got ${getTiltShiftPoolAllocationCount()}`);
+
+  // tiltShiftAmount clamping
+  assert.equal(resolveVisualStyle({}).tiltShiftAmount, 0);
+  assert.equal(resolveVisualStyle({ tiltShiftAmount: 4 }).tiltShiftAmount, 1);
+  assert.equal(resolveVisualStyle({ tiltShiftAmount: -1 }).tiltShiftAmount, 0);
+  const ep = clone(PRESET_EPISODES[0]);
+  ep.visualStyle = { ...(ep.visualStyle || {}), tiltShiftAmount: 0.65 };
+  const val = validateEpisodeScript(ep);
+  assert.equal(val.ok, true);
+  if (val.ok) assert.equal(val.script.visualStyle?.tiltShiftAmount, 0.65);
+});
+
+// ---------------------------------------------------------------------------
+// Test 56 (Wave 6 · Upgrade 31): Pop-Up Book Spring-Hinge Transitions & Fold Physics
+// ---------------------------------------------------------------------------
+test('56. Upgrade 31: computePopupHingeTransform folds -> overshoots -> settles, popup_fold validates & renders deterministically', () => {
+  const folded = computePopupHingeTransform(0.0, 0, 0.42);
+  assert.ok(folded.scaleY < 0.25, `Expected folded scaleY < 0.25, got ${folded.scaleY}`);
+  assert.equal(folded.settled, false);
+
+  // Sample across 0..0.42s to verify overshoot above 1.0 before settling
+  let maxScaleY = 0;
+  for (let i = 1; i <= 40; i++) {
+    const tr = computePopupHingeTransform((i / 40) * 0.42, 0, 0.42);
+    if (tr.scaleY > maxScaleY) maxScaleY = tr.scaleY;
+    assert.ok(Number.isFinite(tr.scaleY) && Number.isFinite(tr.skewX) && Number.isFinite(tr.liftPx));
+  }
+  assert.ok(maxScaleY > 1.01, `Expected spring overshoot > 1.01, got ${maxScaleY}`);
+
+  const settled = computePopupHingeTransform(0.55, 0, 0.42);
+  assert.equal(settled.settled, true);
+  assert.equal(settled.scaleY, 1);
+  assert.equal(settled.skewX, 0);
+
+  // 'popup_fold' in TRANSITION_CATALOG and survives validator
+  assert.ok(TRANSITION_CATALOG.some((t) => t.id === 'popup_fold'), 'Expected popup_fold in TRANSITION_CATALOG');
+  const ep = clone(PRESET_EPISODES[0]);
+  ep.beats[0].transition = 'popup_fold';
+  const val = validateEpisodeScript(ep);
+  assert.equal(val.ok, true);
+  if (val.ok) assert.equal(val.script.beats[0].transition, 'popup_fold');
+
+  // Render smoke test + determinism
+  const mockA = createAuditedMockCanvas2D();
+  const mockB = createAuditedMockCanvas2D();
+  drawPopupFoldTransition(mockA.ctx, 1280, 720, 0.06, '#f2c85b', 'right');
+  drawPopupFoldTransition(mockB.ctx, 1280, 720, 0.06, '#f2c85b', 'right');
+  assert.equal(mockA.getNanCount(), 0);
+  assert.equal(mockA.getSignature(), mockB.getSignature());
+  assert.ok(mockA.getOps() >= 4);
+});
+
+// ---------------------------------------------------------------------------
+// Test 57 (Wave 6 · Upgrade 32): Tactile Paper & Cardstock Procedural Foley
+// ---------------------------------------------------------------------------
+test('57. Upgrade 32: planBeatFoleyEvents stays 1-arg backward-compatible & plans paper_turn / cardstock_fold / hinge_pop deterministically', () => {
+  const foleySrc = fs
+    .readFileSync(path.join(process.cwd(), 'src/studio/proceduralFoley.ts'), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/\/\/.*$/gm, '');
+  assert.equal(/\bMath\.random\s*\(/.test(foleySrc), false, 'proceduralFoley.ts must never call Math.random()');
+
+  const beat = clone(PRESET_EPISODES[0].beats[0]);
+  beat.transition = 'hard_cut';
+  // 1-arg backward compatibility
+  const legacyEvents = planBeatFoleyEvents(beat);
+  assert.ok(Array.isArray(legacyEvents));
+
+  // Papercraft diorama style triggers paper foley automatically
+  const paperBeat = { ...beat, transition: 'popup_fold' as const };
+  const paperEventsA = planBeatFoleyEvents(paperBeat, 'papercraft_diorama');
+  const paperEventsB = planBeatFoleyEvents(paperBeat, 'papercraft_diorama');
+  assert.deepEqual(paperEventsA, paperEventsB, 'Paper foley plan must be deterministic');
+
+  const kinds = new Set(paperEventsA.map((e) => e.kind));
+  assert.ok(kinds.has('paper_turn'), 'Expected paper_turn event for popup_fold');
+  assert.ok(kinds.has('cardstock_fold'), 'Expected cardstock_fold event for papercraft/popup_fold');
+  assert.ok(kinds.has('hinge_pop'), 'Expected hinge_pop event for pop-up actors');
+});
+
+// ---------------------------------------------------------------------------
+// Test 58 (Wave 6 · Upgrade 33): 20-Engine Craft Matrix, Anti-Slop Checklist & Lean Routed SKILL.md
+// ---------------------------------------------------------------------------
+test('58. Upgrade 33: Full SKILL.md includes 20-engine Craft Matrix + Anti-Slop Checklist & Routed SKILL.md cuts size by >55%', () => {
+  assert.equal(Object.keys(ENGINE_CRAFT_MATRIX).length, 20, 'Expected craft matrix for all 20 art engines');
+  assert.equal(ANTI_SLOP_CRITIQUE_CHECKLIST.length, 5, 'Expected 5-point Anti-Slop Checklist');
+
+  const fullMd = buildStagecraftDirectorSkillMd();
+  for (const rs of RENDER_STYLE_CATALOG) {
+    assert.ok(fullMd.includes(`| \`${rs.id}\` |`), `Expected 20-Engine Craft Matrix row for ${rs.id}`);
+  }
+  for (const token of ['20-Engine Craft Matrix', '5-Point Anti-Slop Critique Checklist', 'vfxIntensity', 'tiltShiftAmount', 'popup_fold']) {
+    assert.ok(fullMd.includes(token), `Expected full SKILL.md to contain "${token}"`);
+  }
+
+  const routedMd = buildRoutedDirectorSkillMd({ query: 'cyberpunk rain detective', maxPerCategory: 6 });
+  assert.ok(routedMd.startsWith('---\nname: stagecraft-director-routed\n'));
+  assert.ok(
+    routedMd.length < fullMd.length * 0.45,
+    `Expected routed SKILL.md (${routedMd.length} chars) < 45% of full SKILL.md (${fullMd.length} chars)`
+  );
+  assert.ok(routedMd.includes('Selected Engine Craft Recipe'), 'Routed SKILL.md must include selected engine craft recipe');
+  assert.ok(routedMd.includes('BM25-Routed Shortlist'), 'Routed SKILL.md must include BM25 shortlist');
+});
+
+// ---------------------------------------------------------------------------
+// Test 59 (Wave 6 · Upgrade 34): Pure-TS Okapi BM25 Semantic Search Over 1,150+ Assets
+// ---------------------------------------------------------------------------
+test('59. Upgrade 34: BM25 index covers >=1,150 items, ranks semantic queries accurately & recommendScenePaletteForPrompt is deterministic', () => {
+  const searchSrc = fs
+    .readFileSync(path.join(process.cwd(), 'src/studio/catalogSearchIndex.ts'), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/\/\/.*$/gm, '');
+  assert.equal(/\bMath\.random\s*\(/.test(searchSrc), false, 'catalogSearchIndex.ts must never call Math.random()');
+
+  const total = getCatalogIndexSize();
+  assert.ok(total >= 1150, `Expected >=1,150 indexed studio items, got ${total}`);
+
+  // Semantic query 1: cyberpunk rain detective
+  const cyberHits = searchStudioCatalog('cyberpunk rain detective', { limit: 15 });
+  assert.ok(cyberHits.length >= 5);
+  const cyberIds = cyberHits.map((h) => h.id);
+  assert.ok(
+    cyberIds.some((id) => id.includes('cyber') || id.includes('noir') || id.includes('detective') || id.includes('rain')),
+    `Expected cyberpunk/noir/detective hits, got: ${cyberIds.slice(0, 8).join(', ')}`
+  );
+
+  // Semantic query 2: thunder god
+  const thunderArch = searchStudioCatalog('thunder god', { kinds: ['archetype'], limit: 8 });
+  assert.ok(
+    thunderArch.some((h) => h.id === 'zeus_thunderer' || h.id.includes('thunder') || h.id.includes('deity')),
+    `Expected zeus_thunderer or storm deity in top hits, got: ${thunderArch.map((h) => h.id).join(', ')}`
+  );
+
+  // recommendScenePaletteForPrompt determinism + valid catalog IDs
+  const palA = recommendScenePaletteForPrompt('cyberpunk rain detective');
+  const palB = recommendScenePaletteForPrompt('cyberpunk rain detective');
+  assert.deepEqual(palA, palB);
+  assert.ok(STAGE_CATALOG.some((s) => s.id === palA.stage));
+  assert.ok(ARCHETYPE_CATALOG.some((a) => a.id === palA.archetype));
+  assert.ok(PROP_CATALOG.some((p) => p.id === palA.prop));
+  assert.ok(MOOD_CATALOG.some((m) => m.id === palA.mood));
+  assert.ok(WEATHER_LIST.includes(palA.weather));
+  assert.ok(FX_LIST.includes(palA.fx));
+  assert.ok(RENDER_STYLE_CATALOG.some((r) => r.id === palA.renderStyle));
+});
+
+// ---------------------------------------------------------------------------
+// Test 60 (Wave 6 · Upgrade 35): Instant Story Remix Blueprint Engine (12 Blueprints)
+// ---------------------------------------------------------------------------
+test('60. Upgrade 35: All 12 STORY_REMIX_BLUEPRINTS generate deterministic, validated, high-craft episodes that render cleanly', () => {
+  const remixSrc = fs
+    .readFileSync(path.join(process.cwd(), 'src/studio/storyRemixEngine.ts'), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/\/\/.*$/gm, '');
+  assert.equal(/\bMath\.random\s*\(/.test(remixSrc), false, 'storyRemixEngine.ts must never call Math.random()');
+
+  assert.equal(STORY_REMIX_BLUEPRINTS.length, 12, `Expected 12 story remix blueprints, got ${STORY_REMIX_BLUEPRINTS.length}`);
+  assert.equal(new Set(STORY_REMIX_BLUEPRINTS.map((b) => b.id)).size, 12, 'Blueprint IDs must be unique');
+
+  const mock = createAuditedMockCanvas2D();
+
+  for (const bp of STORY_REMIX_BLUEPRINTS) {
+    const epA = remixStoryBlueprint({
+      blueprintId: bp.id,
+      topicTitle: `${bp.label} Probe`,
+      themeQuery: bp.defaultThemeQuery,
+      aspect: '16:9',
+    });
+    const epB = remixStoryBlueprint({
+      blueprintId: bp.id,
+      topicTitle: `${bp.label} Probe`,
+      themeQuery: bp.defaultThemeQuery,
+      aspect: '16:9',
+    });
+
+    assert.deepEqual(epA, epB, `Blueprint ${bp.id} must be deterministic`);
+
+    const val = validateEpisodeScript(epA);
+    assert.equal(val.ok, true, `Blueprint ${bp.id} failed validation: ${val.ok ? '' : val.error}`);
+    assert.ok(epA.beats.length >= 5, `Blueprint ${bp.id} should have >=5 beats`);
+    assert.ok(epA.cast.length >= 2, `Blueprint ${bp.id} should have >=2 cast members`);
+    assert.notEqual(
+      epA.cast[0].archetype,
+      epA.cast[1].archetype,
+      `Blueprint ${bp.id} must diversify lead vs foil archetypes`
+    );
+
+    const craft = scoreEpisodeVisualCraft(epA);
+    assert.ok(
+      craft.totalScore >= 12,
+      `Blueprint ${bp.id} expected Visual Craft >= 12/18, got ${craft.totalScore}/18`
+    );
+
+    // Smoke-render beat 0 backdrop + analytical VFX layer with zero NaNs
+    const b0 = epA.beats[0];
+    const pal = MOOD_PALETTES[b0.mood] || MOOD_PALETTES.midnight_banyan;
+    drawStageBackdrop(mock.ctx, 640, 360, b0.stage, b0.mood, 0.5);
+    drawAnalyticalBeatVfxLayer(
+      mock.ctx,
+      640,
+      360,
+      b0,
+      [{ actor: b0.actors[0], x: 320, y: 260, scale: 0.75 }],
+      0.28,
+      0.28,
+      pal,
+      epA.visualStyle?.vfxIntensity ?? 0.75
+    );
+  }
+
+  assert.equal(mock.getNanCount(), 0, `Remix blueprint smoke render produced ${mock.getNanCount()} NaN coordinates`);
 });
 
 // ---------------------------------------------------------------------------

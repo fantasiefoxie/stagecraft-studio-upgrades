@@ -1,6 +1,11 @@
 import { MoodId, PostFxPassId, RenderStyleId } from './types';
 import { MOOD_PALETTES } from './renderAssets';
 import { computeDeterministicFlicker } from './animationEngine';
+import {
+  applyPooledTiltShiftBand,
+  drawCardstockCutBevel,
+  drawPapercraftLayeredShadow,
+} from './papercraftCraft';
 
 // =========================================================================
 // REUSABLE OFFSCREEN LAYER BUFFERS (Zero Per-Frame Allocation)
@@ -990,6 +995,11 @@ export interface SceneLayerCallbacks {
   drawForeground: (ctx: CanvasRenderingContext2D) => void;
 }
 
+export interface ComposeCraftOptions {
+  lightSide?: 'left' | 'right';
+  tiltShiftAmount?: number;
+}
+
 export function composeStyledScene(
   ctx: CanvasRenderingContext2D,
   w: number,
@@ -998,7 +1008,8 @@ export function composeStyledScene(
   mood: MoodId,
   globalT: number,
   layers: SceneLayerCallbacks,
-  backdropCacheKey?: string
+  backdropCacheKey?: string,
+  craftOptions?: ComposeCraftOptions
 ): void {
   // Fast zero-overhead path for default Chiaroscuro engine (still benefits from backdrop cache on static shots)
   if (renderStyle === 'chiaroscuro') {
@@ -1384,25 +1395,12 @@ export function composeStyledScene(
       }
     }
 
-    // Pass A: Deep directional shadowbox cardstock drop-shadow with subtle theatre lamp drift
-    const lampShiftX = Math.sin(globalT * 0.9) * 3.5 * s;
-    const lampShiftY = Math.cos(globalT * 0.7) * 2.2 * s;
-    ctx.save();
-    ctx.shadowColor = 'rgba(2, 4, 12, 0.84)';
-    ctx.shadowBlur = 22 * s;
-    ctx.shadowOffsetX = 12 * s + lampShiftX;
-    ctx.shadowOffsetY = 16 * s + lampShiftY;
-    ctx.drawImage(fgBuf.canvas, 0, 0);
-    ctx.restore();
+    // Pass A (Upgrade 30): Soft warm mood-tinted layered drop shadow (replaces flat black)
+    const lightSide = craftOptions?.lightSide || 'right';
+    drawPapercraftLayeredShadow(ctx, fgBuf.canvas, lightSide, pal.shadowTint, s);
 
-    // Pass B: Crisp sunlit golden-cream cut-paper edge bevel (-2px, -2px)
-    ctx.save();
-    ctx.shadowColor = 'rgba(255, 234, 178, 0.62)';
-    ctx.shadowBlur = 2 * s;
-    ctx.shadowOffsetX = -2.2 * s;
-    ctx.shadowOffsetY = -2.2 * s;
-    ctx.drawImage(fgBuf.canvas, 0, 0);
-    ctx.restore();
+    // Pass B (Upgrade 30): Photographed cardstock cut-edge bevel (lit highlight + dark edge thickness)
+    drawCardstockCutBevel(ctx, fgBuf.canvas, lightSide, s);
 
     // Pass C: Clean tactile foreground cutout on top
     ctx.drawImage(fgBuf.canvas, 0, 0);
@@ -1419,10 +1417,19 @@ export function composeStyledScene(
       }
     }
 
+    // Pass D (Upgrade 30): Miniature macro lens tilt-shift blur band (auto 0.55 unless explicitly set)
+    const tiltAmt =
+      typeof craftOptions?.tiltShiftAmount === 'number' && Number.isFinite(craftOptions.tiltShiftAmount)
+        ? craftOptions.tiltShiftAmount
+        : 0.55;
+    if (tiltAmt > 0.02) {
+      applyPooledTiltShiftBand(ctx, w, h, tiltAmt);
+    }
+
     // Stacked 2-tier cut-paper shadowbox theatre mat border with real cast shadow!
     const mat1 = Math.round(18 * s);
     ctx.save();
-    ctx.shadowColor = 'rgba(2, 4, 12, 0.8)';
+    ctx.shadowColor = 'rgba(20, 12, 8, 0.76)';
     ctx.shadowBlur = 18 * s;
     ctx.shadowOffsetX = 0;
     ctx.shadowOffsetY = 8 * s;

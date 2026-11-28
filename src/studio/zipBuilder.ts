@@ -127,6 +127,11 @@ import studioSurfaceReflectionsTs from './surfaceReflections.ts?raw';
 import studioForegroundParallaxTs from './foregroundParallax.ts?raw';
 import studioVisualScorecardTs from './visualScorecard.ts?raw';
 import studioDirectorSkillExportTs from './directorSkillExport.ts?raw';
+import studioVfxEmitterEngineTs from './vfxEmitterEngine.ts?raw';
+import studioVfxDistortionPassTs from './vfxDistortionPass.ts?raw';
+import studioPapercraftCraftTs from './papercraftCraft.ts?raw';
+import studioCatalogSearchIndexTs from './catalogSearchIndex.ts?raw';
+import studioStoryRemixEngineTs from './storyRemixEngine.ts?raw';
 import studioZipBuilderTs from './zipBuilder.ts?raw';
 import batchRenderScriptMjs from '../../scripts/render-batch.mjs?raw';
 import determinismAuditScriptMjs from '../../scripts/determinism-audit.mjs?raw';
@@ -781,6 +786,26 @@ export function collectAllMachinimaEntries(): ZipEntryInput[] {
     {
       path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/directorSkillExport.ts`,
       content: studioDirectorSkillExportTs,
+    },
+    {
+      path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/vfxEmitterEngine.ts`,
+      content: studioVfxEmitterEngineTs,
+    },
+    {
+      path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/vfxDistortionPass.ts`,
+      content: studioVfxDistortionPassTs,
+    },
+    {
+      path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/papercraftCraft.ts`,
+      content: studioPapercraftCraftTs,
+    },
+    {
+      path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/catalogSearchIndex.ts`,
+      content: studioCatalogSearchIndexTs,
+    },
+    {
+      path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/storyRemixEngine.ts`,
+      content: studioStoryRemixEngineTs,
     },
     {
       path: `${root}/03_katha_studio_indian_folklore_engine/src/studio/zipBuilder.ts`,

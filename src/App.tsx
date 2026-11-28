@@ -69,9 +69,12 @@ import {
   EXPRESSION_LIST,
   MotionCadenceId,
   MotionProfileId,
+  MoodId,
   PostFxPassId,
+  PropId,
   RenderStyleId,
   SfxId,
+  StageId,
   StorybookShelf,
   STUDIO_FPS,
   StoryBeat,
@@ -2177,7 +2180,8 @@ export default function App() {
         ev.localT,
         isPlayingRef.current,
         ev.speechEnergy,
-        nextBeatForJCut
+        nextBeatForJCut,
+        ep.visualStyle?.renderStyle
       );
 
       const canvas = stageCanvasRef.current;
@@ -2396,6 +2400,34 @@ export default function App() {
           }
           break;
         }
+        case 'apply_stage': {
+          if (typeof cmd.payload === 'string') {
+            updateSelectedBeat({ stage: cmd.payload as StageId }, `Stage: ${cmd.payload}`);
+          }
+          break;
+        }
+        case 'apply_mood': {
+          if (typeof cmd.payload === 'string') {
+            updateSelectedBeat({ mood: cmd.payload as MoodId }, `Mood: ${cmd.payload}`);
+          }
+          break;
+        }
+        case 'apply_prop': {
+          if (typeof cmd.payload === 'string') {
+            updateSelectedBeat({ prop: cmd.payload as PropId }, `Prop: ${cmd.payload}`);
+          }
+          break;
+        }
+        case 'add_archetype': {
+          if (typeof cmd.payload === 'string') {
+            const archId = cmd.payload as ArchetypeId;
+            const label =
+              ARCHETYPE_CATALOG.find((a) => a.id === archId)?.label ||
+              cmd.label.replace(/^Add Cast:\s*/i, '');
+            addArchetypeToEpisode(archId, label);
+          }
+          break;
+        }
         case 'toggle_safe_zones':
           setSafeZones((v) => !v);
           break;
@@ -2439,6 +2471,7 @@ export default function App() {
       }
     },
     [
+      addArchetypeToEpisode,
       beatStarts,
       handleApplyCinematicJCuts,
       handleAutoTagStageChanges,
